@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../useAuth';
 import api from '../api/axios';
 import CharacterTile from './CharacterTile';
 import Modal from './Modal';
@@ -9,7 +8,6 @@ import parchmentBg from '../parchment-bg.jpg';
 
 function HomePage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const [characters, setCharacters] = useState([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [characterToDelete, setCharacterToDelete] = useState(null);
@@ -27,11 +25,6 @@ function HomePage() {
       console.error('Error fetching characters:', error);
       setToastMessage('Error fetching characters');
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
   };
 
   const handleCreateCharacter = () => {
@@ -58,18 +51,6 @@ function HomePage() {
 
   return (
     <div className="min-h-screen bg-cream" style={{backgroundImage: `url(${parchmentBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
-      <header className="bg-deep-red shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-white font-cinzel">Ars Saga Manager</h1>
-          <button
-            onClick={handleLogout}
-            className="bg-white text-deep-red px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {characters.map(character => (
