@@ -14,7 +14,7 @@ function Header() {
 
   return (
     <header className="bg-deep-red shadow">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         <Link to="/" className="text-3xl font-bold text-white font-cinzel hover:text-gray-200">
           Ars Saga Manager
         </Link>

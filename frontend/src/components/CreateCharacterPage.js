@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import parchmentBg from '../parchment-bg.jpg';
 
 function CreateCharacterPage() {
   const [characterName, setCharacterName] = useState('');
@@ -32,32 +33,34 @@ function CreateCharacterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Create Character</h2>
-        <input
-          type="text"
-          value={characterName}
-          onChange={(e) => setCharacterName(e.target.value)}
-          placeholder="Enter character name"
-          className="w-full p-2 border border-gray-300 rounded mb-4"
-        />
-        <div className="flex justify-between">
-          <button
-            onClick={() => navigate('/home')}
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!characterName.trim()}
-            className={`${
-              characterName.trim() ? 'bg-blue-500 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'
-            } text-white font-bold py-2 px-4 rounded`}
-          >
-            Save
-          </button>
+    <div className="min-h-screen bg-cream" style={{backgroundImage: `url(${parchmentBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-4 text-gray-800">Create Character</h2>
+          <input
+            type="text"
+            value={characterName}
+            onChange={(e) => setCharacterName(e.target.value)}
+            placeholder="Enter character name"
+            className="w-full p-2 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-deep-red"
+          />
+          <div className="flex justify-between">
+            <button
+              onClick={() => navigate('/home')}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!characterName.trim()}
+              className={`${
+                characterName.trim() ? 'bg-deep-red hover:bg-red-700' : 'bg-gray-300 cursor-not-allowed'
+              } text-white font-bold py-2 px-4 rounded transition duration-300`}
+            >
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>

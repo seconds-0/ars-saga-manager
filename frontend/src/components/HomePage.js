@@ -4,7 +4,7 @@ import api from '../api/axios';
 import CharacterTile from './CharacterTile';
 import Modal from './Modal';
 import Toast from './Toast';
-import parchmentBg from '../parchment-bg.jpg';
+import SideBar from './SideBar';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ function HomePage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [characterToDelete, setCharacterToDelete] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
+  const [activePage, setActivePage] = useState('home');
 
   useEffect(() => {
     fetchCharacters();
@@ -49,26 +50,45 @@ function HomePage() {
     }
   };
 
+  const renderContent = () => {
+    switch (activePage) {
+      case 'characters':
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {characters.map(character => (
+              <CharacterTile
+                key={character.id}
+                character={character}
+                onDelete={() => handleDeleteCharacter(character)}
+                onEdit={() => navigate(`/edit-character/${character.id}`)}
+              />
+            ))}
+            <button
+              onClick={handleCreateCharacter}
+              className="mt-8 bg-deep-red text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
+            >
+              Create New Character
+            </button>
+          </div>
+        );
+      default:
+        return <div>Welcome to Ars Saga Manager</div>;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cream" style={{backgroundImage: `url(${parchmentBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {characters.map(character => (
-            <CharacterTile
-              key={character.id}
-              character={character}
-              onDelete={() => handleDeleteCharacter(character)}
-              onEdit={() => navigate(`/edit-character/${character.id}`)}
-            />
-          ))}
-        </div>
-        <button
-          onClick={handleCreateCharacter}
-          className="mt-8 bg-deep-red text-white px-6 py-3 rounded-md text-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
-        >
-          Create New Character
-        </button>
-      </main>
+    <div className="flex min-h-screen bg-gray-50">
+      <SideBar activePage={activePage} setActivePage={setActivePage} />
+      <div className="flex-grow flex flex-col">
+        <header className="bg-deep-red shadow p-4">
+          <h1 className="text-3xl font-bold text-white font-cinzel">
+            Ars Saga Manager
+          </h1>
+        </header>
+        <main className="flex-grow p-8">
+          {renderContent()}
+        </main>
+      </div>
 
       <Modal
         isOpen={deleteModalOpen}
