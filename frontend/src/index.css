@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
+
+.font-medieval {
+  font-family: 'MedievalSharp', cursive;
+}
+
+.bg-cream {
+  background-color: #f8f0e3;
+}
+
+.border-gold {
+  border-color: #d4af37;
+}
+
+.focus\:ring-gold:focus {
+  --tw-ring-color: #d4af37;
+}
+
+.focus\:border-gold:focus {
+  border-color: #d4af37;
+}
