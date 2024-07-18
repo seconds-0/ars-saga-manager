@@ -1,11 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function CharacterTile({ character, onDelete, onEdit }) {
+function CharacterTile({ character, onDelete }) {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white shadow-md rounded-lg p-6 relative">
       <button
         onClick={onDelete}
-        className="absolute top-2 right-2 text-deep-red hover:text-red-700"
+        className="absolute top-2 right-2 text-gray-900 hover:text-gray-800"
         aria-label="Delete character"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -14,8 +17,8 @@ function CharacterTile({ character, onDelete, onEdit }) {
       </button>
       <h3 className="text-xl font-semibold mb-2 text-dark-brown">{character.name}</h3>
       <button
-        onClick={onEdit}
-        className="mt-4 bg-deep-red text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
+        onClick={() => navigate(`/character/${character.id}`)}
+        className="mt-4 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-150 ease-in-out"
       >
         Edit
       </button>

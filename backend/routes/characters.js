@@ -10,14 +10,19 @@ router.use(authenticateToken);
 // Create a new character
 router.post('/', async (req, res) => {
   try {
-    const { name, entityType } = req.body;
+    const { name, characterType } = req.body;
+    console.log('Received request body:', req.body);
     if (!name || name.trim() === '') {
       return res.status(400).json({ message: 'Character name is required' });
+    }
+    if (!characterType || !['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'].includes(characterType)) {
+      return res.status(400).json({ message: 'Valid character type is required' });
     }
     const character = await Character.create({ 
       name, 
       userId: req.user.id,
-      entityType: entityType || 'character'
+      characterType,
+      entityType: 'character'
     });
     res.status(201).json(character);
   } catch (error) {
@@ -29,20 +34,27 @@ router.post('/', async (req, res) => {
 // Get all characters for the authenticated user
 router.get('/', async (req, res) => {
   try {
+    console.log('Fetching characters for user:', req.user.id);
+    console.time('characterFetch');
     const characters = await Character.findAll({ where: { userId: req.user.id } });
+    console.timeEnd('characterFetch');
+    console.log('Characters found:', characters.length);
     res.json(characters);
   } catch (error) {
     console.error('Error fetching characters:', error);
-    res.status(500).json({ message: 'Error fetching characters', error: error.message });
+    res.status(500).json({ message: 'Error fetching characters', error: error.message, stack: error.stack });
   }
 });
 
 // Get a specific character by ID
 router.get('/:id', async (req, res) => {
   try {
+    console.log('Fetching character with ID:', req.params.id);
+    console.log('User ID:', req.user.id);
     const character = await Character.findOne({ 
       where: { id: req.params.id, userId: req.user.id } 
     });
+    console.log('Character found:', character);
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
@@ -56,11 +68,14 @@ router.get('/:id', async (req, res) => {
 // Update a character
 router.put('/:id', async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, characterType } = req.body;
     if (!name || name.trim() === '') {
       return res.status(400).json({ message: 'Character name is required' });
     }
-    const [updated] = await Character.update({ name }, { 
+    if (!characterType || !['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'].includes(characterType)) {
+      return res.status(400).json({ message: 'Valid character type is required' });
+    }
+    const [updated] = await Character.update({ name, characterType }, { 
       where: { id: req.params.id, userId: req.user.id } 
     });
     if (updated) {
