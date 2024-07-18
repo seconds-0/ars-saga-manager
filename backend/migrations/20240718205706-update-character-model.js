@@ -73,16 +73,28 @@ module.exports = {
       }
     });
 
-    await queryInterface.addConstraint('Characters', {
-      fields: ['characterType'],
-      type: 'check',
-      where: {
-        characterType: ['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie']
-      }
-    });
+    // Check if the constraint exists
+    const constraintExists = await queryInterface.sequelize.query(
+      "SELECT 1 FROM pg_constraint WHERE conname = 'Characters_characterType_ck'",
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+
+    if (constraintExists.length === 0) {
+      // If the constraint doesn't exist, add it
+      await queryInterface.addConstraint('Characters', {
+        fields: ['characterType'],
+        type: 'check',
+        name: 'Characters_characterType_ck',
+        where: {
+          characterType: ['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie']
+        }
+      });
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
+    // Remove the constraint if it exists
+    await queryInterface.removeConstraint('Characters', 'Characters_characterType_ck');
     await queryInterface.dropTable('Characters');
   }
 };
