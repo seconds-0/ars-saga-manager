@@ -8,7 +8,7 @@ import ForgotPasswordForm from './components/ForgotPasswordForm';
 import ResetConfirmation from './components/ResetConfirmation';
 import ResetPasswordForm from './components/ResetPasswordForm';
 import CharacterListPage from './components/CharacterListPage';
-import CharacterSheet from './components/CharacterSheet';
+import CharacterSheet from './components/CharacterSheetComponents/CharacterSheet';
 import { useAuth } from './useAuth';
 
 function AppContent() {

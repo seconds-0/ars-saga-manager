@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Toast from './Toast';
-import api from '../api/axios';
+import Toast from '../Toast';
+import api from '../../api/axios';
 import CharacterSheetTabs from './CharacterSheetTabs';
 
 function CharacterSheet() {
@@ -44,9 +44,9 @@ function CharacterSheet() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
-        <div className="flex justify-between items-center mb-4">
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
           <h2 className="text-2xl font-bold">Character Sheet: {character.name}</h2>
           <button
             onClick={() => navigate('/characters')}

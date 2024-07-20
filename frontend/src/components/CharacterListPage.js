@@ -71,7 +71,7 @@ function CharacterListPage() {
             key={character.id}
             character={character}
             onDelete={() => handleDelete(character)}
-            onEdit={() => navigate(`/edit-character/${character.id}`)}
+            onEdit={() => navigate(`/character/${character.id}`)}
           />
         ))}
       </div>

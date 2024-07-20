@@ -63,6 +63,11 @@ module.exports = (sequelize, DataTypes) => {
 
   Character.associate = function(models) {
     Character.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    Character.belongsToMany(models.ReferenceVirtueFlaw, {
+      through: models.CharacterVirtueFlaw,
+      foreignKey: 'characterId',
+      as: 'virtuesAndFlaws'
+    });
   };
 
   return Character;
