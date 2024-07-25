@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const instance = axios.create({
   baseURL: 'http://localhost:5000/api',
-  timeout: 5000, // 5 seconds timeout
+  timeout: 1000, 
 });
 
 instance.interceptors.request.use(
@@ -22,11 +22,33 @@ instance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.code === 'ECONNABORTED') {
-      console.log('Request timed out. Please try again later.');
+      console.error('Request timed out. Please try again later.');
     } else if (!error.response) {
-      console.log('Unable to connect to the server. Please check your internet connection or try again later.');
+      console.error('Unable to connect to the server. Please check your internet connection or try again later.');
     } else {
-      console.log('An error occurred:', error.message);
+      const status = error.response.status;
+      const message = error.response.data.message || error.message;
+
+      console.error(`Error ${status}:`, message);
+      console.error('Full error response:', error.response.data);
+
+      switch (status) {
+        case 400:
+          console.error('Bad request:', message);
+          break;
+        case 401:
+          console.error('Unauthorized:', message);
+          // Optionally, you can redirect to login page or clear local storage
+          break;
+        case 404:
+          console.error('Not found:', message);
+          break;
+        case 500:
+          console.error('Internal server error:', message);
+          break;
+        default:
+          console.error(`An error occurred (${status}):`, message);
+      }
     }
     return Promise.reject(error);
   }

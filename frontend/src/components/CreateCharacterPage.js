@@ -10,10 +10,12 @@ function CreateCharacterPage() {
   const handleCreate = async () => {
     if (characterName.trim() && characterType) {
       try {
-        const response = await api.post('/characters', { name: characterName, characterType: characterType });
+        const response = await api.post('/characters', { characterName: characterName, characterType: characterType });
+        console.log('Character created:', response.data);
         navigate(`/character/${response.data.id}`);
       } catch (error) {
         console.error('Error creating character:', error);
+        console.error('Error response:', error.response?.data);
       }
     }
   };

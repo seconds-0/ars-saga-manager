@@ -21,7 +21,7 @@ function CharacterListPage() {
   const fetchCharacters = async () => {
     try {
       const response = await api.get('/characters');
-      setCharacters(response.data);
+      setCharacters(response.data.characters);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching characters:', err);
@@ -30,7 +30,7 @@ function CharacterListPage() {
       } else if (!err.response) {
         setError('Unable to connect to the server. Please check your internet connection.');
       } else {
-        setError(`Failed to fetch characters: ${err.message}`);
+        setError(`Failed to fetch characters: ${err.response?.data?.message || err.message}`);
       }
       setLoading(false);
     }
@@ -86,7 +86,7 @@ function CharacterListPage() {
         confirmText="Delete"
       >
         <p className="text-sm text-gray-500">
-          Are you sure you want to delete {characterToDelete?.name}? This action cannot be undone.
+          Are you sure you want to delete {characterToDelete?.characterName}? This action cannot be undone.
         </p>
       </Modal>
       {toastMessage && (

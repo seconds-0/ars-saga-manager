@@ -10,6 +10,7 @@ import ResetPasswordForm from './components/ResetPasswordForm';
 import CharacterListPage from './components/CharacterListPage';
 import CharacterSheet from './components/CharacterSheetComponents/CharacterSheet';
 import { useAuth } from './useAuth';
+import { Helmet } from 'react-helmet';
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -33,9 +34,14 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <>
+      <Helmet>
+        <title>Ars Saga Manager</title>
+      </Helmet>
+      <Router>
+        <AppContent />
+      </Router>
+    </>
   );
 }
 

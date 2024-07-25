@@ -47,7 +47,7 @@ function CharacterSheet() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <h2 className="text-2xl font-bold">Character Sheet: {character.name}</h2>
+          <h2 className="text-2xl font-bold">Character Sheet: {character.characterName}</h2>
           <button
             onClick={() => navigate('/characters')}
             className="bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-150 ease-in-out"

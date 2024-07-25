@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { sequelize } = require('../models'); // Import sequelize instance
 const crypto = require('crypto');
 const { sendResetPasswordEmail } = require('../emailService');
 const { Op } = require('sequelize');
@@ -12,7 +12,7 @@ router.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, password: hashedPassword });
+    const user = await sequelize.models.User.create({ email, password: hashedPassword });
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error creating user', error: error.message });
@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     console.log('Login attempt for email:', email);
     
-    const user = await User.findOne({ where: { email } });
+    const user = await sequelize.models.User.findOne({ where: { email } });
     if (!user) {
       console.log('User not found for email:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const user = await sequelize.models.User.findOne({ where: { email } });
     if (!user) {
       // For security reasons, don't reveal that the user doesn't exist
       return res.json({ message: 'If a user with that email exists, a password reset link has been sent.' });
@@ -87,7 +87,7 @@ router.post('/reset-password/:token', async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    const user = await User.findOne({
+    const user = await sequelize.models.User.findOne({
       where: {
         resetPasswordToken: token,
         resetPasswordExpires: { [Op.gt]: Date.now() }
