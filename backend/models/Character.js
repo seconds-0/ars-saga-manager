@@ -53,7 +53,69 @@ module.exports = (sequelize, DataTypes) => {
     abilities: DataTypes.JSON,
     arts: DataTypes.JSON,
     spells: DataTypes.JSON,
-    equipment: DataTypes.JSON
+    equipment: DataTypes.JSON,
+
+    // New fields for characteristics
+    strength: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    stamina: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    dexterity: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    quickness: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    intelligence: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    presence: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    communication: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    perception: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false
+    },
+    useCunning: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
+    },
+    availableImprovementPoints: {
+      type: DataTypes.INTEGER,
+      defaultValue: 7,
+      allowNull: false
+    },
+    totalImprovementPoints: {
+      type: DataTypes.INTEGER,
+      defaultValue: 7,
+      allowNull: false
+    },
+    characteristicModifiers: {
+      type: DataTypes.JSON,
+      defaultValue: {},
+      allowNull: false
+    }
   }, {
     sequelize,
     modelName: 'Character',

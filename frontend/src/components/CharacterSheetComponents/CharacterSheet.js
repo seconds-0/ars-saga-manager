@@ -28,13 +28,29 @@ function CharacterSheet() {
 
   const handleSave = async (updatedData) => {
     try {
+      console.log('Saving character data:', updatedData);
       const response = await api.put(`/characters/${id}`, updatedData);
+      console.log('Server response:', response.data);
       setCharacter(response.data);
       setToastMessage('Character updated successfully!');
       setToastType('success');
     } catch (error) {
       console.error('Error updating character:', error);
-      setToastMessage('Failed to update character. Please try again.');
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+        setToastMessage(`Failed to update character: ${error.response.data.message || 'Unknown error'}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Error request:', error.request);
+        setToastMessage('No response received from server. Please try again.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message);
+        setToastMessage('An error occurred while updating the character. Please try again.');
+      }
       setToastType('error');
     }
   };

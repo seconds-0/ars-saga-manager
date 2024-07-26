@@ -2,6 +2,7 @@ const express = require('express');
 const { Character } = require('../models');
 const { authenticateToken } = require('./auth');
 const { v4: uuidv4 } = require('uuid');
+const { validateCharacteristics, calculateDerivedCharacteristics } = require('../utils/characterUtils');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.use(authenticateToken);
 // Create a new character
 router.post('/', async (req, res) => {
   try {
-    const { characterName, characterType } = req.body;
+    const { characterName, characterType, characteristics = {}, useCunning = false } = req.body;
     console.log('Received request body:', req.body);
     console.log('User ID:', req.user.id);
 
@@ -21,15 +22,35 @@ router.post('/', async (req, res) => {
     if (!characterType || !['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'].includes(characterType)) {
       return res.status(400).json({ message: 'Valid character type is required' });
     }
+
+    // Ensure all characteristics are present, defaulting to 0 if not provided
+    const defaultCharacteristics = {
+      strength: 0, stamina: 0, dexterity: 0, quickness: 0,
+      intelligence: 0, presence: 0, communication: 0, perception: 0
+    };
+    const fullCharacteristics = { ...defaultCharacteristics, ...characteristics };
+
+    // Validate characteristics
+    const validationError = validateCharacteristics(fullCharacteristics);
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
+
     const character = await Character.create({ 
       characterName, 
       userId: req.user.id,
       characterType,
       entityType: 'character',
-      entityId: uuidv4()
+      entityId: uuidv4(),
+      ...fullCharacteristics,
+      useCunning,
+      totalImprovementPoints: 7 // Default value
     });
     console.log('Character created:', character.toJSON());
-    res.status(201).json(character);
+
+    const derivedCharacteristics = calculateDerivedCharacteristics(character);
+
+    res.status(201).json({ ...character.toJSON(), derivedCharacteristics });
   } catch (error) {
     console.error('Error creating character:', error);
     console.error('Error stack:', error.stack);
@@ -43,13 +64,11 @@ router.get('/', async (req, res) => {
     console.log('Fetching characters for user:', req.user.id);
     console.time('characterFetch');
     
-    // Add error handling for req.user
     if (!req.user || !req.user.id) {
       console.error('User not authenticated or user ID missing');
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
-    // Check if Character model is properly imported
     if (!Character || typeof Character.findAll !== 'function') {
       console.error('Character model is not properly defined');
       return res.status(500).json({ message: 'Server configuration error' });
@@ -99,20 +118,30 @@ router.get('/:id', async (req, res) => {
 // Update a character
 router.put('/:id', async (req, res) => {
   try {
-    const { name, characterType } = req.body;
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ message: 'Character name is required' });
+    console.log('Received update request for character:', req.params.id);
+    console.log('Request body:', req.body);
+
+    const { useCunning, totalImprovementPoints, ...characteristics } = req.body;
+    
+    // Validate characteristics
+    const validationError = validateCharacteristics(characteristics);
+    if (validationError) {
+      console.log('Validation error:', validationError);
+      return res.status(400).json({ message: validationError });
     }
-    if (!characterType || !['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'].includes(characterType)) {
-      return res.status(400).json({ message: 'Valid character type is required' });
-    }
-    const [updated] = await Character.update({ name, characterType }, { 
-      where: { id: req.params.id, userId: req.user.id } 
-    });
+
+    const [updated] = await Character.update(
+      { ...characteristics, useCunning, totalImprovementPoints },
+      { where: { id: req.params.id, userId: req.user.id } }
+    );
+
     if (updated) {
       const updatedCharacter = await Character.findOne({ where: { id: req.params.id } });
-      return res.json(updatedCharacter);
+      const derivedCharacteristics = calculateDerivedCharacteristics(updatedCharacter);
+      console.log('Character updated successfully:', updatedCharacter.toJSON());
+      return res.json({ ...updatedCharacter.toJSON(), derivedCharacteristics });
     }
+    console.log('Character not found:', req.params.id);
     return res.status(404).json({ message: 'Character not found' });
   } catch (error) {
     console.error('Error updating character:', error);
