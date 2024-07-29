@@ -37,13 +37,13 @@ const config = {
     dialect: 'postgres'
   },
   development: {
-    username: process.env.DB_DEV_USERNAME,
-    password: process.env.DB_DEV_PASSWORD,
+    username: process.env.DB_SUPERUSER_USERNAME,
+    password: process.env.DB_SUPERUSER_PASSWORD,
     database: process.env.DB_NAME,
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'postgres',
-    logging: console.log // Add this line
+    logging: console.log
   },
   test: {
     username: process.env.DB_APP_USERNAME,

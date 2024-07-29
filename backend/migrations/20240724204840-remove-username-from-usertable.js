@@ -2,13 +2,15 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('Users', 'username');
+    // Check if the column exists before trying to remove it
+    const tableInfo = await queryInterface.describeTable('Users');
+    if (tableInfo.username) {
+      await queryInterface.removeColumn('Users', 'username');
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('Users', 'username', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    // If you need to revert this migration, you can add the column back
+    // await queryInterface.addColumn('Users', 'username', Sequelize.STRING);
   }
 };
