@@ -3,7 +3,6 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    // Check if columns exist before removing them
     const tableInfo = await queryInterface.describeTable('Characters');
 
     if (tableInfo.name) {
@@ -18,7 +17,6 @@ module.exports = {
     if (tableInfo.chracteristicsandabilities) {
       await queryInterface.removeColumn('Characters', 'chracteristicsandabilities');
     }
-    // Add new columns if they don't exist
     if (!tableInfo.entityId) {
       await queryInterface.addColumn('Characters', 'entityId', {
         type: Sequelize.UUID,
@@ -27,14 +25,12 @@ module.exports = {
         unique: true
       });
     }
-
     if (!tableInfo.characterName) {
       await queryInterface.addColumn('Characters', 'characterName', {
         type: Sequelize.STRING,
         allowNull: false
       });
     }
-
     if (!tableInfo.age) {
       await queryInterface.addColumn('Characters', 'age', {
         type: Sequelize.INTEGER,
@@ -42,57 +38,48 @@ module.exports = {
         allowNull: true
       });
     }
-
     if (!tableInfo.description) {
       await queryInterface.addColumn('Characters', 'description', {
         type: Sequelize.TEXT,
         allowNull: true
       });
     }
-
     if (!tableInfo.house) {
       await queryInterface.addColumn('Characters', 'house', {
         type: Sequelize.ENUM('Bonisagus', 'Tremere', 'Guernicus', 'Mercere', 'Criamon', 'Ex Miscellenia', 'Verditius', 'Bjorner', 'Merenita', 'Tytalus', 'Jerbiton', 'Flambeau'),
         allowNull: true
       });
     }
-
     if (!tableInfo.virtues) {
       await queryInterface.addColumn('Characters', 'virtues', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.flaws) {
       await queryInterface.addColumn('Characters', 'flaws', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.characteristics) {
       await queryInterface.addColumn('Characters', 'characteristics', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.abilities) {
       await queryInterface.addColumn('Characters', 'abilities', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.arts) {
       await queryInterface.addColumn('Characters', 'arts', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.spells) {
       await queryInterface.addColumn('Characters', 'spells', {
         type: Sequelize.JSON
       });
     }
-
     if (!tableInfo.equipment) {
       await queryInterface.addColumn('Characters', 'equipment', {
         type: Sequelize.JSON
@@ -111,21 +98,44 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-    // Remove new columns
-    await queryInterface.removeColumn('Characters', 'entityId');
-    await queryInterface.removeColumn('Characters', 'characterName');
-    await queryInterface.removeColumn('Characters', 'age');
-    await queryInterface.removeColumn('Characters', 'description');
-    await queryInterface.removeColumn('Characters', 'house');
-    await queryInterface.removeColumn('Characters', 'virtues');
-    await queryInterface.removeColumn('Characters', 'flaws');
-    await queryInterface.removeColumn('Characters', 'characteristics');
-    await queryInterface.removeColumn('Characters', 'abilities');
-    await queryInterface.removeColumn('Characters', 'arts');
-    await queryInterface.removeColumn('Characters', 'spells');
-    await queryInterface.removeColumn('Characters', 'equipment');
+    const tableInfo = await queryInterface.describeTable('Characters');
 
-
+    if (tableInfo.entityId) {
+      await queryInterface.removeColumn('Characters', 'entityId');
+    }
+    if (tableInfo.characterName) {
+      await queryInterface.removeColumn('Characters', 'characterName');
+    }
+    if (tableInfo.age) {
+      await queryInterface.removeColumn('Characters', 'age');
+    }
+    if (tableInfo.description) {
+      await queryInterface.removeColumn('Characters', 'description');
+    }
+    if (tableInfo.house) {
+      await queryInterface.removeColumn('Characters', 'house');
+    }
+    if (tableInfo.virtues) {
+      await queryInterface.removeColumn('Characters', 'virtues');
+    }
+    if (tableInfo.flaws) {
+      await queryInterface.removeColumn('Characters', 'flaws');
+    }
+    if (tableInfo.characteristics) {
+      await queryInterface.removeColumn('Characters', 'characteristics');
+    }
+    if (tableInfo.abilities) {
+      await queryInterface.removeColumn('Characters', 'abilities');
+    }
+    if (tableInfo.arts) {
+      await queryInterface.removeColumn('Characters', 'arts');
+    }
+    if (tableInfo.spells) {
+      await queryInterface.removeColumn('Characters', 'spells');
+    }
+    if (tableInfo.equipment) {
+      await queryInterface.removeColumn('Characters', 'equipment');
+    }
 
     // Remove the unique index for entityId
     await queryInterface.removeIndex('Characters', 'characters_entity_id_unique');
