@@ -94,7 +94,7 @@ function RegisterForm({ onRegisterSuccess }) {
         <div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-deep-red hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
           >
             Register
           </button>
@@ -105,6 +105,7 @@ function RegisterForm({ onRegisterSuccess }) {
           message={toastMessage}
           type={toastType}
           onClose={() => setToastMessage('')}
+          className="text-deep-red"
         />
       )}
     </div>

@@ -2,6 +2,8 @@ const calculateDerivedCharacteristics = (character) => {
     // For now, we'll just return the base characteristics
     // In the future, this function will incorporate modifiers and other factors
     return {
+      size: 0, //default size
+      confidence: 1, //default confidence
       strength: character.strength,
       stamina: character.stamina,
       dexterity: character.dexterity,

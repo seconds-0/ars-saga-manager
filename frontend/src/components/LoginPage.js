@@ -101,7 +101,7 @@ function LoginPage() {
               <div className="mt-2 text-center">
                 <a
                   href="/forgot-password"
-                  className="text-sm text-indigo-600 hover:text-indigo-500"
+                  className="text-sm text-deep-red hover:text-red-900"
                 >
                   Forgot your password?
                 </a>
@@ -117,7 +117,7 @@ function LoginPage() {
           <div className="mt-6">
             <button
               onClick={() => setShowRegister(!showRegister)}
-              className="w-full text-center text-sm text-indigo-600 hover:text-indigo-500"
+              className="w-full text-center text-sm text-deep-red hover:text-red-900"
             >
               {showRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
             </button>
