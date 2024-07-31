@@ -14,11 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     category: DataTypes.STRING,
     realm: DataTypes.STRING,
     description: DataTypes.TEXT,
-    source: DataTypes.TEXT,
-    allowed_sizes: {
-      type: DataTypes.JSONB,
-      allowNull: false
-    }
+    source: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'ReferenceVirtueFlaw',

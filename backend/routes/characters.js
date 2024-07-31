@@ -199,10 +199,9 @@ router.get('/:id/eligible-virtues-flaws', async (req, res) => {
     const allVirtuesFlaws = await ReferenceVirtueFlaw.findAll({
       attributes: { exclude: ['createdAt', 'updatedAt'] }
     });
-    console.log('All virtues and flaws:', allVirtuesFlaws);
 
     if (!ruleEngine || typeof ruleEngine.isVirtueFlawEligible !== 'function') {
-      console.error('ruleEngine or isVirtueFlawEligible function is not properly defined');
+      logger.error('ruleEngine or isVirtueFlawEligible function is not properly defined');
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
@@ -210,17 +209,15 @@ router.get('/:id/eligible-virtues-flaws', async (req, res) => {
       try {
         return ruleEngine.isVirtueFlawEligible(character, vf);
       } catch (error) {
-        console.error('Error in isVirtueFlawEligible for virtue/flaw:', vf.id, error);
+        logger.error('Error in isVirtueFlawEligible for virtue/flaw:', vf.id, error);
         return false;
       }
     });
 
-    console.log('Eligible virtues and flaws:', eligibleVirtuesFlaws);
-
     res.json(eligibleVirtuesFlaws);
   } catch (error) {
-    console.error('Error fetching eligible virtues and flaws:', error);
-    res.status(500).json({ message: 'Error fetching eligible virtues and flaws', error: error.message, stack: error.stack });
+    logger.error('Error fetching eligible virtues and flaws:', error);
+    res.status(500).json({ message: 'Error fetching eligible virtues and flaws', error: error.message });
   }
 });
 

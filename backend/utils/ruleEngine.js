@@ -23,14 +23,25 @@ class RuleEngine {
   }
 
   isVirtueFlawEligible(character, virtueFlaw) {
+    if (!virtueFlaw || typeof virtueFlaw !== 'object') {
+      logger.error('Invalid virtueFlaw object:', virtueFlaw);
+      return false;
+    }
+
     const applicableRules = [
       virtueFlaw.type,
       `${virtueFlaw.size}${virtueFlaw.type}`,
-      ...(virtueFlaw.prerequisites || []),
-      ...(virtueFlaw.incompatibilities || []).map(inc => `not${inc}`)
+      ...(Array.isArray(virtueFlaw.prerequisites) ? virtueFlaw.prerequisites : []),
+      ...(Array.isArray(virtueFlaw.incompatibilities) ? virtueFlaw.incompatibilities.map(inc => `not${inc}`) : [])
     ];
 
-    return applicableRules.every(rule => this.evaluate(rule, character, virtueFlaw));
+    return applicableRules.every(rule => {
+      if (typeof rule !== 'string') {
+        logger.warn(`Invalid rule: ${rule}`);
+        return true; // Skip invalid rules
+      }
+      return this.evaluate(rule, character, virtueFlaw);
+    });
   }
 }
 
