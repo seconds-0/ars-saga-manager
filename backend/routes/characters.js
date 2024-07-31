@@ -1,8 +1,27 @@
 const express = require('express');
-const { Character } = require('../models');
-const { authenticateToken } = require('./auth');
+const { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
+const ruleEngine = require('../utils/ruleEngine');
+const logger = require('../utils/logger'); // Ensure you have a logger utility
+const { authenticateToken } = require('../routes/auth');
 const { v4: uuidv4 } = require('uuid');
-const { validateCharacteristics, calculateDerivedCharacteristics } = require('../utils/characterUtils');
+
+const validateCharacteristics = (characteristics) => {
+  const validCharacteristics = ['strength', 'stamina', 'dexterity', 'quickness', 'intelligence', 'presence', 'communication', 'perception'];
+  for (let char of validCharacteristics) {
+    if (typeof characteristics[char] !== 'number' || characteristics[char] < -3 || characteristics[char] > 3) {
+      return `Invalid value for ${char}. Must be a number between -3 and 3.`;
+    }
+  }
+  return null;
+};
+
+const calculateDerivedCharacteristics = (character) => {
+  return {
+    size: 0, // Default size
+    confidence: 1, // Default confidence
+    // Add more derived characteristics as needed
+  };
+};
 
 const router = express.Router();
 
@@ -33,6 +52,7 @@ router.post('/', async (req, res) => {
     // Validate characteristics
     const validationError = validateCharacteristics(fullCharacteristics);
     if (validationError) {
+      console.log('Validation error:', validationError);
       return res.status(400).json({ message: validationError });
     }
 
@@ -42,7 +62,7 @@ router.post('/', async (req, res) => {
       characterType,
       entityType: 'character',
       entityId: uuidv4(),
-      ...fullCharacteristics,
+      ...characteristics,
       useCunning,
       totalImprovementPoints: 7 // Default value
     });
@@ -76,6 +96,9 @@ router.get('/', async (req, res) => {
 
     const characters = await Character.findAll({ 
       where: { userId: req.user.id },
+      attributes: { 
+        include: ['id', 'characterName', 'virtueFlawPoints', 'maxVirtueFlawPoints']
+      }
     });
     
     console.timeEnd('characterFetch');
@@ -162,6 +185,143 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting character:', error);
     res.status(500).json({ message: 'Error deleting character', error: error.message });
+  }
+});
+
+// Get eligible virtues and flaws for a character
+router.get('/:id/eligible-virtues-flaws', async (req, res) => {
+  try {
+    const character = await Character.findByPk(req.params.id);
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found' });
+    }
+
+    const allVirtuesFlaws = await ReferenceVirtueFlaw.findAll({
+      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    });
+    console.log('All virtues and flaws:', allVirtuesFlaws);
+
+    if (!ruleEngine || typeof ruleEngine.isVirtueFlawEligible !== 'function') {
+      console.error('ruleEngine or isVirtueFlawEligible function is not properly defined');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
+    const eligibleVirtuesFlaws = allVirtuesFlaws.filter(vf => {
+      try {
+        return ruleEngine.isVirtueFlawEligible(character, vf);
+      } catch (error) {
+        console.error('Error in isVirtueFlawEligible for virtue/flaw:', vf.id, error);
+        return false;
+      }
+    });
+
+    console.log('Eligible virtues and flaws:', eligibleVirtuesFlaws);
+
+    res.json(eligibleVirtuesFlaws);
+  } catch (error) {
+    console.error('Error fetching eligible virtues and flaws:', error);
+    res.status(500).json({ message: 'Error fetching eligible virtues and flaws', error: error.message, stack: error.stack });
+  }
+});
+
+// Get virtues and flaws for a specific character
+router.get('/:id/virtues-flaws', async (req, res) => {
+  try {
+    const character = await Character.findByPk(req.params.id, {
+      include: [{
+        model: CharacterVirtueFlaw,
+        as: 'CharacterVirtueFlaws',
+        include: [{
+          model: ReferenceVirtueFlaw,
+          as: 'referenceVirtueFlaw'
+        }]
+      }]
+    });
+
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found' });
+    }
+
+    const virtuesFlaws = character.CharacterVirtueFlaws.map(cvf => ({
+      id: cvf.id,
+      name: cvf.referenceVirtueFlaw.name,
+      description: cvf.referenceVirtueFlaw.description,
+      cost: cvf.cost,
+      selections: cvf.selections
+    }));
+
+    res.json(virtuesFlaws);
+  } catch (error) {
+    console.error('Error fetching virtues and flaws:', error);
+    res.status(500).json({ message: 'Error fetching virtues and flaws', error: error.message });
+  }
+});
+
+// Add a virtue or flaw to a character
+router.post('/:id/virtues-flaws', async (req, res) => {
+  try {
+    const { referenceVirtueFlawId, cost, selections } = req.body;
+    const character = await Character.findByPk(req.params.id);
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found' });
+    }
+
+    const virtueFlaw = await ReferenceVirtueFlaw.findByPk(referenceVirtueFlawId);
+    if (!virtueFlaw) {
+      return res.status(404).json({ message: 'Virtue or Flaw not found' });
+    }
+
+    if (!ruleEngine.isVirtueFlawEligible(character, virtueFlaw)) {
+      return res.status(400).json({ message: 'Character is not eligible for this Virtue or Flaw' });
+    }
+
+    const newVirtueFlaw = await CharacterVirtueFlaw.create({
+      characterId: character.id,
+      referenceVirtueFlawId,
+      cost,
+      selections
+    });
+
+    // Update character's virtue/flaw points
+    await character.update({
+      virtueFlawPoints: character.virtueFlawPoints + cost
+    });
+
+    res.status(201).json(newVirtueFlaw);
+  } catch (error) {
+    logger.error('Error adding virtue or flaw:', error);
+    res.status(500).json({ message: 'Error adding virtue or flaw' });
+  }
+});
+
+// Remove a virtue or flaw from a character
+router.delete('/:characterId/virtues-flaws/:virtueFlawId', async (req, res) => {
+  try {
+    const { characterId, virtueFlawId } = req.params;
+    const characterVirtueFlaw = await CharacterVirtueFlaw.findOne({
+      where: { id: virtueFlawId, characterId }
+    });
+
+    if (!characterVirtueFlaw) {
+      return res.status(404).json({ message: 'Virtue or Flaw not found for this character' });
+    }
+
+    const character = await Character.findByPk(characterId);
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found' });
+    }
+
+    // Update character's virtue/flaw points
+    await character.update({
+      virtueFlawPoints: character.virtueFlawPoints - characterVirtueFlaw.cost
+    });
+
+    await characterVirtueFlaw.destroy();
+
+    res.status(204).send();
+  } catch (error) {
+    logger.error('Error removing virtue or flaw:', error);
+    res.status(500).json({ message: 'Error removing virtue or flaw' });
   }
 });
 

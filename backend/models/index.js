@@ -27,15 +27,24 @@ fs
     );
   })
   .forEach(file => {
+    console.log(`Attempting to load model from file: ${file}`);
+    if (file === 'ReferenceVirtueFlaw.js') {
+      console.log('Attempting to load model from file: ReferenceVirtueFlaw.js');
+    }
     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
     console.log(`Loaded model: ${model.name}`);
   });
 
+console.log('Models before association:', Object.keys(db));
+
 Object.keys(db).forEach(modelName => {
+  console.log(`Checking associations for model: ${modelName}`);
   if (db[modelName].associate) {
     db[modelName].associate(db);
     console.log(`Associated model: ${modelName}`);
+  } else {
+    console.log(`No associations for model: ${modelName}`);
   }
 });
 

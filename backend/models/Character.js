@@ -5,6 +5,12 @@ module.exports = (sequelize, DataTypes) => {
   class Character extends Model {
     static associate(models) {
       Character.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Character.hasMany(models.CharacterVirtueFlaw, { foreignKey: 'characterId', as: 'CharacterVirtueFlaws' });
+    }
+
+    // Calculate remaining virtue/flaw points
+    getRemainingVirtueFlawPoints() {
+      return this.maxVirtueFlawPoints - this.virtueFlawPoints;
     }
   }
   Character.init({
@@ -48,8 +54,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('Bonisagus', 'Tremere', 'Guernicus', 'Mercere', 'Criamon', 'Ex Miscellenia', 'Verditius', 'Bjorner', 'Merenita', 'Tytalus', 'Jerbiton', 'Flambeau'),
       allowNull: true
     },
-    virtues: DataTypes.JSON,
-    flaws: DataTypes.JSON,
     abilities: DataTypes.JSON,
     arts: DataTypes.JSON,
     spells: DataTypes.JSON,
@@ -115,6 +119,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       defaultValue: {},
       allowNull: false
+    },
+
+    // New fields for virtue/flaw point tracking
+    virtueFlawPoints: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    maxVirtueFlawPoints: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     }
   }, {
     sequelize,
