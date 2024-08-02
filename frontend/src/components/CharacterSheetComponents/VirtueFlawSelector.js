@@ -1,109 +1,79 @@
-import React, { useState, useMemo } from 'react';
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from 'react-query';
+import api from '../../api/axios';
+import { debounce } from 'lodash';
 
-function VirtueFlawSelector({ eligibleVirtuesFlaws, onAdd, remainingPoints }) {
-  const [selectedVirtueFlaw, setSelectedVirtueFlaw] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+function VirtueFlawSelector({ onAdd, remainingPoints }) {
+  const [search, setSearch] = useState('');
+  const [filteredVirtuesFlaws, setFilteredVirtuesFlaws] = useState([]);
 
-  const categories = useMemo(() => {
-    const cats = new Set(eligibleVirtuesFlaws.map(vf => vf.category));
-    return ['All', ...Array.from(cats)];
-  }, [eligibleVirtuesFlaws]);
-
-  const filteredVirtuesFlaws = useMemo(() => {
-    return eligibleVirtuesFlaws.filter(vf => 
-      (selectedCategory === 'All' || vf.category === selectedCategory) &&
-      vf.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [eligibleVirtuesFlaws, searchTerm, selectedCategory]);
-
-  const handleSelect = (event) => {
-    const selected = eligibleVirtuesFlaws.find(vf => vf.id === parseInt(event.target.value));
-    setSelectedVirtueFlaw(selected);
+  const fetchReferenceVirtuesFlaws = async () => {
+    console.log('Fetching reference virtues and flaws...'); // Debug log
+    const response = await api.get('/reference-virtues-flaws');
+    console.log('API response:', response.data); // Debug log
+    return response.data;
   };
 
-  const handleAdd = () => {
-    if (selectedVirtueFlaw) {
-      const cost = selectedVirtueFlaw.size === 'Major' ? 3 : 1;
-      if (cost > remainingPoints) {
-        alert('Not enough virtue/flaw points remaining!');
-        return;
-      }
-      if (window.confirm(`Are you sure you want to add ${selectedVirtueFlaw.name}? This will cost ${cost} point(s).`)) {
-        onAdd(selectedVirtueFlaw);
-        setSelectedVirtueFlaw(null);
-      }
+  const { data: allVirtuesFlaws, isLoading, error } = useQuery(
+    'referenceVirtuesFlaws',
+    fetchReferenceVirtuesFlaws,
+    {
+      staleTime: Infinity,
+      onSuccess: (data) => console.log('Query successful, data:', data), // Debug log
+      onError: (err) => console.error('Query error:', err), // Debug log
     }
-  };
+  );
 
-  if (eligibleVirtuesFlaws.length === 0) {
-    return <div>No eligible virtues or flaws available.</div>;
-  }
+  useEffect(() => {
+    console.log('Effect triggered, allVirtuesFlaws:', allVirtuesFlaws); // Debug log
+    if (allVirtuesFlaws) {
+      const filtered = allVirtuesFlaws
+        .filter(vf => vf.name.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      setFilteredVirtuesFlaws(filtered);
+      console.log('Filtered virtues and flaws:', filtered); // Debug log
+    }
+  }, [search, allVirtuesFlaws]);
+
+  const debouncedSearch = debounce((value) => {
+    setSearch(value);
+  }, 300);
+
+  console.log('Render - isLoading:', isLoading, 'error:', error, 'filteredVirtuesFlaws:', filteredVirtuesFlaws); // Debug log
+
+  if (isLoading) return <div>Loading virtues and flaws...</div>;
+  if (error) return <div>Error loading virtues and flaws: {error.message}</div>;
 
   return (
-    <div className="mt-4">
-      <h3 className="text-lg font-semibold mb-2">Add Virtue or Flaw</h3>
-      <div className="mb-2">
-        <input
-          type="text"
-          placeholder="Search virtues/flaws..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full p-2 border rounded"
-        />
+    <div>
+      <input
+        type="text"
+        placeholder="Search virtues and flaws"
+        onChange={(e) => debouncedSearch(e.target.value)}
+        className="w-full p-2 mb-4 border rounded"
+      />
+      <div className="border p-4 h-64 overflow-y-auto">
+        {filteredVirtuesFlaws.length === 0 ? (
+          <div>No virtues or flaws found.</div>
+        ) : (
+          <ul className="space-y-2">
+            {filteredVirtuesFlaws.map((vf) => (
+              <li key={vf.id} className="flex justify-between items-center">
+                <span>{vf.name} ({vf.size})</span>
+                <button
+                  onClick={() => onAdd(vf.id)}
+                  disabled={vf.type === 'Virtue' && vf.cost > remainingPoints}
+                  className="bg-blue-500 text-white px-2 py-1 rounded disabled:bg-gray-300"
+                >
+                  Add
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <div className="mb-2">
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="block w-full p-2 border rounded"
-        >
-          {categories.map(category => (
-            <option key={category} value={category}>{category}</option>
-          ))}
-        </select>
-      </div>
-      <select 
-        onChange={handleSelect}
-        className="block w-full p-2 mb-2 border rounded"
-      >
-        <option value="">Select a Virtue or Flaw</option>
-        {filteredVirtuesFlaws.map(vf => (
-          <option key={vf.id} value={vf.id}>{vf.name} ({vf.size}) - {vf.cost} point(s)</option>
-        ))}
-      </select>
-      {selectedVirtueFlaw && (
-        <div className="mb-2">
-          <p><strong>Description:</strong> {selectedVirtueFlaw.description}</p>
-          <p><strong>Cost:</strong> {selectedVirtueFlaw.size === 'Major' ? 3 : 1} point(s)</p>
-        </div>
-      )}
-      <button 
-        onClick={handleAdd}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        disabled={!selectedVirtueFlaw}
-      >
-        Add Selected Virtue/Flaw
-      </button>
-      <p className="mt-2">Remaining points: {remainingPoints}</p>
     </div>
   );
 }
-
-VirtueFlawSelector.propTypes = {
-  eligibleVirtuesFlaws: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      size: PropTypes.string.isRequired,
-      description: PropTypes.string.isRequired,
-      category: PropTypes.string.isRequired,
-      cost: PropTypes.number.isRequired,
-    })
-  ).isRequired,
-  onAdd: PropTypes.func.isRequired,
-  remainingPoints: PropTypes.number.isRequired,
-};
 
 export default VirtueFlawSelector;

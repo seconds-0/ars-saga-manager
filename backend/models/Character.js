@@ -12,6 +12,39 @@ module.exports = (sequelize, DataTypes) => {
     getRemainingVirtueFlawPoints() {
       return this.maxVirtueFlawPoints - this.virtueFlawPoints;
     }
+
+    async addVirtueFlaw(virtueFlawId, cost, selections) {
+      const transaction = await sequelize.transaction();
+      try {
+        await this.increment('virtueFlawPoints', { by: cost, transaction });
+        const newVirtueFlaw = await this.createCharacterVirtueFlaw({
+          referenceVirtueFlawId: virtueFlawId,
+          cost,
+          selections
+        }, { transaction });
+        await transaction.commit();
+        return newVirtueFlaw;
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
+    }
+
+    async removeVirtueFlaw(virtueFlawId) {
+      const transaction = await sequelize.transaction();
+      try {
+        const virtueFlaw = await this.getCharacterVirtueFlaws({ where: { id: virtueFlawId }, transaction });
+        if (!virtueFlaw) {
+          throw new Error('Virtue/Flaw not found');
+        }
+        await this.decrement('virtueFlawPoints', { by: virtueFlaw.cost, transaction });
+        await virtueFlaw.destroy({ transaction });
+        await transaction.commit();
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
+    }
   }
   Character.init({
     id: {
@@ -124,15 +157,30 @@ module.exports = (sequelize, DataTypes) => {
     // New fields for virtue/flaw point tracking
     virtueFlawPoints: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0
+      }
     },
     maxVirtueFlawPoints: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: false,
+      defaultValue: 10,
+      validate: {
+        min: 0
+      }
     }
   }, {
     sequelize,
     modelName: 'Character',
+    hooks: {
+      beforeCreate: (character) => {
+        if (character.characterType === 'Grog') {
+          character.maxVirtueFlawPoints = 3;
+        }
+      }
+    }
   });
   return Character;
 };

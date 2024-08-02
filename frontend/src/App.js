@@ -11,6 +11,11 @@ import CharacterListPage from './components/CharacterListPage';
 import CharacterSheet from './components/CharacterSheetComponents/CharacterSheet';
 import { useAuth } from './useAuth';
 import { Helmet } from 'react-helmet';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
+import { AuthProvider } from './useAuth';
+
+const queryClient = new QueryClient();
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
@@ -38,9 +43,14 @@ function App() {
       <Helmet>
         <title>Ars Saga Manager</title>
       </Helmet>
-      <Router>
-        <AppContent />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AuthProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </>
   );
 }
