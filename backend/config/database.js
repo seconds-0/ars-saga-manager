@@ -1,31 +1,51 @@
 const path = require('path');
 const fs = require('fs');
 
-const envPath = path.resolve(__dirname, '../.env');
-console.log('Attempting to load .env from:', envPath);
-console.log('.env file exists:', fs.existsSync(envPath));
+// Array of possible .env file locations
+const possibleEnvPaths = [
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(process.cwd(), '.env'),
+];
 
-const result = require('dotenv').config({ path: envPath });
-if (result.error) {
-  console.error('Error loading .env file:', result.error);
+let envPath;
+for (const possiblePath of possibleEnvPaths) {
+  if (fs.existsSync(possiblePath)) {
+    envPath = possiblePath;
+    break;
+  }
+}
+
+console.log('Full path to .env:', path.resolve(__dirname, '../.env'));
+console.log('File exists:', fs.existsSync(path.resolve(__dirname, '../.env')));
+
+if (envPath) {
+  console.log('.env file found at:', envPath);
+  const result = require('dotenv').config({ path: envPath });
+  if (result.error) {
+    console.error('Error loading .env file:', result.error);
+  } else {
+    console.log('.env file loaded successfully');
+  }
 } else {
-  console.log('.env file loaded successfully');
+  console.error('No .env file found in any of the following locations:');
+  possibleEnvPaths.forEach(path => console.log(' -', path));
 }
 
 console.log('Current working directory:', process.cwd());
 console.log('__dirname:', __dirname);
-console.log('Full process.env:', process.env);
 
-console.log('Environment variables:');
-console.log('DB_SUPERUSER_USERNAME:', process.env.DB_SUPERUSER_USERNAME);
-console.log('DB_SUPERUSER_PASSWORD:', process.env.DB_SUPERUSER_PASSWORD);
-console.log('DB_DEV_USERNAME:', process.env.DB_DEV_USERNAME);
-console.log('DB_DEV_PASSWORD:', process.env.DB_DEV_PASSWORD);
-console.log('DB_APP_USERNAME:', process.env.DB_APP_USERNAME);
-console.log('DB_APP_PASSWORD:', process.env.DB_APP_PASSWORD);
-console.log('DB_NAME:', process.env.DB_NAME);
-console.log('DB_HOST:', process.env.DB_HOST);
-console.log('DB_PORT:', process.env.DB_PORT);
+// Log only relevant environment variables
+const relevantEnvVars = [
+  'DB_SUPERUSER_USERNAME', 'DB_SUPERUSER_PASSWORD', 'DB_DEV_USERNAME', 
+  'DB_DEV_PASSWORD', 'DB_APP_USERNAME', 'DB_APP_PASSWORD', 
+  'DB_NAME', 'DB_HOST', 'DB_PORT'
+];
+
+console.log('Relevant environment variables:');
+relevantEnvVars.forEach(varName => {
+  console.log(`${varName}:`, process.env[varName] ? '[SET]' : '[NOT SET]');
+});
 
 const config = {
   superuser: {
