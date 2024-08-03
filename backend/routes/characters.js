@@ -1,9 +1,13 @@
 const express = require('express');
 const { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
 const ruleEngine = require('../utils/ruleEngine');
-const logger = require('../utils/logger'); // Ensure you have a logger utility
+const logger = require('../utils/logger');
 const { authenticateToken } = require('../routes/auth');
 const { v4: uuidv4 } = require('uuid');
+const { validateVirtueFlaw, validateCharacter } = require('../middleware/validation');
+const { AppError, handleError } = require('../utils/errorHandler');
+const sanitizeInputs = require('../middleware/sanitizer');
+const { Op } = require('sequelize');
 
 const validateCharacteristics = (characteristics) => {
   const validCharacteristics = ['strength', 'stamina', 'dexterity', 'quickness', 'intelligence', 'presence', 'communication', 'perception'];
@@ -23,13 +27,24 @@ const calculateDerivedCharacteristics = (character) => {
   };
 };
 
+const checkCharacterOwnership = async (req, res, next) => {
+  const character = await Character.findOne({
+    where: { id: req.params.id, userId: req.user.id }
+  });
+  if (!character) {
+    return res.status(404).json({ message: 'Character not found or you do not have permission' });
+  }
+  req.character = character;
+  next();
+};
+
 const router = express.Router();
 
 // Use authenticateToken middleware for all character routes
 router.use(authenticateToken);
 
 // Create a new character
-router.post('/', async (req, res) => {
+router.post('/', validateCharacter, async (req, res) => {
   try {
     const { characterName, characterType, characteristics = {}, useCunning = false } = req.body;
     console.log('Received request body:', req.body);
@@ -119,18 +134,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a specific character by ID
-router.get('/:id', async (req, res) => {
+// Get a specific character
+router.get('/:id', authenticateToken, async (req, res) => {
   try {
     console.log('Fetching character with ID:', req.params.id);
     console.log('User ID:', req.user.id);
-    const character = await Character.findOne({ 
-      where: { id: req.params.id, userId: req.user.id } 
+
+    const character = await Character.findOne({
+      where: { id: req.params.id, userId: req.user.id }
     });
-    console.log('Character found:', character);
+
     if (!character) {
+      console.log('Character not found');
       return res.status(404).json({ message: 'Character not found' });
     }
+
+    console.log('Character found:', character.toJSON());
     res.json(character);
   } catch (error) {
     console.error('Error fetching character:', error);
@@ -139,7 +158,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update a character
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) => {
   try {
     console.log('Received update request for character:', req.params.id);
     console.log('Request body:', req.body);
@@ -189,35 +208,49 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Get eligible virtues and flaws for a character
-router.get('/:id/eligible-virtues-flaws', async (req, res) => {
+router.get('/:id/eligible-virtues-flaws', authenticateToken, checkCharacterOwnership, async (req, res, next) => {
   try {
-    const character = await Character.findByPk(req.params.id);
+    const { id } = req.params;
+    const { search = '', page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const character = await Character.findByPk(id, {
+      include: [{
+        model: CharacterVirtueFlaw,
+        as: 'CharacterVirtueFlaws',
+        include: [{
+          model: ReferenceVirtueFlaw,
+          as: 'referenceVirtueFlaw'
+        }]
+      }]
+    });
+
     if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
+      return next(new AppError('Character not found', 404));
     }
 
-    const allVirtuesFlaws = await ReferenceVirtueFlaw.findAll({
-      attributes: { exclude: ['createdAt', 'updatedAt'] }
+    const whereClause = search
+      ? { name: { [Op.iLike]: `%${search}%` } }
+      : {};
+
+    const { rows, count } = await ReferenceVirtueFlaw.findAndCountAll({
+      where: whereClause,
+      limit: parseInt(limit),
+      offset: parseInt(offset),
     });
 
-    if (!ruleEngine || typeof ruleEngine.isVirtueFlawEligible !== 'function') {
-      logger.error('ruleEngine or isVirtueFlawEligible function is not properly defined');
-      return res.status(500).json({ message: 'Server configuration error' });
-    }
+    const eligibleVirtuesFlaws = rows.filter(vf => 
+      ruleEngine.isVirtueFlawEligible(character, vf)
+    );
 
-    const eligibleVirtuesFlaws = allVirtuesFlaws.filter(vf => {
-      try {
-        return ruleEngine.isVirtueFlawEligible(character, vf);
-      } catch (error) {
-        logger.error('Error in isVirtueFlawEligible for virtue/flaw:', vf.id, error);
-        return false;
-      }
+    res.json({
+      virtuesFlaws: eligibleVirtuesFlaws,
+      totalCount: count,
+      hasNextPage: offset + eligibleVirtuesFlaws.length < count,
     });
-
-    res.json(eligibleVirtuesFlaws);
   } catch (error) {
-    logger.error('Error fetching eligible virtues and flaws:', error);
-    res.status(500).json({ message: 'Error fetching eligible virtues and flaws', error: error.message });
+    console.error('Error in eligible-virtues-flaws route:', error);
+    next(new AppError('Error fetching eligible virtues and flaws', 500));
   }
 });
 
@@ -255,10 +288,10 @@ router.get('/:id/virtues-flaws', async (req, res) => {
 });
 
 // Add a virtue or flaw to a character
-router.post('/:id/virtues-flaws', async (req, res) => {
+router.post('/:id/virtues-flaws', authenticateToken, checkCharacterOwnership, sanitizeInputs, validateVirtueFlaw, async (req, res) => {
   try {
     const { referenceVirtueFlawId, cost, selections } = req.body;
-    const character = await Character.findByPk(req.params.id);
+    const character = req.character;
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }
@@ -269,7 +302,7 @@ router.post('/:id/virtues-flaws', async (req, res) => {
     }
 
     if (!ruleEngine.isVirtueFlawEligible(character, virtueFlaw)) {
-      return res.status(400).json({ message: 'Character is not eligible for this Virtue or Flaw' });
+      throw new AppError('Character is not eligible for this Virtue or Flaw', 400);
     }
 
     const newVirtueFlaw = await CharacterVirtueFlaw.create({
@@ -284,15 +317,16 @@ router.post('/:id/virtues-flaws', async (req, res) => {
       virtueFlawPoints: character.virtueFlawPoints + cost
     });
 
+    logger.info(`Virtue/Flaw added to character ${req.params.id}`);
     res.status(201).json(newVirtueFlaw);
   } catch (error) {
-    logger.error('Error adding virtue or flaw:', error);
-    res.status(500).json({ message: 'Error adding virtue or flaw' });
+    logger.error(`Error adding Virtue/Flaw to character ${req.params.id}: ${error.message}`);
+    handleError(error, res);
   }
 });
 
 // Remove a virtue or flaw from a character
-router.delete('/:characterId/virtues-flaws/:virtueFlawId', async (req, res) => {
+router.delete('/:characterId/virtues-flaws/:virtueFlawId', checkCharacterOwnership, async (req, res) => {
   try {
     const { characterId, virtueFlawId } = req.params;
     const characterVirtueFlaw = await CharacterVirtueFlaw.findOne({
@@ -303,7 +337,7 @@ router.delete('/:characterId/virtues-flaws/:virtueFlawId', async (req, res) => {
       return res.status(404).json({ message: 'Virtue or Flaw not found for this character' });
     }
 
-    const character = await Character.findByPk(characterId);
+    const character = req.character;
     if (!character) {
       return res.status(404).json({ message: 'Character not found' });
     }

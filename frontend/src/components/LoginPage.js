@@ -1,127 +1,102 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import RegisterForm from './RegisterForm';
 import api from '../api/axios';
-import { useAuth } from '../useAuth'; 
-import Toast from './Toast';
-import parchmentBg from '../parchment-bg.jpg';
+import { useAuth } from '../useAuth';
+import { Card, TextInput, Button, Alert, Label } from 'flowbite-react';
+import useForm from '../hooks/useForm';
 
 function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { values, handleChange, handleSubmit } = useForm({ email: '', password: '' });
   const [showRegister, setShowRegister] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password
-      });
+      const response = await api.post('/auth/login', { email, password });
       console.log('Login successful', response.data);
-      
       localStorage.setItem('token', response.data.token);
-      
-      const { token } = response.data;
-      login(token);
-      
+      login(response.data.token);
       navigate('/home');
     } catch (error) {
       console.error('Login failed', error);
-      setToastMessage('Login failed: ' + (error.response?.data?.message || error.message));
+      setErrorMessage('Login failed: ' + (error.response?.data?.message || error.message));
     }
   };
 
+  const onSubmit = () => handleLogin(values.email, values.password);
+
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8" style={{backgroundImage: `url(${parchmentBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}}>
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h1 className="text-center text-5xl font-bold text-deep-red font-cinzel mb-6">
-          Ars Saga Manager
-        </h1>
-        <h2 className="mt-6 text-center text-3xl font-bold text-dark-brown font-palatino">
-          {showRegister ? 'Create an account' : 'Sign in to your account'}
-        </h2>
-      </div>
+    <div className="min-h-screen flex flex-col justify-center py-12 bg-parchment bg-cover bg-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <h1 className="text-center text-5xl font-bold text-primary-700 font-cinzel mb-6">
+            Ars Saga Manager
+          </h1>
+          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900 font-palatino">
+            {showRegister ? 'Create an account' : 'Sign in to your account'}
+          </h2>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white bg-opacity-90 py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {showRegister ? (
-            <RegisterForm onRegisterSuccess={() => setShowRegister(false)} />
-          ) : (
-            <div>
-              <form onSubmit={handleLogin} className="space-y-6">
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <Card>
+            {showRegister ? (
+              <RegisterForm onRegisterSuccess={() => setShowRegister(false)} />
+            ) : (
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-dark-brown font-palatino">
-                    Email address
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-deep-red focus:border-deep-red sm:text-sm"
-                    />
-                  </div>
+                  <Label htmlFor="email">Email address</Label>
+                  <TextInput
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="name@company.com"
+                    required={true}
+                    value={values.email}
+                    onChange={handleChange}
+                  />
                 </div>
-
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-dark-brown font-palatino">
-                    Password
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      autoComplete="current-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-deep-red focus:border-deep-red sm:text-sm"
-                    />
-                  </div>
+                  <Label htmlFor="password">Password</Label>
+                  <TextInput
+                    id="password"
+                    name="password"
+                    type="password"
+                    required={true}
+                    value={values.password}
+                    onChange={handleChange}
+                  />
                 </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-deep-red hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-red"
+                <Button type="submit">
+                  Sign in
+                </Button>
+                <div className="text-center">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-primary-600 hover:underline"
                   >
-                    Sign in
-                  </button>
+                    Forgot your password?
+                  </Link>
                 </div>
               </form>
-              <div className="mt-2 text-center">
-                <a
-                  href="/forgot-password"
-                  className="text-sm text-deep-red hover:text-red-900"
-                >
-                  Forgot your password?
-                </a>
-              </div>
-              {toastMessage && (
-                <Toast
-                  message={toastMessage}
-                  onClose={() => setToastMessage('')}
-                />
-              )}
+            )}
+            {errorMessage && (
+              <Alert color="failure" onDismiss={() => setErrorMessage('')} className="mt-4">
+                {errorMessage}
+              </Alert>
+            )}
+            <div className="mt-6">
+              <Button 
+                color="light"
+                onClick={() => setShowRegister(!showRegister)} 
+                fullSized={true}
+              >
+                {showRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
+              </Button>
             </div>
-          )}
-          <div className="mt-6">
-            <button
-              onClick={() => setShowRegister(!showRegister)}
-              className="w-full text-center text-sm text-deep-red hover:text-red-900"
-            >
-              {showRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
-            </button>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

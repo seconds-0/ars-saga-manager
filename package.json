@@ -4,6 +4,7 @@
     "sequelize-cli": "^6.6.2"
   },
   "dependencies": {
+    "chokidar": "^3.6.0",
     "dotenv": "^16.4.5",
     "pg": "^8.12.0"
   }

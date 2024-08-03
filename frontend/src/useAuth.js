@@ -1,27 +1,45 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import api from './api/axios';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    if (token) {
+      setIsAuthenticated(true);
+      fetchUser(token);
+    }
   }, []);
 
-  const login = (token) => {
+  const fetchUser = async (token) => {
+    try {
+      const response = await api.get('/users/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      logout();
+    }
+  };
+
+  const login = (token, userId) => {
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
+    fetchUser(token);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
+    setUser(null);
   };
 
   const value = {
     isAuthenticated,
+    user,
     login,
     logout
   };
