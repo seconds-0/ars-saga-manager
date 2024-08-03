@@ -1,0 +1,115 @@
+Last updated: 2024-07-31T23:07:05.580Z
+
+.gitignore
+backend/
+  .env
+  .sequelizerc
+  config/
+    database.js
+  emailService.js
+  migrations/
+    20240724193900-megamigration.js
+    20240724204840-remove-username-from-usertable.js
+    20240724220023-update-character-model.js
+    20240725180326-update-character-model-2.js
+    20240725190802-add-characteristics-to-characters.js
+    20240730203317-add-timestamps-and-source-to-reference-virtues-flaws.js
+    20240730211100-add-free-to-size-enum.js
+    20240731122942-add-max-selections-to-reference-virtues-flaws.js
+    20240731123118-add-missing-columns-to-reference-virtues-flaws.js
+    20240731141823-add-available-improvement-points-to-characters.js
+    20240731142640-add-virtue-flaw-points-to-characters.js
+    20240731184319-update-characters-and-flaws-table.js
+    20240731193359-add-allowed-sizes-to-reference-virtues-flaws.js
+    20240731193709-add-costs-and-remove-allowed-sizes.js
+  models/
+    Character.js
+    CharacterVirtueFlaw.js
+    index.js
+    ReferenceVirtueFlaw.js
+    User.js
+  output.log
+  package-lock.json
+  package.json
+  routes/
+    auth.js
+    characters.js
+  scripts/
+    generateDatabaseSchema.js
+  seeders/
+    20240720060310-initial-virtues-flaws.js
+  server.js
+  utils/
+    characterUtils.js
+    logger.js
+    ruleEngine.js
+Documentation/
+  Architecture
+  databaseSchema.txt
+  file_structure.txt
+  Product Requirements
+frontend/
+  .gitignore
+  package-lock.json
+  package.json
+  postcss.config.js
+  public/
+    emblem.png
+    favicon.ico
+    index.html
+    logo192.png
+    logo512.png
+    manifest.json
+    robots.txt
+  README.md
+  src/
+    api/
+      axios.js
+    App.css
+    App.js
+    App.test.js
+    components/
+      CharacterListPage.js
+      CharacterSheetComponents/
+        ArtsTab.js
+        CharacteristicInput.js
+        CharacteristicsAndAbilitiesTab.js
+        CharacterOverviewTab.js
+        CharacterSheet.js
+        CharacterSheetTabs.js
+        EquipmentAndCombatTab.js
+        SpellsTab.js
+        VirtueFlawList.js
+        VirtueFlawSelector.js
+        VirtuesAndFlawsTab.js
+      CharacterTile.js
+      CreateCharacterPage.js
+      ErrorMessage.js
+      ForgotPasswordForm.js
+      HomePage.js
+      Layout.js
+      LoadingSpinner.js
+      LoginPage.js
+      Modal.js
+      RegisterForm.js
+      ResetConfirmation.js
+      ResetPasswordForm.js
+      SideBar.js
+      Toast.js
+    hooks/
+    index.css
+    index.js
+    logo.svg
+    parchment-bg.jpg
+    reportWebVitals.js
+    setupTests.js
+    useAuth.js
+    utils/
+      characterUtils.js
+  tailwind.config.js
+LICENSE
+package-lock.json
+package.json
+README.md
+scripts/
+  documentFileSystem.js

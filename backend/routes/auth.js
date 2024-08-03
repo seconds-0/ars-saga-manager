@@ -8,6 +8,31 @@ const { Op } = require('sequelize');
 
 const router = express.Router();
 
+// Move the authenticateToken function to the top of the file
+const authenticateToken = (req, res, next) => {
+  console.log('Authenticating token...');
+  const authHeader = req.headers['authorization'];
+  console.log('Auth header:', authHeader);
+
+  const token = authHeader && authHeader.split(' ')[1];
+  console.log('Extracted token:', token);
+
+  if (token == null) {
+    console.log('No token provided');
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.error('Token verification failed:', err);
+      return res.sendStatus(403);
+    }
+    console.log('Token verified successfully. User:', user);
+    req.user = user;
+    next();
+  });
+};
+
 router.post('/register', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -115,28 +140,20 @@ router.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-const authenticateToken = (req, res, next) => {
-  console.log('Authenticating token...');
-  const authHeader = req.headers['authorization'];
-  console.log('Auth header:', authHeader);
-
-  const token = authHeader && authHeader.split(' ')[1];
-  console.log('Extracted token:', token);
-
-  if (token == null) {
-    console.log('No token provided');
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.error('Token verification failed:', err);
-      return res.sendStatus(403);
+// Update this route
+router.get('/me', async (req, res) => {
+  try {
+    const user = await sequelize.models.User.findByPk(req.user.id, {
+      attributes: ['id', 'email'] // Only send non-sensitive information
+    });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-    console.log('Token verified successfully. User:', user);
-    req.user = user;
-    next();
-  });
-};
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ message: 'Error fetching user', error: error.message });
+  }
+});
 
 module.exports = { router, authenticateToken };

@@ -1,11 +1,10 @@
 import axios from 'axios';
 
-const instance = axios.create({
-  baseURL: 'http://localhost:5000/api',
-  timeout: 5000, // Increased timeout to 5000ms (5 seconds)
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api', // Make sure this matches your backend URL
 });
 
-instance.interceptors.request.use(
+api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -18,7 +17,7 @@ instance.interceptors.request.use(
   }
 );
 
-instance.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.code === 'ECONNABORTED') {
@@ -54,4 +53,4 @@ instance.interceptors.response.use(
   }
 );
 
-export default instance;
+export default api;

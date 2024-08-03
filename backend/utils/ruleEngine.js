@@ -1,49 +1,67 @@
-const logger = require('./logger'); // Ensure you have a logger utility
+const logger = require('./logger');
 
 class RuleEngine {
   constructor() {
-    this.rules = {};
-  }
-
-  addRule(name, condition) {
-    this.rules[name] = condition;
-  }
-
-  evaluate(ruleName, character, virtueFlaw) {
-    if (!this.rules[ruleName]) {
-      logger.warn(`Rule '${ruleName}' not found`);
-      return true; // Default to true if rule not found
-    }
-    try {
-      return this.rules[ruleName](character, virtueFlaw);
-    } catch (error) {
-      logger.error(`Error evaluating rule '${ruleName}':`, error);
-      return false; // Default to false on error
-    }
+    this.rules = {
+      characterTypeRestriction: (character, virtueFlaw) => {
+        if (character.characterType === 'Grog' && virtueFlaw.size === 'Major') {
+          return false;
+        }
+        return true;
+      },
+      maxVirtueFlawCount: (character, virtueFlaw) => {
+        const currentCount = character.CharacterVirtueFlaws.length;
+        const maxCount = character.characterType === 'Grog' ? 3 : 10;
+        return currentCount < maxCount;
+      },
+      incompatibilities: (character, virtueFlaw) => {
+        const incompatibilities = virtueFlaw.incompatibilities || [];
+        return !character.CharacterVirtueFlaws.some(cvf => 
+          incompatibilities.includes(cvf.referenceVirtueFlaw.name)
+        );
+      },
+      prerequisites: (character, virtueFlaw) => {
+        const prerequisites = virtueFlaw.prerequisites || [];
+        return prerequisites.every(prereq => 
+          character.CharacterVirtueFlaws.some(cvf => cvf.referenceVirtueFlaw.name === prereq)
+        );
+      },
+      hermeticRestriction: (character, virtueFlaw) => {
+        if (virtueFlaw.category === 'Hermetic') {
+          return character.CharacterVirtueFlaws.some(cvf => cvf.referenceVirtueFlaw.name === 'The Gift');
+        }
+        return true;
+      },
+      multipleSelections: (character, virtueFlaw) => {
+        const existingCount = character.CharacterVirtueFlaws.filter(cvf => 
+          cvf.referenceVirtueFlaw.id === virtueFlaw.id
+        ).length;
+        return virtueFlaw.max_selections ? existingCount < virtueFlaw.max_selections : existingCount === 0;
+      },
+      pointLimit: (character, virtueFlaw) => {
+        const remainingPoints = this.calculateRemainingPoints(character);
+        const cost = virtueFlaw.size === 'Major' ? 3 : 1;
+        return virtueFlaw.type !== 'Virtue' || cost <= remainingPoints;
+      }
+    };
   }
 
   isVirtueFlawEligible(character, virtueFlaw) {
-    if (!virtueFlaw || typeof virtueFlaw !== 'object') {
-      logger.error('Invalid virtueFlaw object:', virtueFlaw);
-      return false;
-    }
+    return Object.values(this.rules).every(rule => rule(character, virtueFlaw));
+  }
 
-    const applicableRules = [
-      virtueFlaw.type,
-      `${virtueFlaw.size}${virtueFlaw.type}`,
-      ...(Array.isArray(virtueFlaw.prerequisites) ? virtueFlaw.prerequisites : []),
-      ...(Array.isArray(virtueFlaw.incompatibilities) ? virtueFlaw.incompatibilities.map(inc => `not${inc}`) : [])
-    ];
-
-    return applicableRules.every(rule => {
-      if (typeof rule !== 'string') {
-        logger.warn(`Invalid rule: ${rule}`);
-        return true; // Skip invalid rules
+  calculateRemainingPoints(character) {
+    const maxPoints = character.maxVirtueFlawPoints;
+    const usedPoints = character.CharacterVirtueFlaws.reduce((total, cvf) => {
+      const cost = cvf.referenceVirtueFlaw.size === 'Major' ? 3 : 1;
+      // Check if it's a special case where a Virtue doesn't cost points or a Flaw doesn't give points
+      if (cvf.referenceVirtueFlaw.specialPointRule) {
+        return total;
       }
-      return this.evaluate(rule, character, virtueFlaw);
-    });
+      return cvf.referenceVirtueFlaw.type === 'Virtue' ? total + cost : total - cost;
+    }, 0);
+    return maxPoints - usedPoints;
   }
 }
 
-// Export a singleton instance of the RuleEngine
 module.exports = new RuleEngine();

@@ -3,16 +3,32 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./models');
 const { sequelize, User } = db;
-const { router: authRoutes } = require('./routes/auth');
+const { router: authRoutes, authenticateToken } = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
+const apiLimiter = require('./middleware/rateLimiter');
+const sanitizeInputs = require('./middleware/sanitizer');
+const { handleError } = require('./utils/errorHandler');
+const referenceVirtuesFlawsRouter = require('./routes/referenceVirtuesFlaws');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(sanitizeInputs); // Added this line
+
+// Apply rate limiter to all API routes
+app.use("/api/", apiLimiter);
+
+// Auth routes
 app.use('/api/auth', authRoutes);
-app.use('/api/characters', characterRoutes);
+
+// Protected routes
+app.use('/api/users', authenticateToken, authRoutes);
+app.use('/api/characters', authenticateToken, characterRoutes);
+
+// Reference virtues and flaws route
+app.use('/api/reference-virtues-flaws', referenceVirtuesFlawsRouter);
 
 // Test route
 app.get('/', (req, res) => {
@@ -39,7 +55,7 @@ async function startServer() {
 
 startServer();
 
+// Error handling middleware (should be last)
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
+  handleError(err, res);
 });

@@ -1,80 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import api from '../../api/axios';
-import PropTypes from 'prop-types';
 import CharacterSheetTabs from './CharacterSheetTabs';
+import ErrorBoundary from '../ErrorBoundary';
+import { useAuth } from '../../useAuth';
+import LoadingSpinner from '../LoadingSpinner';
 
-// CharacterSheet: Main component for displaying and editing character information
 function CharacterSheet() {
   const { id } = useParams();
-  const [character, setCharacter] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { user, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    if (id) {
-      fetchCharacter();
-    } else {
-      setIsLoading(false);
+  console.log('CharacterSheet rendered, ID:', id);
+  console.log('User:', user);
+  console.log('Is Authenticated:', isAuthenticated);
+
+  const { data: character, isLoading, error } = useQuery(['character', id], () =>
+    api.get(`/characters/${id}`).then((res) => {
+      console.log('API response:', res.data);
+      return res.data;
+    }),
+    {
+      enabled: isAuthenticated,
+      retry: false,
+      onError: (err) => {
+        console.error('Error fetching character:', err);
+      },
     }
-  }, [id]);
+  );
 
-  // fetchCharacter: Retrieves character data from the server and updates state
-  const fetchCharacter = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await api.get(`/characters/${id}`);
-      if (response.data && response.data.id) {
-        setCharacter(response.data);
-      } else {
-        throw new Error('Invalid character data received');
-      }
-    } catch (error) {
-      console.error('Error fetching character:', error);
-      setError('Failed to load character data. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  console.log('Query state:', { isLoading, error, character });
 
-  // handleSave: Sends updated character data to the server and refreshes local state
-  const handleSave = async (updatedData) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await api.put(`/characters/${id}`, updatedData);
-      await fetchCharacter(); // Refresh character data
-    } catch (error) {
-      console.error('Error updating character:', error);
-      setError('Failed to save character data. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
-
-  if (!character) {
-    return <div>Character not found</div>;
-  }
+  if (!isAuthenticated) return <div>Please log in to view this character.</div>;
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!character) return <div>Character not found</div>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{character.characterName}</h1>
-      <CharacterSheetTabs character={character} onSave={handleSave} />
-    </div>
+    <ErrorBoundary>
+      <div className="p-8">
+        <h2 className="text-2xl font-bold mb-4">
+          {character.characterName || 'Unnamed'} - {character.characterType || 'Unknown Type'}
+        </h2>
+        <CharacterSheetTabs character={character} />
+      </div>
+    </ErrorBoundary>
   );
 }
-
-CharacterSheet.propTypes = {
-  id: PropTypes.string
-};
 
 export default CharacterSheet;

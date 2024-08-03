@@ -10,22 +10,10 @@ function CreateCharacterPage() {
   const handleCreate = async () => {
     if (characterName.trim() && characterType) {
       try {
-        const initialCharacteristics = {
-          strength: 0,
-          stamina: 0,
-          dexterity: 0,
-          quickness: 0,
-          intelligence: 0,
-          presence: 0,
-          communication: 0,
-          perception: 0
-        };
-
         const response = await api.post('/characters', {
           characterName: characterName,
           characterType: characterType,
-          characteristics: initialCharacteristics,
-          useCunning: false
+          useCunning: false // This is now optional in the schema
         });
         console.log('Character created:', response.data);
         navigate(`/character/${response.data.id}`);
