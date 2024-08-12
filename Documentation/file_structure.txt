@@ -1,12 +1,18 @@
-Last updated: 2024-07-31T23:07:05.580Z
+Last updated: 2024-08-05T23:30:57.633Z
 
 .gitignore
 backend/
   .env
   .sequelizerc
+  combined.log
   config/
     database.js
   emailService.js
+  error.log
+  middleware/
+    rateLimiter.js
+    sanitizer.js
+    validation.js
   migrations/
     20240724193900-megamigration.js
     20240724204840-remove-username-from-usertable.js
@@ -28,19 +34,33 @@ backend/
     index.js
     ReferenceVirtueFlaw.js
     User.js
-  output.log
   package-lock.json
   package.json
   routes/
     auth.js
     characters.js
+    referenceVirtuesFlaws.js
   scripts/
     generateDatabaseSchema.js
   seeders/
-    20240720060310-initial-virtues-flaws.js
+    20240802161359-seed-flaws-part-1.js
+    20240802161403-seed-flaws-part-2.js
+    20240802161406-seed-flaws-part-3.js
+    20240802161410-seed-flaws-part-4.js
+    20240802161413-seed-flaws-part-5.js
+    20240802162649-seed-crb-virtues-part-1.js
+    20240802162652-seed-crb-virtues-part-2.js
+    20240802162655-seed-crb-virtues-part-3.js
+    20240802163310-seed-crb-virtues-part-4.js
+    20240802182814-seed-crb-virtues-part-5.js
+    20240802182819-seed-crb-virtues-part-6.js
+    20240803050918-seed-crb-virtues-part-7.js
+    20240803051019-seed-crb-virtues-part-8.js
   server.js
   utils/
+    cache.js
     characterUtils.js
+    errorHandler.js
     logger.js
     ruleEngine.js
 Documentation/
@@ -48,6 +68,7 @@ Documentation/
   databaseSchema.txt
   file_structure.txt
   Product Requirements
+  Testing Strategy
 frontend/
   .gitignore
   package-lock.json
@@ -63,6 +84,7 @@ frontend/
     robots.txt
   README.md
   src/
+    .babelrc
     api/
       axios.js
     App.css
@@ -77,19 +99,24 @@ frontend/
         CharacterOverviewTab.js
         CharacterSheet.js
         CharacterSheetTabs.js
+        CurrentVirtueFlawList.js
         EquipmentAndCombatTab.js
         SpellsTab.js
+        VirtueFlawDetails.js
         VirtueFlawList.js
         VirtueFlawSelector.js
         VirtuesAndFlawsTab.js
       CharacterTile.js
       CreateCharacterPage.js
+      ErrorBoundary.js
       ErrorMessage.js
       ForgotPasswordForm.js
       HomePage.js
+      HomePage.test.js
       Layout.js
       LoadingSpinner.js
       LoginPage.js
+      LoginPage.test.js
       Modal.js
       RegisterForm.js
       ResetConfirmation.js
@@ -97,16 +124,27 @@ frontend/
       SideBar.js
       Toast.js
     hooks/
+      useForm.js
+      useVirtuesAndFlaws.js
     index.css
     index.js
     logo.svg
     parchment-bg.jpg
+    queryClient.js
     reportWebVitals.js
     setupTests.js
     useAuth.js
     utils/
       characterUtils.js
+    __mocks__/
+      axios.js
   tailwind.config.js
+  test-report.html
+  testing/
+    customHtmlReporter.js
+    customTemplate.html
+    customTestResultsProcessor.js
+    jest.config.js
 LICENSE
 package-lock.json
 package.json

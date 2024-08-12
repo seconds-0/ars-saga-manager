@@ -16,8 +16,8 @@ require('dotenv').config({ path: envPath });
 // Log environment variables (excluding the actual password)
 console.log('Environment variables:');
 console.log({
-  DB_USERNAME: process.env.DB_DEV_USERNAME,
-  DB_PASSWORD: process.env.DB_DEV_PASSWORD ? '[REDACTED]' : undefined,
+  DB_SUPERUSER_USERNAME: process.env.DB_SUPERUSER_USERNAME,
+  DB_SUPERUSER_PASSWORD: process.env.DB_SUPERUSER_PASSWORD ? '[REDACTED]' : undefined,
   DB_HOST: process.env.DB_HOST,
   DB_PORT: process.env.DB_PORT,
   DB_NAME: process.env.DB_NAME,
@@ -25,8 +25,8 @@ console.log({
 
 // Database connection configuration
 const dbConfig = {
-  user: process.env.DB_DEV_USERNAME,
-  password: process.env.DB_DEV_PASSWORD,
+  user: process.env.DB_SUPERUSER_USERNAME,
+  password: process.env.DB_SUPERUSER_PASSWORD,
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_NAME,

@@ -14,6 +14,7 @@ import { Helmet } from 'react-helmet';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { AuthProvider } from './useAuth';
+import { Flowbite } from 'flowbite-react';
 
 const queryClient = new QueryClient();
 
@@ -22,12 +23,12 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage data-testid="login-page" />} />
       <Route path="/forgot-password" element={<ForgotPasswordForm />} />
       <Route path="/reset-confirmation" element={<ResetConfirmation />} />
       <Route path="/reset-password/:token" element={<ResetPasswordForm />} />
       <Route element={<Layout />}>
-        <Route path="/" element={isAuthenticated ? <HomePage /> : <Navigate to="/login" />} />
+        <Route path="/" element={isAuthenticated ? <HomePage data-testid="home-page" /> : <Navigate to="/login" />} />
         <Route path="/home" element={isAuthenticated ? <Navigate to="/" /> : <Navigate to="/login" />} />
         <Route path="/create-character" element={isAuthenticated ? <CreateCharacterPage /> : <Navigate to="/login" />} />
         <Route path="/character/:id" element={isAuthenticated ? <CharacterSheet /> : <Navigate to="/login" />} />
@@ -39,19 +40,14 @@ function AppContent() {
 
 function App() {
   return (
-    <>
-      <Helmet>
-        <title>Ars Saga Manager</title>
-      </Helmet>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <Flowbite>
         <AuthProvider>
-          <Router>
-            <AppContent />
-          </Router>
+          <AppContent />
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
-    </>
+      </Flowbite>
+    </QueryClientProvider>
   );
 }
 

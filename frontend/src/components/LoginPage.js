@@ -6,7 +6,7 @@ import { useAuth } from '../useAuth';
 import { Card, TextInput, Button, Alert, Label } from 'flowbite-react';
 import useForm from '../hooks/useForm';
 
-function LoginPage() {
+export default function LoginPage() {
   const { values, handleChange, handleSubmit } = useForm({ email: '', password: '' });
   const [showRegister, setShowRegister] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -36,61 +36,49 @@ function LoginPage() {
             Ars Saga Manager
           </h1>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900 font-palatino">
-            {showRegister ? 'Create an account' : 'Sign in to your account'}
+            Sign in to your account
           </h2>
         </div>
-
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <Card>
-            {showRegister ? (
-              <RegisterForm onRegisterSuccess={() => setShowRegister(false)} />
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                <div>
-                  <Label htmlFor="email">Email address</Label>
-                  <TextInput
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="name@company.com"
-                    required={true}
-                    value={values.email}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <TextInput
-                    id="password"
-                    name="password"
-                    type="password"
-                    required={true}
-                    value={values.password}
-                    onChange={handleChange}
-                  />
-                </div>
-                <Button type="submit">
-                  Sign in
-                </Button>
-                <div className="text-center">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-primary-600 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-              </form>
-            )}
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" data-testid="login-form">
+              <div>
+                <Label htmlFor="email">Email address</Label>
+                <TextInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  required={true}
+                  value={values.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <TextInput
+                  id="password"
+                  name="password"
+                  type="password"
+                  required={true}
+                  value={values.password}
+                  onChange={handleChange}
+                />
+              </div>
+              <Button type="submit" data-testid="sign-in-button" className="bg-red-800 hover:bg-red-700 text-white">
+                Sign in
+              </Button>
+            </form>
             {errorMessage && (
               <Alert color="failure" onDismiss={() => setErrorMessage('')} className="mt-4">
                 {errorMessage}
               </Alert>
             )}
             <div className="mt-6">
-              <Button 
+              <Button
+                data-testid="register-button"
                 color="light"
-                onClick={() => setShowRegister(!showRegister)} 
+                onClick={() => setShowRegister(!showRegister)}
                 fullSized={true}
               >
                 {showRegister ? 'Already have an account? Sign in' : 'Need an account? Register'}
@@ -102,5 +90,3 @@ function LoginPage() {
     </div>
   );
 }
-
-export default LoginPage;

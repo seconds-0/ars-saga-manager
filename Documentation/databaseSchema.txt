@@ -1,27 +1,15 @@
-CREATED AT: 2024-07-31T22:55:10.405Z
+CREATED AT: 2024-08-03T05:17:00.743Z
 
 Characters
   ├─ id (integer, not nullable)
 Characters
   ├─ userId (integer, not nullable)
 Characters
+  ├─ entityId (uuid, not nullable)
+Characters
   ├─ entityType (character varying, not nullable)
 Characters
   ├─ characterType (character varying, not nullable)
-Characters
-  ├─ createdAt (timestamp with time zone, not nullable)
-Characters
-  ├─ updatedAt (timestamp with time zone, not nullable)
-Characters
-  ├─ entityId (uuid, not nullable)
-Characters
-  ├─ characterName (character varying, not nullable)
-Characters
-  ├─ age (integer, nullable)
-Characters
-  ├─ description (text, nullable)
-Characters
-  ├─ house (USER-DEFINED, nullable)
 Characters
   ├─ virtues (json, nullable)
 Characters
@@ -36,6 +24,20 @@ Characters
   ├─ spells (json, nullable)
 Characters
   ├─ equipment (json, nullable)
+Characters
+  ├─ characteristicsAndAbilities (json, nullable)
+Characters
+  ├─ createdAt (timestamp with time zone, not nullable)
+Characters
+  ├─ updatedAt (timestamp with time zone, not nullable)
+Characters
+  ├─ characterName (character varying, not nullable)
+Characters
+  ├─ age (integer, nullable)
+Characters
+  ├─ description (text, nullable)
+Characters
+  ├─ house (USER-DEFINED, nullable)
 Characters
   ├─ strength (integer, not nullable)
 Characters
@@ -90,8 +92,6 @@ character_virtues_flaws
   ├─ updatedAt (timestamp with time zone, not nullable)
 character_virtues_flaws
   ├─ selections (jsonb, nullable)
-character_virtues_flaws
-  ├─ cost (integer, not nullable)
 reference_virtues_flaws
   ├─ id (integer, not nullable)
 reference_virtues_flaws
@@ -99,9 +99,9 @@ reference_virtues_flaws
 reference_virtues_flaws
   ├─ size (USER-DEFINED, not nullable)
 reference_virtues_flaws
-  ├─ category (character varying, not nullable)
+  ├─ category (USER-DEFINED, not nullable)
 reference_virtues_flaws
-  ├─ realm (character varying, not nullable)
+  ├─ realm (USER-DEFINED, not nullable)
 reference_virtues_flaws
   ├─ name (character varying, not nullable)
 reference_virtues_flaws

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{pageTitle}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .test-suite { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
+    .test-suite-header { cursor: pointer; font-weight: bold; }
+    .test-result { margin-bottom: 10px; padding: 5px; }
+    .passed { background-color: #e6ffe6; }
+    .failed { background-color: #ffe6e6; }
+    .test-info { display: flex; justify-content: space-between; }
+    .failureMessages { margin-top: 10px; background-color: #f8f8f8; padding: 10px; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>{{pageTitle}}</h1>
+  {{#each results.testResults}}
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('{{testFilePath}}')">
+        {{testFilePath}} ({{testResults.length}} tests)
+      </div>
+      <div id="{{testFilePath}}" class="test-suite-content">
+        {{#each testResults}}
+          <div class="test-result {{status}}">
+            <div class="test-info">
+              <div class="test-title">{{fullName}}</div>
+              <div class="test-status">{{status}}</div>
+              <div class="test-duration">{{duration}}ms</div>
+            </div>
+            {{#if failureMessages}}
+            <div class="failureMessages">
+              {{#each failureMessages}}
+                <pre class="failureMsg">{{this}}</pre>
+              {{/each}}
+            </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/each}}
+
+  <script>
+    function toggleTestSuite(suiteName) {
+      const suiteContent = document.getElementById(suiteName);
+      suiteContent.classList.toggle('hidden');
+    }
+  </script>
+</body>
+</html>

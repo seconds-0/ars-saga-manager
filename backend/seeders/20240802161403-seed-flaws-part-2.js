@@ -22,7 +22,7 @@ module.exports = {
       {
         type: "Flaw",
         size: "Minor",
-        category: "Social Status",
+        category: "Social",
         realm: "None",
         name: "Branded Criminal",
         description: "As punishment for some crime in your past, a mark has been burned into your cheek. This adversely affects your ability to function in society. You may not take the Wealthy Virtue, but you may take Martial Abilities at character creation. You may choose not to take such abilities, if your crime was not violent.",

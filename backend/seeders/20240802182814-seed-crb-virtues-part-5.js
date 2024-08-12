@@ -38,7 +38,7 @@ module.exports = {
       {
         type: "Virtue",
         size: "Minor",
-        category: "Social Status",
+        category: "Social",
         realm: "None",
         name: "Knight",
         description: "You are a knight, a member of the noble classes and one of the elite warriors of Europe. Unless you are Poor, you may have high quality weapons and armor, and a horse. Typical armaments for a mid-13th century knight are lance, sword, heater shield, a complete mail suit, and a warhorse. You may take Martial Abilities during character generation. The Wealthy Virtue and Poor Flaw affect you normally. This Virtue is only available to male characters, and is compatible with the Landed Noble Virtue.",
@@ -54,7 +54,7 @@ module.exports = {
       {
         type: "Virtue",
         size: "Major",
-        category: "Social Status",
+        category: "Social",
         realm: "None",
         name: "Landed Noble",
         description: "You owe fealty and service to a higher noble, and control land, serfs, and men-at-arms. You have half a dozen servants at your manor house, including a couple of bodyguards. Your servants should be controlled by the rest of the troupe. You have sworn an Oath of Fealty, and so must balance this Virtue with that Flaw. You get the normal points for Oath of Fealty. You are wealthier than most characters, but have no additional free time. You have the power to enforce the law within your fief, but you may not impose the death penalty, nor may you mutilate criminals. Floggings and fines are the normal penalties you impose. If you are Poor, your fief is either very small, or in a poor area for farming with few other resources. You must spend every season managing it, or it may collapse completely, leaving you effectively landless. You are no wealthier than most average characters, and you have only a couple of servants. Wealthy Landed Nobles control more than one fief, and have bailiffs or stewards for each, so that they do not need to devote any time to looking after their lands. You are significantly richer than most Wealthy characters, and could afford to build a small castle or a large chapel within a cathedral. You have around fifty servants, including a significant number of warriors. This Status Virtue is compatible with the Knight Minor Status Virtue, but unlike that Virtue it's available to male and female characters.",
