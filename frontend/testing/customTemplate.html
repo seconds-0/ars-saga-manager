@@ -19,16 +19,16 @@
 </head>
 <body>
   <h1>{{pageTitle}}</h1>
-  {{#each results.testResults}}
+  {{#each testSuites}}
     <div class="test-suite">
-      <div class="test-suite-header" onclick="toggleTestSuite('{{testFilePath}}')">
-        {{testFilePath}} ({{testResults.length}} tests)
+      <div class="test-suite-header" onclick="toggleTestSuite('{{name}}')">
+        {{name}} ({{tests.length}} tests)
       </div>
-      <div id="{{testFilePath}}" class="test-suite-content">
-        {{#each testResults}}
+      <div id="{{name}}" class="test-suite-content">
+        {{#each tests}}
           <div class="test-result {{status}}">
             <div class="test-info">
-              <div class="test-title">{{fullName}}</div>
+              <div class="test-title">{{name}}</div>
               <div class="test-status">{{status}}</div>
               <div class="test-duration">{{duration}}ms</div>
             </div>

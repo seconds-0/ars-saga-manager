@@ -14,9 +14,19 @@ class CustomHtmlReporter {
     const templateContent = fs.readFileSync(templatePath, 'utf8');
     const template = Handlebars.compile(templateContent);
 
+    const testSuites = results.testResults.map(testFile => ({
+      name: path.relative(this._globalConfig.rootDir, testFile.testFilePath),
+      tests: testFile.testResults.map(test => ({
+        name: test.fullName,
+        status: test.status,
+        duration: test.duration,
+        failureMessages: test.failureMessages
+      }))
+    }));
+
     const htmlContent = template({
       pageTitle: this._options.pageTitle,
-      results: results,
+      testSuites: testSuites,
     });
 
     fs.writeFileSync(outputPath, htmlContent);
