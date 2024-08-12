@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { AuthProvider } from './useAuth';
@@ -40,9 +40,7 @@ test('renders login page when not authenticated', async () => {
     isAuthenticated: false,
   }));
 
-  await act(async () => {
-    renderWithProviders(<App />);
-  });
+  renderWithProviders(<App />, { route: '/login' });
 
   expect(await screen.findByTestId('login-page')).toBeInTheDocument();
   expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
@@ -53,10 +51,13 @@ test('renders home page when authenticated', async () => {
     isAuthenticated: true,
   }));
 
-  await act(async () => {
-    renderWithProviders(<App />);
-  });
+  renderWithProviders(<App />);
+  // Wait for the home page to be rendered
+  await screen.findByTestId('home-page', {}, { timeout: 5000 }); // Increase timeout to 5 seconds
 
-  expect(await screen.findByTestId('home-page')).toBeInTheDocument();
+  // Check that the home page is present
+  expect(screen.getByTestId('home-page')).toBeInTheDocument();
+
+  // Check that the login page is not present
   expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
 });

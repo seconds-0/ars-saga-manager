@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
@@ -10,7 +10,6 @@ import ResetPasswordForm from './components/ResetPasswordForm';
 import CharacterListPage from './components/CharacterListPage';
 import CharacterSheet from './components/CharacterSheetComponents/CharacterSheet';
 import { useAuth } from './useAuth';
-import { Helmet } from 'react-helmet';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { AuthProvider } from './useAuth';
@@ -20,6 +19,7 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const { isAuthenticated } = useAuth();
+  console.log('Authentication state:', isAuthenticated);
 
   return (
     <Routes>

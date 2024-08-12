@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import RegisterForm from './RegisterForm';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../useAuth';
 import { Card, TextInput, Button, Alert, Label } from 'flowbite-react';
@@ -29,7 +28,7 @@ export default function LoginPage() {
   const onSubmit = () => handleLogin(values.email, values.password);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 bg-parchment bg-cover bg-center">
+    <div className="min-h-screen flex flex-col justify-center py-12 bg-parchment bg-cover bg-center" data-testid="login-page">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <h1 className="text-center text-5xl font-bold text-primary-700 font-cinzel mb-6">
