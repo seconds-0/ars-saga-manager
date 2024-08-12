@@ -1,14 +1,15 @@
-Last updated: 2024-08-05T23:30:57.633Z
+ARS-SAGA-MANAGER File System Structure
+Last updated: 2024-08-12T18:00:44.682Z
 
-.gitignore
+.vscode/
+  settings.json
+  tasks.json
 backend/
   .env
   .sequelizerc
-  combined.log
   config/
     database.js
   emailService.js
-  error.log
   middleware/
     rateLimiter.js
     sanitizer.js
@@ -66,11 +67,11 @@ backend/
 Documentation/
   Architecture
   databaseSchema.txt
-  file_structure.txt
+  file_system_structure.txt
   Product Requirements
   Testing Strategy
 frontend/
-  .gitignore
+  .env
   package-lock.json
   package.json
   postcss.config.js
@@ -144,6 +145,7 @@ frontend/
     customHtmlReporter.js
     customTemplate.html
     customTestResultsProcessor.js
+    fileMock.js
     jest.config.js
 LICENSE
 package-lock.json
@@ -151,3 +153,4 @@ package.json
 README.md
 scripts/
   documentFileSystem.js
+  file_system_monitor.js
