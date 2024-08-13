@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import ErrorBoundary from '../ErrorBoundary';
 import VirtuesAndFlawsTab from './VirtuesAndFlawsTab';
 import CharacterOverviewTab from './CharacterOverviewTab';
 import CharacteristicsAndAbilitiesTab from './CharacteristicsAndAbilitiesTab';
@@ -15,7 +17,7 @@ const tabs = [
   { name: 'Equipment & Combat', component: EquipmentAndCombatTab },
 ];
 
-function CharacterSheetTabs({ character }) {
+function CharacterSheetTabs({ character, onSave }) {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
@@ -33,11 +35,16 @@ function CharacterSheetTabs({ character }) {
           </button>
         ))}
       </div>
-      <div className="mt-4">
-        {React.createElement(tabs[activeTab].component, { character })}
-      </div>
+      <ErrorBoundary>
+        {React.createElement(tabs[activeTab].component, { character, onSave })}
+      </ErrorBoundary>
     </div>
   );
 }
+
+CharacterSheetTabs.propTypes = {
+  character: PropTypes.object.isRequired,
+  onSave: PropTypes.func.isRequired,
+};
 
 export default CharacterSheetTabs;

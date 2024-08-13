@@ -1,5 +1,5 @@
 ARS-SAGA-MANAGER File System Structure
-Last updated: 2024-08-12T18:00:44.682Z
+Last updated: 2024-08-12T21:59:16.728Z
 
 .vscode/
   settings.json
@@ -68,6 +68,8 @@ Documentation/
   Architecture
   databaseSchema.txt
   file_system_structure.txt
+  Plans/
+    Character Creation Testing Strategy
   Product Requirements
   Testing Strategy
 frontend/
@@ -99,6 +101,7 @@ frontend/
         CharacteristicsAndAbilitiesTab.js
         CharacterOverviewTab.js
         CharacterSheet.js
+        CharacterSheet.test.js
         CharacterSheetTabs.js
         CurrentVirtueFlawList.js
         EquipmentAndCombatTab.js
@@ -109,6 +112,7 @@ frontend/
         VirtuesAndFlawsTab.js
       CharacterTile.js
       CreateCharacterPage.js
+      CreateCharacterPage.test.js
       ErrorBoundary.js
       ErrorMessage.js
       ForgotPasswordForm.js

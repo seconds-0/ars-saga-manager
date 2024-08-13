@@ -4,6 +4,14 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
+import { setLogger } from 'react-query';
+
+// Suppress react-query error logs during testing
+setLogger({
+  log: console.log,
+  warn: console.warn,
+  error: () => {},
+});
 
 // Increase the timeout for async operations
 configure({ asyncUtilTimeout: 5000 });

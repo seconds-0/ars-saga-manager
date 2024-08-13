@@ -8,16 +8,21 @@ import { useAuth } from '../../useAuth';
 import LoadingSpinner from '../LoadingSpinner';
 
 function CharacterSheet() {
+  console.log('CharacterSheet component rendering');
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
 
   console.log('CharacterSheet rendered, ID:', id);
   console.log('User:', user);
   console.log('Is Authenticated:', isAuthenticated);
+  console.log('CharacterSheetTabs component:', CharacterSheetTabs);
 
   const { data: character, isLoading, error } = useQuery(['character', id], () =>
     api.get(`/characters/${id}`).then((res) => {
       console.log('API response:', res.data);
+      if (res.data === null) {
+        throw new Error('Character not found');
+      }
       return res.data;
     }),
     {

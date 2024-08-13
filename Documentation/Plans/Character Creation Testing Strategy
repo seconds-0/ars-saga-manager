@@ -1,0 +1,146 @@
+# Character Creation Testing Strategy
+
+## 1. CreateCharacterPage Component Tests
+
+### 1.1 Rendering Tests
+
+- **Test that the CreateCharacterPage component renders without crashing:**
+
+  - This test should render the CreateCharacterPage component and ensure it doesn't throw any errors.
+  - Use React Testing Library's render function and check that the component is in the document.
+
+- **Verify that all form elements are present:**
+  - After rendering, use queries like `getByLabelText` or `getByRole` to check for the presence of:
+    - Character name input
+    - Character type dropdown
+    - Create button
+  - Consider adding `data-testid` attributes to these elements for easier selection, e.g., `data-testid="character-name-input"`.
+
+### 1.2 Input Validation Tests
+
+- **Test that the character name input accepts valid input:**
+
+  - Simulate user input in the character name field and verify that it updates correctly.
+  - Test with various valid names, including those with spaces or special characters.
+
+- **Verify that the character type dropdown contains all expected options:**
+
+  - Check that all character types (Magus, Companion, Grog, Animal, Demon, Spirit, Faerie) are present in the dropdown.
+  - Use `getByRole('combobox')` to select the dropdown and then query for its options.
+
+- **Test that the create button is disabled when inputs are invalid:**
+  - Verify that the create button is disabled when:
+    - The name is empty
+    - The character type is not selected
+  - You may need to add a `disabled` attribute to the button in the component code if it's not already present.
+
+### 1.3 Form Submission Tests
+
+- **Test successful form submission with valid data:**
+
+  - Mock the `api.post` function to return a successful response.
+  - Fill in valid data, submit the form, and verify that `api.post` was called with the correct data.
+
+- **Verify that the correct API call is made with the input data:**
+
+  - Check that the mocked `api.post` function was called with:
+    - The correct endpoint ('/characters')
+    - The right payload (characterName, characterType, useCunning)
+
+- **Test error handling for API call failures:**
+  - Mock `api.post` to reject with an error.
+  - Submit the form and verify that the error is handled correctly (e.g., an error message is displayed).
+
+### 1.4 Navigation Tests
+
+- **Verify that successful character creation navigates to the correct page:**
+  - Mock the `useNavigate` hook from react-router-dom.
+  - After a successful form submission, check that `navigate` was called with the correct path ('/character/${id}').
+
+## 2. CharacterSheet Component Tests
+
+### 2.1 Rendering Tests
+
+- **Test that the CharacterSheet component renders without crashing:**
+
+  - Render the CharacterSheet component with mocked props and verify it's in the document.
+
+- **Verify that character data is displayed correctly:**
+  - Mock the `useQuery` hook to return sample character data.
+  - Check that this data is correctly displayed in the component, including the character name and type.
+
+### 2.2 Authentication Tests
+
+- **Test that unauthenticated users are redirected or shown appropriate message:**
+  - Mock the `useAuth` hook to return `{isAuthenticated: false}`.
+  - Verify that the component either redirects (check for `navigate` call) or displays a "Please log in" message.
+
+### 2.3 Loading and Error States
+
+- **Verify that loading spinner is displayed while fetching character data:**
+
+  - Mock `useQuery` to return `{isLoading: true}`.
+  - Check for the presence of the LoadingSpinner component.
+
+- **Test error handling when character data fetch fails:**
+  - Mock `useQuery` to return `{error: new Error('Failed to fetch')}`.
+  - Verify that an error message is displayed.
+
+## 3. CharacteristicsAndAbilitiesTab Component Tests
+
+### 3.1 Rendering Tests
+
+- **Test initial rendering with default values:**
+
+  - Render the component with minimal props.
+  - Check that all characteristics are displayed with default values (0).
+
+- **Verify rendering with pre-existing character data:**
+  - Provide mock character data with non-zero characteristics.
+  - Verify they're displayed correctly.
+
+### 3.2 Characteristic Modification Tests
+
+- **Test incrementing and decrementing each characteristic:**
+
+  - For each characteristic, find its increment and decrement buttons (consider adding `data-testid` attributes).
+  - Click them and verify the value changes correctly.
+
+- **Verify that characteristics cannot exceed maximum or minimum values:**
+  - Try to increment a characteristic at +3 or decrement one at -3.
+  - Verify that the value doesn't change and potentially that an error message is shown.
+
+### 3.3 Point Calculation Tests
+
+- **Test that available improvement points are calculated correctly:**
+
+  - Modify various characteristics.
+  - Check that the "Available Improvement Points" value updates correctly.
+
+- **Verify that points are deducted correctly when increasing characteristics:**
+  - Increase a characteristic and verify that the correct number of points is deducted:
+    - 1 for 0 to +1
+    - 2 for +1 to +2
+    - 3 for +2 to +3
+
+### 3.4 Saving Tests
+
+- **Test saving characteristics and verify API call:**
+
+  - Mock the `onSave` function.
+  - Click the save button and verify that `onSave` was called with the correct data.
+
+- **Verify error handling for save failures:**
+  - Mock `onSave` to throw an error.
+  - Trigger a save and check that an error message is displayed (likely via the Toast component).
+
+### 3.5 Use Cunning Functionality
+
+- **Test toggling the "Use Cunning" checkbox:**
+
+  - Find the checkbox (consider adding a `data-testid`).
+  - Click it and verify its state changes.
+
+- **Verify that it affects the character data correctly:**
+  - Toggle the checkbox.
+  - Verify that it's included in the data when saving (check the argument passed to `onSave`).
