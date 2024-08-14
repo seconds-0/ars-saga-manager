@@ -1,21 +1,27 @@
-CREATED AT: 2024-08-03T05:17:00.743Z
+CREATED AT: 2024-08-12T23:08:18.045Z
 
 Characters
   ├─ id (integer, not nullable)
 Characters
-  ├─ userId (integer, not nullable)
-Characters
   ├─ entityId (uuid, not nullable)
 Characters
-  ├─ entityType (character varying, not nullable)
+  ├─ characterName (character varying, not nullable)
 Characters
-  ├─ characterType (character varying, not nullable)
+  ├─ userId (integer, not nullable)
+Characters
+  ├─ entityType (character varying, nullable)
+Characters
+  ├─ characterType (USER-DEFINED, not nullable)
+Characters
+  ├─ age (integer, nullable)
+Characters
+  ├─ description (text, nullable)
+Characters
+  ├─ house (USER-DEFINED, nullable)
 Characters
   ├─ virtues (json, nullable)
 Characters
   ├─ flaws (json, nullable)
-Characters
-  ├─ characteristics (json, nullable)
 Characters
   ├─ abilities (json, nullable)
 Characters
@@ -24,20 +30,6 @@ Characters
   ├─ spells (json, nullable)
 Characters
   ├─ equipment (json, nullable)
-Characters
-  ├─ characteristicsAndAbilities (json, nullable)
-Characters
-  ├─ createdAt (timestamp with time zone, not nullable)
-Characters
-  ├─ updatedAt (timestamp with time zone, not nullable)
-Characters
-  ├─ characterName (character varying, not nullable)
-Characters
-  ├─ age (integer, nullable)
-Characters
-  ├─ description (text, nullable)
-Characters
-  ├─ house (USER-DEFINED, nullable)
 Characters
   ├─ strength (integer, not nullable)
 Characters
@@ -57,11 +49,15 @@ Characters
 Characters
   ├─ useCunning (boolean, not nullable)
 Characters
+  ├─ availableImprovementPoints (integer, not nullable)
+Characters
   ├─ totalImprovementPoints (integer, not nullable)
 Characters
   ├─ characteristicModifiers (json, not nullable)
 Characters
-  ├─ availableImprovementPoints (integer, nullable)
+  ├─ createdAt (timestamp with time zone, not nullable)
+Characters
+  ├─ updatedAt (timestamp with time zone, not nullable)
 Characters
   ├─ virtueFlawPoints (integer, nullable)
 Characters
@@ -91,6 +87,8 @@ character_virtues_flaws
 character_virtues_flaws
   ├─ updatedAt (timestamp with time zone, not nullable)
 character_virtues_flaws
+  ├─ cost (integer, not nullable)
+character_virtues_flaws
   ├─ selections (jsonb, nullable)
 reference_virtues_flaws
   ├─ id (integer, not nullable)
@@ -107,12 +105,6 @@ reference_virtues_flaws
 reference_virtues_flaws
   ├─ description (text, not nullable)
 reference_virtues_flaws
-  ├─ createdAt (timestamp with time zone, not nullable)
-reference_virtues_flaws
-  ├─ updatedAt (timestamp with time zone, not nullable)
-reference_virtues_flaws
-  ├─ source (text, nullable)
-reference_virtues_flaws
   ├─ max_selections (integer, nullable)
 reference_virtues_flaws
   ├─ prerequisites (jsonb, nullable)
@@ -120,5 +112,11 @@ reference_virtues_flaws
   ├─ incompatibilities (jsonb, nullable)
 reference_virtues_flaws
   ├─ effects (jsonb, nullable)
+reference_virtues_flaws
+  ├─ createdAt (timestamp with time zone, not nullable)
+reference_virtues_flaws
+  ├─ updatedAt (timestamp with time zone, not nullable)
+reference_virtues_flaws
+  ├─ source (text, nullable)
 reference_virtues_flaws
   ├─ allowed_sizes (jsonb, nullable)

@@ -27,7 +27,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "jest",
+    "test": "jest --config=./testing/jest.config.js",
+    "test:watch": "jest --config=./testing/jest.config.js --watch",
     "test:html": "jest --config=./testing/jest.config.js --watchAll=false",
     "eject": "react-scripts eject"
   },
