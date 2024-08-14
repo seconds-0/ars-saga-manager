@@ -1,6 +1,6 @@
-ARS-SAGA-MANAGER File System Structure
-Last updated: 2024-08-14T14:54:10.727Z
+Last updated: 2024-08-14T04:38:07.060Z
 
+.gitignore
 backend/
   .env
   .sequelizerc
@@ -73,6 +73,7 @@ Documentation/
   Product Requirements
   Testing Strategy
 frontend/
+  .gitignore
   package-lock.json
   package.json
   postcss.config.js

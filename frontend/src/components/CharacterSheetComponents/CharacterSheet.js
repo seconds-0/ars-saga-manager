@@ -20,8 +20,9 @@ function CharacterSheet() {
   const { data: character, isLoading, error } = useQuery(['character', id], () =>
     api.get(`/characters/${id}`).then((res) => {
       console.log('API response:', res.data);
-      if (res.data === null) {
-        throw new Error('Character not found');
+      if (!res.data || Object.keys(res.data).length === 0) {
+        console.log('No character data');
+        return null;
       }
       return res.data;
     }),
