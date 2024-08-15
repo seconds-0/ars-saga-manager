@@ -8,9 +8,10 @@ import { useAuth } from '../../useAuth';
 import LoadingSpinner from '../LoadingSpinner';
 
 function CharacterSheet() {
-  console.log('CharacterSheet component rendering');
+  console.log('CharacterSheet rendering');
   const { id } = useParams();
   const { user, isAuthenticated } = useAuth();
+  console.log('isAuthenticated:', isAuthenticated);
 
   console.log('CharacterSheet rendered, ID:', id);
   console.log('User:', user);
@@ -37,19 +38,24 @@ function CharacterSheet() {
 
   console.log('Query state:', { isLoading, error, character });
 
-  if (!isAuthenticated) return <div>Please log in to view this character.</div>;
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!character) return <div>Character not found</div>;
-
   return (
     <ErrorBoundary>
-      <div className="p-8">
-        <h2 className="text-2xl font-bold mb-4">
-          {character.characterName || 'Unnamed'} - {character.characterType || 'Unknown Type'}
-        </h2>
-        <CharacterSheetTabs character={character} />
-      </div>
+      {!isAuthenticated ? (
+        <div data-testid="login-message">Please log in to view this character.</div>
+      ) : isLoading ? (
+        <LoadingSpinner />
+      ) : error ? (
+        <div>Error: {error.message}</div>
+      ) : !character ? (
+        <div>Character not found</div>
+      ) : (
+        <div className="p-8">
+          <h2 className="text-2xl font-bold mb-4">
+            {character.characterName || 'Unnamed'} - {character.characterType || 'Unknown Type'}
+          </h2>
+          <CharacterSheetTabs character={character} />
+        </div>
+      )}
     </ErrorBoundary>
   );
 }

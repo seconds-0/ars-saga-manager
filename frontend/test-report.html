@@ -20,10 +20,241 @@
 <body>
   <h1>Test Report</h1>
     <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoadingSpinner.test.js')">
+        src\components\LoadingSpinner.test.js (3 tests)
+      </div>
+      <div id="src\components\LoadingSpinner.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">107ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner has correct CSS classes for styling and animation</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">13ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner is wrapped in a flex container for centering</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">10ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\HomePage.test.js')">
+        src\components\HomePage.test.js (3 tests)
+      </div>
+      <div id="src\components\HomePage.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">HomePage renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">123ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">HomePage renders welcome message</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">35ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">HomePage renders with correct test id</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">20ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoginPage.test.js')">
+        src\components\LoginPage.test.js (4 tests)
+      </div>
+      <div id="src\components\LoginPage.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage LoginPage renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">157ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage renders login form</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">98ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage handles form submission and stores token</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">66ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage displays error message on login failure</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">72ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
       <div class="test-suite-header" onclick="toggleTestSuite('src\components\CharacterSheetComponents\CharacterSheet.test.js')">
-        src\components\CharacterSheetComponents\CharacterSheet.test.js (0 tests)
+        src\components\CharacterSheetComponents\CharacterSheet.test.js (6 tests)
       </div>
       <div id="src\components\CharacterSheetComponents\CharacterSheet.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should display &quot;Please log in&quot; message when user is not authenticated</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">538ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should not make API call when user is not authenticated</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">144ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should display loading spinner while fetching character data</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">108ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should display character data when fetch is successful</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">155ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should handle errors and display error message</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">186ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacterSheet Component should display &quot;Character not found&quot; when no character data is returned</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">56ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\App.test.js')">
+        src\App.test.js (2 tests)
+      </div>
+      <div id="src\App.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">renders login page when not authenticated</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">395ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">renders home page when authenticated</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">60ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\CreateCharacterPage.test.js')">
+        src\components\CreateCharacterPage.test.js (10 tests)
+      </div>
+      <div id="src\components\CreateCharacterPage.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">115ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage all form elements are present</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">157ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage character type dropdown contains all expected options</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">337ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage character name input accepts valid input</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">494ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage create button is disabled when inputs are invalid</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">36ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage character name input accepts special characters</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">399ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage successful form submission with valid data</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">272ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage correct API call is made with input data</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">337ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage error handling for API call failures</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">307ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CreateCharacterPage navigates to the correct page after successful character creation</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">343ms</div>
+            </div>
+          </div>
       </div>
     </div>
 

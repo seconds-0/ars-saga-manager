@@ -1,14 +1,15 @@
 ARS-SAGA-MANAGER File System Structure
-Last updated: 2024-08-14T14:54:10.727Z
+Last updated: 2024-08-15T23:36:07.815Z
 
+.vscode/
+  settings.json
+  tasks.json
 backend/
   .env
   .sequelizerc
-  combined.log
   config/
     database.js
   emailService.js
-  error.log
   middleware/
     rateLimiter.js
     sanitizer.js
@@ -73,6 +74,7 @@ Documentation/
   Product Requirements
   Testing Strategy
 frontend/
+  .env
   package-lock.json
   package.json
   postcss.config.js
@@ -143,11 +145,17 @@ frontend/
     utils/
       characterUtils.js
     __mocks__/
-      axios.js
-      CharacterSheetTabs.js
+      api/
+        axios.js
+      components/
+        CharacterSheetComponents/
+          CharacterSheetTabs.js
       ErrorBoundary.js
+      hooks/
       LoadingSpinner.js
+      react-router-dom.js
       UseAuth.js
+      utils/
   tailwind.config.js
   test-report.html
   testing/
