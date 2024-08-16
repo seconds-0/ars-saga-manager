@@ -23,7 +23,7 @@ describe('LoadingSpinner', () => {
 
   test('is wrapped in a flex container for centering', () => {
     renderLoadingSpinner();
-    const wrapperDiv = screen.getByTestId('loading-spinner-wrapper');
+    const wrapperDiv = screen.getByTestId('loading-spinner-container');
     expect(wrapperDiv).toHaveClass('flex', 'justify-center', 'items-center', 'h-full');
   });
 });

@@ -277,7 +277,35 @@ api.js
 
 Example usage in a test file:
 javascript
-// In MyComponent.test.js
+// 1. Imports
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import MyComponent from './MyComponent';
+import { useAuth } from '../../hooks/useAuth';
+import api from '../../api/api';
+// 2. Mock declarations
 jest.mock('../../hooks/useAuth');
 jest.mock('../../api/api');
-// The rest of your test file...
+// 3. Test setup and helper functions
+const renderComponent = (props = {}) => {
+return render(<MyComponent {...props} />);
+};
+// 4. Test cases
+describe('MyComponent', () => {
+beforeEach(() => {
+jest.clearAllMocks();
+});
+it('renders correctly', () => {
+renderComponent();
+// Add assertions
+});
+// More test cases...
+});
+
+This structure ensures that:
+
+- Imports are at the top, following JavaScript conventions.
+- Mock declarations are clearly visible and grouped together.
+- The actual test setup and cases are separate and easy to find.
+
+Remember that Jest hoists mock declarations, so they will effectively run before the imports regardless of their position in the file. However, placing them after imports improves readability and follows common JavaScript practices.

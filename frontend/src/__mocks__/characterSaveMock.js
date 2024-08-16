@@ -1,0 +1,1 @@
+export const onSaveMock = jest.fn().mockResolvedValue(undefined);

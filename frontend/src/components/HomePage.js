@@ -1,8 +1,8 @@
 import React from 'react';
 
-function HomePage({ 'data-testid': dataTestId }) {
+function HomePage() {
   return (
-    <div data-testid={dataTestId}>
+    <div data-testid="home-page">
       <h1 className="text-3xl font-bold mb-6">Welcome to Ars Saga Manager</h1>
       {/* Add any dashboard content here */}
     </div>
