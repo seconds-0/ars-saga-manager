@@ -1,5 +1,5 @@
 ARS-SAGA-MANAGER File System Structure
-Last updated: 2024-08-15T23:36:07.815Z
+Last updated: 2024-08-16T03:41:25.105Z
 
 .vscode/
   settings.json
@@ -100,6 +100,7 @@ frontend/
         ArtsTab.js
         CharacteristicInput.js
         CharacteristicsAndAbilitiesTab.js
+        CharacteristicsAndAbilitiesTab.test.js
         CharacterOverviewTab.js
         CharacterSheet.js
         CharacterSheet.test.js
@@ -147,9 +148,12 @@ frontend/
     __mocks__/
       api/
         axios.js
+      characterSaveMock.js
       components/
         CharacterSheetComponents/
+          CharacteristicInput.js
           CharacterSheetTabs.js
+        Toast.js
       ErrorBoundary.js
       hooks/
       LoadingSpinner.js
