@@ -1,11 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 import CharacteristicsAndAbilitiesTab from './CharacteristicsAndAbilitiesTab';
 
-jest.mock('./CharacteristicInput', () => ({ name, baseValue }) => (
+jest.mock('./CharacteristicInput', () => ({ name, baseValue, onIncrement, onDecrement }) => (
   <div data-testid={`characteristic-input-${name.toLowerCase()}`}>
     {name}: {baseValue}
+    <button onClick={onIncrement} aria-label={`increment ${name}`}>+</button>
+    <button onClick={onDecrement} aria-label={`decrement ${name}`}>-</button>
   </div>
 ));
 
@@ -88,5 +91,45 @@ describe('CharacteristicsAndAbilitiesTab', () => {
     });
   });
 
-  // Add more test cases here...
+  describe('3.2.1 Incrementing Tests', () => {
+    it('should increment a characteristic up to +3 and correctly spend points', async () => {
+      // Arrange
+      const user = userEvent.setup();
+      const mockCharacter = {
+        strength: 0,
+        totalImprovementPoints: 12 // Need 6 points total: 1 + 2 + 3 = 6 points to go from 0 to +3
+      };
+      renderComponent({ character: mockCharacter });
+
+      // Act & Assert
+      // Initial value should be 0, with all 12 points available
+      expect(screen.getByTestId('characteristic-input-strength')).toHaveTextContent('Strength: 0');
+      expect(screen.getByText('Available Improvement Points: 12')).toBeInTheDocument();
+
+      // Click increment button 3 times to reach +3
+      const incrementButtons = screen.getAllByRole('button', { name: /increment/i });
+      const strengthIncrement = incrementButtons[0];
+
+      // First increment (0 to +1) - costs 1 point
+      await user.click(strengthIncrement);
+      expect(screen.getByTestId('characteristic-input-strength')).toHaveTextContent('Strength: 1');
+      const pointsAfterFirst = screen.getByText(/Available Improvement Points: \d+/);
+      expect(pointsAfterFirst).toHaveTextContent('Available Improvement Points: 11'); // 12 - 1 = 11
+      expect(Number(pointsAfterFirst.textContent.match(/\d+/)[0])).toBe(11);
+
+      // Second increment (+1 to +2) - costs 2 points
+      await user.click(strengthIncrement);
+      expect(screen.getByTestId('characteristic-input-strength')).toHaveTextContent('Strength: 2');
+      const pointsAfterSecond = screen.getByText(/Available Improvement Points: \d+/);
+      expect(pointsAfterSecond).toHaveTextContent('Available Improvement Points: 9'); // 11 - 2 = 9
+      expect(Number(pointsAfterSecond.textContent.match(/\d+/)[0])).toBe(9);
+
+      // Third increment (+2 to +3) - costs 3 points
+      await user.click(strengthIncrement);
+      expect(screen.getByTestId('characteristic-input-strength')).toHaveTextContent('Strength: 3');
+      const pointsAfterThird = screen.getByText(/Available Improvement Points: \d+/);
+      expect(pointsAfterThird).toHaveTextContent('Available Improvement Points: 6'); // 9 - 3 = 6
+      expect(Number(pointsAfterThird.textContent.match(/\d+/)[0])).toBe(6);
+    });
+  });
 });
