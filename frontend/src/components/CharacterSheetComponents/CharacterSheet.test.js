@@ -20,7 +20,7 @@ jest.mock('../../useAuth', () => {
 });
 
 jest.mock('../LoadingSpinner', () => () => <div data-testid="loading-spinner">Loading...</div>);
-jest.mock('./CharacterSheetTabs', () => ({ character }) => <div data-testid="character-sheet-tabs">Mocked Tabs for {character.characterName}</div>);
+jest.mock('./CharacterSheetTabs', () => ({ character, onSave }) => <div data-testid="character-sheet-tabs">Mocked Tabs for {character.characterName}</div>);
 jest.mock('../../api/axios', () => ({
   get: jest.fn().mockResolvedValue({ data: {} }),
 }));

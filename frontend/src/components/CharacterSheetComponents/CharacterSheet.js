@@ -53,7 +53,7 @@ function CharacterSheet() {
           <h2 className="text-2xl font-bold mb-4">
             {character.characterName || 'Unnamed'} - {character.characterType || 'Unknown Type'}
           </h2>
-          <CharacterSheetTabs character={character} />
+          <CharacterSheetTabs character={character} onSave={() => {}} />
         </div>
       )}
     </ErrorBoundary>
