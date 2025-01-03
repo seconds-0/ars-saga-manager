@@ -53,6 +53,9 @@ jest.mock('../useAuth', () => ({
   AuthProvider: ({ children }) => <div>{children}</div>,
   useAuth: () => ({
     login: jest.fn().mockResolvedValue(undefined),
+    isAuthenticated: false,
+    user: null,
+    logout: jest.fn(),
   }),
 }));
 
@@ -117,6 +120,9 @@ describe('LoginPage', () => {
     
     jest.spyOn(require('../useAuth'), 'useAuth').mockImplementation(() => ({
       login: mockLogin,
+      isAuthenticated: false,
+      user: null,
+      logout: jest.fn(),
     }));
     jest.spyOn(require('react-router-dom'), 'useNavigate').mockImplementation(() => mockNavigate);
 
@@ -124,21 +130,36 @@ describe('LoginPage', () => {
     renderLoginPage();
     
     console.log('Submitting form');
-    await act(async () => {
-      fireEvent.submit(screen.getByTestId('login-form'));
-    });
+    fireEvent.submit(screen.getByTestId('login-form'));
     
     console.log('Checking expectations');
-    expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'password123' });
-    expect(mockLogin).toHaveBeenCalledWith(fakeToken);
-    expect(mockNavigate).toHaveBeenCalledWith('/home');
-    expect(localStorage.getItem('token')).toBe(fakeToken);
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'password123' });
+    });
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith(fakeToken);
+    });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/home');
+    });
+    await waitFor(() => {
+      expect(localStorage.getItem('token')).toBe(fakeToken);
+    });
     
     console.log('Test completed');
   });
 
   test('displays error message on login failure', async () => {
     api.post.mockRejectedValueOnce({ response: { data: { message: 'Invalid credentials' } } });
+    const mockLogin = jest.fn();
+    
+    jest.spyOn(require('../useAuth'), 'useAuth').mockImplementation(() => ({
+      login: mockLogin,
+      isAuthenticated: false,
+      user: null,
+      logout: jest.fn(),
+    }));
+
     renderLoginPage();
 
     fireEvent.change(screen.getByTestId('mock-input-email'), { target: { value: 'test@example.com' } });

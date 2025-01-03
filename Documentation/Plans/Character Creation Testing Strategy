@@ -111,32 +111,41 @@
 
 ## 3. CharacteristicsAndAbilitiesTab Component Tests
 
-### 3.1 Rendering Tests
+### 3.1 Rendering Tests (COMPLETE)
 
-- **Test initial rendering with default values:**
+- (COMPLETE) **Test initial rendering with default values**
+- (COMPLETE) **Verify rendering with pre-existing character data**
 
-- **Verify rendering with pre-existing character data:**
+### 3.2 Characteristic Modification Tests (COMPLETE)
 
-### 3.2 Characteristic Modification Tests
+- (COMPLETE) **Test incrementing and decrementing each characteristic**
+  - Verify point costs at different characteristic levels
+  - Test maximum and minimum value constraints
+  - Test point calculation and restoration
+- (COMPLETE) **Test point calculation for positive and negative values**
+- (COMPLETE) **Test multiple characteristic modifications**
+- (COMPLETE) **Falsification Tests**
+  - Verify incorrect initial points are caught
+  - Verify incorrect increment/decrement behavior is caught
+  - Verify incorrect point calculations are caught
 
-- **Test incrementing and decrementing each characteristic:**
+### 3.3 Point Calculation Tests (COMPLETE)
 
-- **Verify that characteristics cannot exceed maximum or minimum values:**
-
-### 3.3 Point Calculation Tests
-
-- **Test that available improvement points are calculated correctly:**
-
-- **Verify that points are deducted correctly when increasing characteristics:**
+- (COMPLETE) **Test that available improvement points are calculated correctly**
+  - Verify point costs for each characteristic level (-3 to +3)
+  - Test point restoration when decreasing characteristics
+  - Verify costs scale correctly with characteristic values
+- (COMPLETE) **Verify that points are deducted correctly when increasing characteristics**
+  - Test complex scenarios with multiple characteristics
+  - Verify edge cases and boundary conditions
+  - Falsification tests to catch incorrect calculations
 
 ### 3.4 Saving Tests
 
-- **Test saving characteristics and verify API call:**
-
-- **Verify error handling for save failures:**
+- **Test saving characteristics and verify API call**
+- **Verify error handling for save failures**
 
 ### 3.5 Use Cunning Functionality
 
-- **Test toggling the "Use Cunning" checkbox:**
-
-- **Verify that it affects the character data correctly:**
+- **Test toggling the "Use Cunning" checkbox**
+- **Verify that it affects the character data correctly**

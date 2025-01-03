@@ -149,7 +149,9 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
         </div>
       </div>
       <div className="mt-4">
-        <p className="font-semibold">Available Improvement Points: {getAvailablePoints()}</p>
+        <p className="font-semibold" data-testid="available-points">
+          Available Improvement Points: {getAvailablePoints()}
+        </p>
       </div>
       <button
         onClick={handleSave}

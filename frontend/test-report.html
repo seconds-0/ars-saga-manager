@@ -20,50 +20,260 @@
 <body>
   <h1>Test Report</h1>
     <div class="test-suite">
-      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoadingSpinner.test.js')">
-        src\components\LoadingSpinner.test.js (3 tests)
+      <div class="test-suite-header" onclick="toggleTestSuite('src\utils\virtueFlawValidation.test.js')">
+        src\utils\virtueFlawValidation.test.js (36 tests)
       </div>
-      <div id="src\components\LoadingSpinner.test.js" class="test-suite-content">
+      <div id="src\utils\virtueFlawValidation.test.js" class="test-suite-content">
           <div class="test-result passed">
             <div class="test-info">
-              <div class="test-title">LoadingSpinner renders without crashing</div>
+              <div class="test-title">Virtue and Flaw Validation Core Validation Rules should validate grog restrictions with default rules</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">107ms</div>
+              <div class="test-duration">7ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
-              <div class="test-title">LoadingSpinner has correct CSS classes for styling and animation</div>
+              <div class="test-title">Virtue and Flaw Validation Core Validation Rules should validate companion restrictions with default rules</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">10ms</div>
+              <div class="test-duration">2ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
-              <div class="test-title">LoadingSpinner is wrapped in a flex container for centering</div>
+              <div class="test-title">Virtue and Flaw Validation Core Validation Rules should validate minor flaw limit for companions/magi</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">10ms</div>
-            </div>
-          </div>
-      </div>
-    </div>
-    <div class="test-suite">
-      <div class="test-suite-header" onclick="toggleTestSuite('src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js')">
-        src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js (2 tests)
-      </div>
-      <div id="src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js" class="test-suite-content">
-          <div class="test-result passed">
-            <div class="test-info">
-              <div class="test-title">CharacteristicsAndAbilitiesTab 3.1 Rendering Tests should render with default values when no character is provided</div>
-              <div class="test-status">passed</div>
-              <div class="test-duration">196ms</div>
+              <div class="test-duration">4ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
-              <div class="test-title">CharacteristicsAndAbilitiesTab 3.1 Rendering Tests should render with pre-existing character data</div>
+              <div class="test-title">Virtue and Flaw Validation Core Validation Rules should validate The Gift restrictions</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">254ms</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Rule Configuration should allow overriding grog major virtue restriction</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Rule Configuration should allow overriding point limits</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Rule Configuration should allow overriding minor flaw limit</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">19ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Falsification Tests should detect attempts to bypass character type validation</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">73ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Falsification Tests should detect invalid rule configurations</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Falsification Tests should detect missing required rule properties</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Point Balance Rules should validate virtue/flaw point balance</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Point Balance Rules should ignore house virtues/flaws in point balance</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Point Balance Rules should allow point balance override for special cases</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Category-specific Rules should validate Story Flaw limit</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Category-specific Rules should validate Personality Flaw limit</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Category-specific Rules should allow overriding category limits</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Category-specific Rules should ignore house flaws in category limits</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Social Status Rules should require exactly one Social Status</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">7ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Social Status Rules should not allow multiple Social Status virtues/flaws</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Social Status Rules should allow one Social Status virtue or flaw</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">3ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Social Status Rules should count house Social Status as valid</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Social Status Rules should allow disabling Social Status requirement</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Incompatibility Rules should detect incompatible virtue/flaw combinations</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Incompatibility Rules should allow virtue/flaw combinations without incompatibilities</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Incompatibility Rules should ignore house virtues/flaws in incompatibility checks</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Incompatibility Rules should allow disabling incompatibility checks</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Prerequisite Rules should validate virtue prerequisites</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Prerequisite Rules should validate flaw prerequisites</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Prerequisite Rules should allow virtues/flaws with satisfied prerequisites</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Prerequisite Rules should allow disabling prerequisite checks</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Prerequisite Rules should handle multiple prerequisites</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Character Type Restrictions should validate character type restrictions for virtues</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Character Type Restrictions should validate character type restrictions for flaws</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Character Type Restrictions should allow virtues/flaws for allowed character types</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Character Type Restrictions should allow virtues/flaws without character type restrictions</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Validation Character Type Restrictions should allow disabling character type restrictions</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
             </div>
           </div>
       </div>
@@ -77,56 +287,21 @@
             <div class="test-info">
               <div class="test-title">HomePage renders without crashing</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">129ms</div>
+              <div class="test-duration">143ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">HomePage renders welcome message</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">17ms</div>
+              <div class="test-duration">30ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">HomePage renders with correct test id</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">13ms</div>
-            </div>
-          </div>
-      </div>
-    </div>
-    <div class="test-suite">
-      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoginPage.test.js')">
-        src\components\LoginPage.test.js (4 tests)
-      </div>
-      <div id="src\components\LoginPage.test.js" class="test-suite-content">
-          <div class="test-result passed">
-            <div class="test-info">
-              <div class="test-title">LoginPage LoginPage renders without crashing</div>
-              <div class="test-status">passed</div>
-              <div class="test-duration">134ms</div>
-            </div>
-          </div>
-          <div class="test-result passed">
-            <div class="test-info">
-              <div class="test-title">LoginPage renders login form</div>
-              <div class="test-status">passed</div>
-              <div class="test-duration">78ms</div>
-            </div>
-          </div>
-          <div class="test-result passed">
-            <div class="test-info">
-              <div class="test-title">LoginPage handles form submission and stores token</div>
-              <div class="test-status">passed</div>
-              <div class="test-duration">70ms</div>
-            </div>
-          </div>
-          <div class="test-result passed">
-            <div class="test-info">
-              <div class="test-title">LoginPage displays error message on login failure</div>
-              <div class="test-status">passed</div>
-              <div class="test-duration">71ms</div>
+              <div class="test-duration">26ms</div>
             </div>
           </div>
       </div>
@@ -140,42 +315,476 @@
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should display &quot;Please log in&quot; message when user is not authenticated</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">549ms</div>
+              <div class="test-duration">548ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should not make API call when user is not authenticated</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">27ms</div>
+              <div class="test-duration">46ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should display loading spinner while fetching character data</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">23ms</div>
+              <div class="test-duration">62ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should display character data when fetch is successful</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">74ms</div>
+              <div class="test-duration">87ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should handle errors and display error message</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">92ms</div>
+              <div class="test-duration">150ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CharacterSheet Component should display &quot;Character not found&quot; when no character data is returned</div>
               <div class="test-status">passed</div>
+              <div class="test-duration">45ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoginPage.test.js')">
+        src\components\LoginPage.test.js (4 tests)
+      </div>
+      <div id="src\components\LoginPage.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage LoginPage renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">123ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage renders login form</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">90ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage handles form submission and stores token</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">125ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoginPage displays error message on login failure</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">136ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\utils\virtueFlawPoints.test.js')">
+        src\utils\virtueFlawPoints.test.js (16 tests)
+      </div>
+      <div id="src\utils\virtueFlawPoints.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.1 Basic Calculations should calculate virtue points correctly</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">5ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.1 Basic Calculations should calculate flaw points correctly</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.1 Basic Calculations should handle free virtues/flaws correctly</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.1 Basic Calculations should track running point totals</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.2 Special Cases should exclude house virtues/flaws from point totals</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.2 Special Cases should handle Ex Miscellanea additional virtues/flaws</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.2 Special Cases should handle temporary point imbalances</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation 6.2 Special Cases should validate final point balance requirements</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Character Type Specific Calculations should validate grog point limits</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">2ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Character Type Specific Calculations should validate companion/magi point limits</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect invalid virtue/flaw size</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">42ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect incorrect point calculations</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect incorrect house virtue/flaw handling</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect incorrect balance calculations</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect incorrect character type limit handling</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">1ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">Virtue and Flaw Point Calculation Falsification Tests should detect incorrect handling of undefined values</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">3ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\CharacterSheetComponents\VirtueFlawValidationMessages.test.js')">
+        src\components\CharacterSheetComponents\VirtueFlawValidationMessages.test.js (6 tests)
+      </div>
+      <div id="src\components\CharacterSheetComponents\VirtueFlawValidationMessages.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should not render anything when there are no warnings</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">110ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should render error messages with correct styling</div>
+              <div class="test-status">passed</div>
               <div class="test-duration">27ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should render warning messages with correct styling</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">13ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should render multiple messages</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">17ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should handle undefined validationResult</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">8ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">VirtueFlawValidationMessages should handle null warnings array</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">31ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\LoadingSpinner.test.js')">
+        src\components\LoadingSpinner.test.js (3 tests)
+      </div>
+      <div id="src\components\LoadingSpinner.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner renders without crashing</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">39ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner has correct CSS classes for styling and animation</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">4ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">LoadingSpinner is wrapped in a flex container for centering</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">4ms</div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js')">
+        src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js (28 tests)
+      </div>
+      <div id="src\components\CharacterSheetComponents\CharacteristicsAndAbilitiesTab.test.js" class="test-suite-content">
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.1 Rendering Tests should render with default values when no character is provided</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">374ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.1 Rendering Tests should render with pre-existing character data</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">399ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests increment characteristic should increment a characteristic and update points correctly</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">85ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests increment characteristic should detect incorrect initial points</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">45ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests increment characteristic should detect incorrect increment behavior</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">53ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests increment characteristic should detect incorrect point deduction</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">54ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests decrement characteristic should decrement a characteristic and update points correctly</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">70ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests decrement characteristic should detect incorrect decrement behavior</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">49ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests decrement characteristic should detect incorrect point restoration</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">65ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should prevent incrementing when not enough points available</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">50ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should prevent incrementing beyond maximum value (+3)</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">73ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should prevent decrementing below minimum value (-3)</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">48ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should calculate points correctly for negative values</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">55ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should calculate points correctly for positive values</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.2 Characteristic Modification Tests should handle multiple characteristic modifications</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">0ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.3 Point Calculation Tests should calculate costs correctly for each characteristic level</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">78ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.3 Point Calculation Tests should calculate costs correctly for negative values</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">59ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.3 Point Calculation Tests should handle complex point calculations with multiple characteristics</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">81ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.3 Point Calculation Tests should detect incorrect point calculations</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">44ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.4 Saving Tests should save characteristics successfully</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">373ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.4 Saving Tests should handle save failures gracefully</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">123ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.4 Saving Tests should fail if save succeeds but returns incorrect data</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">68ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should toggle the Use Cunning checkbox</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">67ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should preserve Use Cunning state when saving</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">67ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should load with Use Cunning enabled if character has it enabled</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">42ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should detect incorrect initial Use Cunning state</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">35ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should detect incorrect toggle behavior</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">48ms</div>
+            </div>
+          </div>
+          <div class="test-result passed">
+            <div class="test-info">
+              <div class="test-title">CharacteristicsAndAbilitiesTab 3.5 Use Cunning Functionality should detect incorrect Use Cunning state preservation</div>
+              <div class="test-status">passed</div>
+              <div class="test-duration">54ms</div>
             </div>
           </div>
       </div>
@@ -189,16 +798,23 @@
             <div class="test-info">
               <div class="test-title">renders login page when not authenticated</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">360ms</div>
+              <div class="test-duration">417ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">renders home page when authenticated</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">57ms</div>
+              <div class="test-duration">69ms</div>
             </div>
           </div>
+      </div>
+    </div>
+    <div class="test-suite">
+      <div class="test-suite-header" onclick="toggleTestSuite('src\components\CharacterSheetComponents\VirtuesAndFlawsTab.test.js')">
+        src\components\CharacterSheetComponents\VirtuesAndFlawsTab.test.js (0 tests)
+      </div>
+      <div id="src\components\CharacterSheetComponents\VirtuesAndFlawsTab.test.js" class="test-suite-content">
       </div>
     </div>
     <div class="test-suite">
@@ -210,35 +826,35 @@
             <div class="test-info">
               <div class="test-title">CreateCharacterPage renders without crashing</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">114ms</div>
+              <div class="test-duration">179ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage all form elements are present</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">151ms</div>
+              <div class="test-duration">220ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage character type dropdown contains all expected options</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">289ms</div>
+              <div class="test-duration">410ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage character name input accepts valid input</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">486ms</div>
+              <div class="test-duration">542ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage create button is disabled when inputs are invalid</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">27ms</div>
+              <div class="test-duration">36ms</div>
             </div>
           </div>
           <div class="test-result passed">
@@ -252,28 +868,28 @@
             <div class="test-info">
               <div class="test-title">CreateCharacterPage successful form submission with valid data</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">239ms</div>
+              <div class="test-duration">280ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage correct API call is made with input data</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">313ms</div>
+              <div class="test-duration">292ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage error handling for API call failures</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">306ms</div>
+              <div class="test-duration">313ms</div>
             </div>
           </div>
           <div class="test-result passed">
             <div class="test-info">
               <div class="test-title">CreateCharacterPage navigates to the correct page after successful character creation</div>
               <div class="test-status">passed</div>
-              <div class="test-duration">249ms</div>
+              <div class="test-duration">195ms</div>
             </div>
           </div>
       </div>
