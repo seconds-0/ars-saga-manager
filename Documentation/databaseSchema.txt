@@ -1,4 +1,4 @@
-CREATED AT: 2024-08-14T21:22:19.081Z
+CREATED AT: 2025-01-03T17:55:00.221Z
 
 Characters
   ├─ id (integer, not nullable)
