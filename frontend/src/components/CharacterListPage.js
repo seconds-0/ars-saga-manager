@@ -86,7 +86,7 @@ function CharacterListPage() {
         confirmText="Delete"
       >
         <p className="text-sm text-gray-500">
-          Are you sure you want to delete {characterToDelete?.characterName}? This action cannot be undone.
+          Are you sure you want to delete {characterToDelete?.name}? This action cannot be undone.
         </p>
       </Modal>
       {toastMessage && (

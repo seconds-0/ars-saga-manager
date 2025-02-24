@@ -1,186 +1,90 @@
 'use strict';
 const { Model } = require('sequelize');
+const { isValidCharacterType } = require('../utils/ruleEngine');
 
 module.exports = (sequelize, DataTypes) => {
   class Character extends Model {
     static associate(models) {
-      Character.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      Character.hasMany(models.CharacterVirtueFlaw, { foreignKey: 'characterId', as: 'CharacterVirtueFlaws' });
-    }
-
-    // Calculate remaining virtue/flaw points
-    getRemainingVirtueFlawPoints() {
-      return this.maxVirtueFlawPoints - this.virtueFlawPoints;
-    }
-
-    async addVirtueFlaw(virtueFlawId, cost, selections) {
-      const transaction = await sequelize.transaction();
-      try {
-        await this.increment('virtueFlawPoints', { by: cost, transaction });
-        const newVirtueFlaw = await this.createCharacterVirtueFlaw({
-          referenceVirtueFlawId: virtueFlawId,
-          cost,
-          selections
-        }, { transaction });
-        await transaction.commit();
-        return newVirtueFlaw;
-      } catch (error) {
-        await transaction.rollback();
-        throw error;
-      }
-    }
-
-    async removeVirtueFlaw(virtueFlawId) {
-      const transaction = await sequelize.transaction();
-      try {
-        const virtueFlaw = await this.getCharacterVirtueFlaws({ where: { id: virtueFlawId }, transaction });
-        if (!virtueFlaw) {
-          throw new Error('Virtue/Flaw not found');
-        }
-        await this.decrement('virtueFlawPoints', { by: virtueFlaw.cost, transaction });
-        await virtueFlaw.destroy({ transaction });
-        await transaction.commit();
-      } catch (error) {
-        await transaction.rollback();
-        throw error;
-      }
+      Character.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        as: 'user'
+      });
+      Character.hasMany(models.CharacterVirtueFlaw, {
+        foreignKey: 'character_id',
+        as: 'CharacterVirtueFlaws'
+      });
+      Character.belongsTo(models.House, {
+        foreignKey: 'house_id',
+        as: 'house'
+      });
     }
   }
+  
   Character.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    entityId: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+    name: {
+      type: DataTypes.STRING,
       allowNull: false,
-      unique: true
+      validate: {
+        notEmpty: true
+      }
     },
-    characterName: {
+    character_type: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isValidType(value) {
+          if (!isValidCharacterType(value)) {
+            throw new Error('Only Grog, Companion, and Magus are currently supported');
+          }
+        }
+      }
     },
-    userId: {
+    user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
-    entityType: {
-      type: DataTypes.STRING,
-      defaultValue: 'character'
-    },
-    characterType: {
-      type: DataTypes.ENUM('Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'),
-      allowNull: false
-    },
-    age: {
+    house_id: {
       type: DataTypes.INTEGER,
-      defaultValue: 25,
-      allowNull: true
+      allowNull: true,
+      references: {
+        model: 'houses',
+        key: 'id'
+      },
+      validate: {
+        isValidForCharacterType() {
+          if (this.house_id && this.character_type.toLowerCase() !== 'magus') {
+            throw new Error('Only magi can belong to a house');
+          }
+        }
+      }
     },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true
+    selected_house_virtues: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      validate: {
+        isArray(value) {
+          if (!Array.isArray(value)) {
+            throw new Error('selected_house_virtues must be an array');
+          }
+        }
+      }
     },
-    house: {
-      type: DataTypes.ENUM('Bonisagus', 'Tremere', 'Guernicus', 'Mercere', 'Criamon', 'Ex Miscellenia', 'Verditius', 'Bjorner', 'Merenita', 'Tytalus', 'Jerbiton', 'Flambeau'),
-      allowNull: true
-    },
-    abilities: DataTypes.JSON,
-    arts: DataTypes.JSON,
-    spells: DataTypes.JSON,
-    equipment: DataTypes.JSON,
-
-    // New fields for characteristics
-    strength: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    stamina: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    dexterity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    quickness: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    intelligence: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    presence: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    communication: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    perception: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      allowNull: false
-    },
-    useCunning: {
+    use_cunning: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false
-    },
-    availableImprovementPoints: {
-      type: DataTypes.INTEGER,
-      defaultValue: 7,
-      allowNull: false
-    },
-    totalImprovementPoints: {
-      type: DataTypes.INTEGER,
-      defaultValue: 7,
-      allowNull: false
-    },
-    characteristicModifiers: {
-      type: DataTypes.JSON,
-      defaultValue: {},
-      allowNull: false
-    },
-
-    // New fields for virtue/flaw point tracking
-    virtueFlawPoints: {
-      type: DataTypes.INTEGER,
       allowNull: false,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    maxVirtueFlawPoints: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 10,
-      validate: {
-        min: 0
-      }
+      defaultValue: false
     }
   }, {
     sequelize,
     modelName: 'Character',
-    hooks: {
-      beforeCreate: (character) => {
-        if (character.characterType === 'Grog') {
-          character.maxVirtueFlawPoints = 3;
-        }
-      }
-    }
+    tableName: 'characters',
+    underscored: true
   });
+  
   return Character;
 };

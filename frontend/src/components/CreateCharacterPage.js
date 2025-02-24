@@ -11,17 +11,40 @@ function CreateCharacterPage() {
   const handleCreate = async () => {
     if (characterName.trim() && characterType) {
       try {
+        console.log('🔄 Starting character creation...');
+        
+        // Check authentication state
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('❌ No authentication token found');
+          setError('You must be logged in to create a character. Please log in again.');
+          navigate('/login');
+          return;
+        }
+        
+        console.log('🔍 Preparing character data...');
         setError('');
-        const response = await api.post('/characters', {
-          characterName: characterName,
-          characterType: characterType,
-          useCunning: false
-        });
-        console.log('Character created:', response.data);
+        const requestData = {
+          name: characterName,
+          character_type: characterType.toLowerCase(),
+          use_cunning: false
+        };
+        
+        console.log('📤 Sending character creation request:', requestData);
+        const response = await api.post('/characters', requestData);
+        console.log('✅ Character created successfully:', response.data);
+        
         navigate(`/character/${response.data.id}`);
       } catch (error) {
-        console.error('Error creating character:', error);
-        setError('An error occurred while creating the character. Please try again.');
+        console.error('❌ Error creating character:', error);
+        console.error('📝 Error details:', error.response?.data);
+        
+        if (error.response?.status === 401) {
+          setError('Your session has expired. Please log in again.');
+          navigate('/login');
+        } else {
+          setError('An error occurred while creating the character. Please try again.');
+        }
       }
     }
   };
@@ -46,13 +69,9 @@ function CreateCharacterPage() {
           className="w-full p-2 border border-gray-300 rounded mb-4"
         >
           <option value="">Select character type</option>
-          <option value="Magus">Magus</option>
-          <option value="Companion">Companion</option>
-          <option value="Grog">Grog</option>
-          <option value="Animal">Animal</option>
-          <option value="Demon">Demon</option>
-          <option value="Spirit">Spirit</option>
-          <option value="Faerie">Faerie</option>
+          <option value="grog">Grog</option>
+          <option value="companion">Companion</option>
+          <option value="magus">Magus</option>
         </select>
         <div className="flex justify-between">
           <button

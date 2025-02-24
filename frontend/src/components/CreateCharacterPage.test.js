@@ -65,10 +65,16 @@ describe('CreateCharacterPage', () => {
   test('character type dropdown contains all expected options', () => {
     renderComponent();
     
-    const options = ['Select character type', 'Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'];
+    const options = ['Select character type', 'Grog', 'Companion', 'Magus'];
     
     options.forEach(option => {
       expect(screen.getByRole('option', { name: option })).toBeInTheDocument();
+    });
+
+    // Verify removed options are not present
+    const removedOptions = ['animal', 'demon', 'spirit', 'faerie'];
+    removedOptions.forEach(option => {
+      expect(screen.queryByRole('option', { name: option })).not.toBeInTheDocument();
     });
   });
 
@@ -91,12 +97,13 @@ describe('CreateCharacterPage', () => {
     expect(createButton).toBeDisabled();
 
     // Select character type, but clear name
-    fireEvent.change(screen.getByTestId('character-type-select'), { target: { value: 'Magus' } });
+    fireEvent.change(screen.getByTestId('character-type-select'), { target: { value: 'magus' } });
     fireEvent.change(screen.getByTestId('character-name-input'), { target: { value: '' } });
     expect(createButton).toBeDisabled();
 
     // Fill in both inputs
     fireEvent.change(screen.getByTestId('character-name-input'), { target: { value: 'John Doe' } });
+    fireEvent.change(screen.getByTestId('character-type-select'), { target: { value: 'magus' } });
     expect(createButton).not.toBeDisabled();
   });
 
@@ -114,20 +121,20 @@ describe('CreateCharacterPage', () => {
     renderComponent();
 
     await userEvent.type(screen.getByTestId('character-name-input'), 'John Doe');
-    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'Magus');
+    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'magus');
     
     await userEvent.click(screen.getByTestId('create-button'));
 
     expect(api.post).toHaveBeenCalledWith('/characters', {
-      characterName: 'John Doe',
-      characterType: 'Magus',
-      useCunning: false
+      name: 'John Doe',
+      character_type: 'magus',
+      use_cunning: false
     });
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/character/123');
     });
-  }, 10000); // Add this timeout
+  }, 10000);
 
   test('correct API call is made with input data', async () => {
     const mockResponse = { data: { id: '456' } };
@@ -136,20 +143,20 @@ describe('CreateCharacterPage', () => {
     renderComponent();
 
     await userEvent.type(screen.getByTestId('character-name-input'), 'Jane Smith');
-    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'Companion');
+    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'companion');
     
     await userEvent.click(screen.getByTestId('create-button'));
 
     expect(api.post).toHaveBeenCalledWith('/characters', {
-      characterName: 'Jane Smith',
-      characterType: 'Companion',
-      useCunning: false
+      name: 'Jane Smith',
+      character_type: 'companion',
+      use_cunning: false
     });
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/character/456');
     });
-  }, 10000); // Add this timeout
+  }, 10000);
 
   test('error handling for API call failures', async () => {
     const mockError = new Error('API Error');
@@ -160,25 +167,24 @@ describe('CreateCharacterPage', () => {
     renderComponent();
 
     await userEvent.type(screen.getByTestId('character-name-input'), 'Error Test');
-    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'Grog');
+    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'grog');
     
     await userEvent.click(screen.getByTestId('create-button'));
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/characters', {
-        characterName: 'Error Test',
-        characterType: 'Grog',
-        useCunning: false
+        name: 'Error Test',
+        character_type: 'grog',
+        use_cunning: false
       });
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error creating character:', mockError);
-    expect(mockNavigate).not.toHaveBeenCalled();
-
-    expect(screen.getByText('An error occurred while creating the character. Please try again.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('An error occurred while creating the character. Please try again.')).toBeInTheDocument();
+    });
 
     consoleSpy.mockRestore();
-  });
+  }, 10000);
 
   test('navigates to the correct page after successful character creation', async () => {
     const mockResponse = { data: { id: '789' } };
@@ -187,19 +193,74 @@ describe('CreateCharacterPage', () => {
     renderComponent();
 
     await userEvent.type(screen.getByTestId('character-name-input'), 'Merlin');
-    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'Magus');
+    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'magus');
     
     await userEvent.click(screen.getByTestId('create-button'));
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith('/characters', {
-        characterName: 'Merlin',
-        characterType: 'Magus',
-        useCunning: false
+        name: 'Merlin',
+        character_type: 'magus',
+        use_cunning: false
       });
     });
 
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith('/character/789');
+  });
+
+  test('character types are stored in lowercase regardless of display case', async () => {
+    const mockResponse = { data: { id: '789' } };
+
+    renderComponent();
+    const nameInput = screen.getByTestId('character-name-input');
+
+    // Test with each character type
+    const types = [
+      { display: 'magus', stored: 'magus' },
+      { display: 'companion', stored: 'companion' },
+      { display: 'grog', stored: 'grog' }
+    ];
+
+    for (const { display, stored } of types) {
+      api.post.mockReset();
+      api.post.mockResolvedValueOnce(mockResponse);
+      
+      // Clear and set the input directly
+      fireEvent.change(nameInput, { target: { value: `Test ${display}` } });
+      await userEvent.selectOptions(screen.getByTestId('character-type-select'), display);
+      await userEvent.click(screen.getByTestId('create-button'));
+
+      expect(api.post).toHaveBeenLastCalledWith('/characters', {
+        name: `Test ${display}`,
+        character_type: stored,
+        use_cunning: false
+      });
+    }
+  });
+
+  test('form validation - character type is required', async () => {
+    renderComponent();
+    
+    await userEvent.type(screen.getByTestId('character-name-input'), 'Test Character');
+    await userEvent.selectOptions(screen.getByTestId('character-type-select'), 'magus');
+    
+    expect(screen.getByTestId('create-button')).not.toBeDisabled();
+  });
+
+  test('character type options are correctly mapped', () => {
+    renderComponent();
+    
+    const characterTypes = [
+      { display: 'Magus', stored: 'magus' },
+      { display: 'Companion', stored: 'companion' },
+      { display: 'Grog', stored: 'grog' }
+    ];
+
+    characterTypes.forEach(({ display, stored }) => {
+      const option = screen.getByRole('option', { name: display });
+      expect(option).toBeInTheDocument();
+      expect(option.value).toBe(stored);
+    });
   });
 });

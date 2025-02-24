@@ -1,122 +1,92 @@
-CREATED AT: 2025-01-03T17:55:00.221Z
+CREATED AT: 2025-02-07T06:38:15.041Z
 
-Characters
-  ├─ id (integer, not nullable)
-Characters
-  ├─ entityId (uuid, not nullable)
-Characters
-  ├─ characterName (character varying, not nullable)
-Characters
-  ├─ userId (integer, not nullable)
-Characters
-  ├─ entityType (character varying, nullable)
-Characters
-  ├─ characterType (USER-DEFINED, not nullable)
-Characters
-  ├─ age (integer, nullable)
-Characters
-  ├─ description (text, nullable)
-Characters
-  ├─ house (USER-DEFINED, nullable)
-Characters
-  ├─ virtues (json, nullable)
-Characters
-  ├─ flaws (json, nullable)
-Characters
-  ├─ abilities (json, nullable)
-Characters
-  ├─ arts (json, nullable)
-Characters
-  ├─ spells (json, nullable)
-Characters
-  ├─ equipment (json, nullable)
-Characters
-  ├─ strength (integer, not nullable)
-Characters
-  ├─ stamina (integer, not nullable)
-Characters
-  ├─ dexterity (integer, not nullable)
-Characters
-  ├─ quickness (integer, not nullable)
-Characters
-  ├─ intelligence (integer, not nullable)
-Characters
-  ├─ presence (integer, not nullable)
-Characters
-  ├─ communication (integer, not nullable)
-Characters
-  ├─ perception (integer, not nullable)
-Characters
-  ├─ useCunning (boolean, not nullable)
-Characters
-  ├─ availableImprovementPoints (integer, not nullable)
-Characters
-  ├─ totalImprovementPoints (integer, not nullable)
-Characters
-  ├─ characteristicModifiers (json, not nullable)
-Characters
-  ├─ createdAt (timestamp with time zone, not nullable)
-Characters
-  ├─ updatedAt (timestamp with time zone, not nullable)
-Characters
-  ├─ virtueFlawPoints (integer, nullable)
-Characters
-  ├─ maxVirtueFlawPoints (integer, nullable)
 SequelizeMeta
   ├─ name (character varying, not nullable)
-Users
-  ├─ id (integer, not nullable)
-Users
-  ├─ email (character varying, not nullable)
-Users
-  ├─ password (character varying, not nullable)
-Users
-  ├─ createdAt (timestamp with time zone, not nullable)
-Users
-  ├─ updatedAt (timestamp with time zone, not nullable)
 character_virtues_flaws
   ├─ id (integer, not nullable)
 character_virtues_flaws
-  ├─ characterId (integer, not nullable)
+  ├─ character_id (integer, not nullable)
 character_virtues_flaws
-  ├─ referenceVirtueFlawId (integer, not nullable)
-character_virtues_flaws
-  ├─ notes (text, nullable)
-character_virtues_flaws
-  ├─ createdAt (timestamp with time zone, not nullable)
-character_virtues_flaws
-  ├─ updatedAt (timestamp with time zone, not nullable)
+  ├─ reference_virtue_flaw_id (integer, not nullable)
 character_virtues_flaws
   ├─ cost (integer, not nullable)
 character_virtues_flaws
-  ├─ selections (jsonb, nullable)
+  ├─ notes (text, nullable)
+character_virtues_flaws
+  ├─ is_house_virtue_flaw (boolean, not nullable)
+character_virtues_flaws
+  ├─ house_virtue_type (USER-DEFINED, nullable)
+character_virtues_flaws
+  ├─ created_at (timestamp with time zone, not nullable)
+character_virtues_flaws
+  ├─ updated_at (timestamp with time zone, not nullable)
+characters
+  ├─ id (integer, not nullable)
+characters
+  ├─ name (character varying, not nullable)
+characters
+  ├─ character_type (USER-DEFINED, not nullable)
+characters
+  ├─ user_id (integer, not nullable)
+characters
+  ├─ house_id (integer, nullable)
+characters
+  ├─ selected_house_virtues (jsonb, not nullable)
+characters
+  ├─ created_at (timestamp with time zone, not nullable)
+characters
+  ├─ updated_at (timestamp with time zone, not nullable)
+houses
+  ├─ id (integer, not nullable)
+houses
+  ├─ name (character varying, not nullable)
+houses
+  ├─ automatic_virtues (jsonb, not nullable)
+houses
+  ├─ virtue_choices (jsonb, not nullable)
+houses
+  ├─ special_rules (jsonb, not nullable)
+houses
+  ├─ created_at (timestamp with time zone, not nullable)
+houses
+  ├─ updated_at (timestamp with time zone, not nullable)
 reference_virtues_flaws
   ├─ id (integer, not nullable)
+reference_virtues_flaws
+  ├─ name (character varying, not nullable)
 reference_virtues_flaws
   ├─ type (USER-DEFINED, not nullable)
 reference_virtues_flaws
   ├─ size (USER-DEFINED, not nullable)
 reference_virtues_flaws
-  ├─ category (USER-DEFINED, not nullable)
+  ├─ category (character varying, not nullable)
 reference_virtues_flaws
-  ├─ realm (USER-DEFINED, not nullable)
-reference_virtues_flaws
-  ├─ name (character varying, not nullable)
+  ├─ realm (character varying, nullable)
 reference_virtues_flaws
   ├─ description (text, not nullable)
 reference_virtues_flaws
-  ├─ max_selections (integer, nullable)
-reference_virtues_flaws
-  ├─ prerequisites (jsonb, nullable)
-reference_virtues_flaws
-  ├─ incompatibilities (jsonb, nullable)
-reference_virtues_flaws
-  ├─ effects (jsonb, nullable)
-reference_virtues_flaws
-  ├─ createdAt (timestamp with time zone, not nullable)
-reference_virtues_flaws
-  ├─ updatedAt (timestamp with time zone, not nullable)
-reference_virtues_flaws
   ├─ source (text, nullable)
 reference_virtues_flaws
-  ├─ allowed_sizes (jsonb, nullable)
+  ├─ allowed_sizes (jsonb, not nullable)
+reference_virtues_flaws
+  ├─ max_selections (integer, nullable)
+reference_virtues_flaws
+  ├─ prerequisites (jsonb, not nullable)
+reference_virtues_flaws
+  ├─ incompatibilities (jsonb, not nullable)
+reference_virtues_flaws
+  ├─ effects (jsonb, not nullable)
+reference_virtues_flaws
+  ├─ created_at (timestamp with time zone, not nullable)
+reference_virtues_flaws
+  ├─ updated_at (timestamp with time zone, not nullable)
+users
+  ├─ id (integer, not nullable)
+users
+  ├─ email (character varying, not nullable)
+users
+  ├─ password (character varying, not nullable)
+users
+  ├─ created_at (timestamp with time zone, not nullable)
+users
+  ├─ updated_at (timestamp with time zone, not nullable)

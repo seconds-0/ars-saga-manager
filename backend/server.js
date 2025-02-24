@@ -1,8 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./models');
-const { sequelize, User } = db;
+const { sequelize } = require('./models');
+const { logger } = require('./utils/logger');
+const { requestLogging, errorLogging } = require('./middleware/logging');
 const { router: authRoutes, authenticateToken } = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
 const apiLimiter = require('./middleware/rateLimiter');
@@ -15,7 +16,10 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(sanitizeInputs); // Added this line
+app.use(sanitizeInputs);
+
+// Add logging middleware
+app.use(requestLogging);
 
 // Apply rate limiter to all API routes
 app.use("/api/", apiLimiter);
@@ -43,12 +47,13 @@ async function startServer() {
 
     await sequelize.sync({ force: false });
     console.log('Database & tables created!');
-    console.log('User model:', User);
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () => {
+      logger.info({ port: PORT }, 'Server is running');
+    });
   } catch (err) {
-    console.error('Unable to start server:', err);
+    logger.fatal({ err }, 'Failed to start server');
     process.exit(1);
   }
 }
@@ -56,6 +61,20 @@ async function startServer() {
 startServer();
 
 // Error handling middleware (should be last)
+app.use(errorLogging);
 app.use((err, req, res, next) => {
-  handleError(err, res);
+  logger.error({ err }, 'Unhandled error');
+  res.status(500).json({ message: 'Something went wrong' });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'Uncaught exception');
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.fatal({ err: reason }, 'Unhandled rejection');
+  process.exit(1);
 });

@@ -1,8 +1,26 @@
 {
+  "name": "ars-saga-manager",
+  "version": "1.0.0",
+  "description": "Ars Saga Manager - A character management system",
+  "scripts": {
+    "setup": "node scripts/dev-setup.js",
+    "health": "node scripts/health-check.js",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm start",
+    "start:logs": "docker-compose up -d",
+    "stop:logs": "docker-compose down",
+    "start:all": "node scripts/start-all.js",
+    "stop:all": "node scripts/stop-all.js",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "test:all": "cd backend && npm test && cd ../frontend && npm test"
+  },
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "handlebars": "^4.7.8",
     "jest": "^29.7.0",
     "jest-html-reporter": "^3.10.2",
+    "kill-port": "^2.0.1",
     "sequelize": "^6.37.3",
     "sequelize-cli": "^6.6.2"
   },

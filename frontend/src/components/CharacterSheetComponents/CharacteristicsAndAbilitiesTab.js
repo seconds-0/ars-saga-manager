@@ -7,7 +7,7 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
     strength: 0, stamina: 0, dexterity: 0, quickness: 0,
     intelligence: 0, presence: 0, communication: 0, perception: 0
   });
-  const [useCunning, setUseCunning] = useState(false);
+  const [use_cunning, setUseCunning] = useState(false);
   const [totalPoints, setTotalPoints] = useState(7);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('error');
@@ -25,8 +25,8 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
         perception: character.perception || 0
       };
       setCharacteristics(characteristicValues);
-      setUseCunning(character.useCunning || false);
-      setTotalPoints(character.totalImprovementPoints || 7);
+      setUseCunning(character.use_cunning || false);
+      setTotalPoints(character.total_improvement_points || 7);
     }
   }, [character]);
 
@@ -96,14 +96,14 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
 
   const handleSave = async () => {
     try {
-      const characteristicsToSave = {
+      const updatedData = {
         ...characteristics,
-        useCunning,
-        totalImprovementPoints: totalPoints
+        use_cunning,
+        total_improvement_points: totalPoints
       };
       
-      console.log('Saving characteristics:', characteristicsToSave);
-      await onSave(characteristicsToSave);
+      console.log('Saving characteristics:', updatedData);
+      await onSave(updatedData);
       setToastMessage('Characteristics saved successfully');
       setToastType('success');
     } catch (error) {
@@ -131,8 +131,8 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
         <label className="flex items-center">
           <input
             type="checkbox"
-            checked={useCunning}
-            onChange={() => setUseCunning(!useCunning)}
+            checked={use_cunning}
+            onChange={() => setUseCunning(!use_cunning)}
             className="mr-2"
           />
           Use Cunning instead of Intelligence

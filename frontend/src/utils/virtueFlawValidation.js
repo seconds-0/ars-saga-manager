@@ -1,194 +1,252 @@
 /**
+ * Normalizes character type case and validates it
+ * @param {string} characterType - The character type to normalize
+ * @returns {string} The normalized character type
+ * @throws {Error} If the character type is invalid
+ */
+const normalizeCharacterType = (characterType) => {
+  if (!characterType) {
+    throw new Error('Character type is required');
+  }
+
+  const normalized = characterType.toLowerCase();
+  const validTypes = ['grog', 'companion', 'magus'];
+  
+  if (!validTypes.includes(normalized)) {
+    throw new Error('Invalid character type. Only Grog, Companion, and Magus are currently supported.');
+  }
+
+  return normalized;
+};
+
+/**
  * Creates validation rules for virtues and flaws based on character type
  * @param {string} characterType - 'grog', 'companion', or 'magus'
  * @param {Object} overrides - Optional rule overrides
  * @returns {Object} Validation rules
  */
 export const createValidationRules = (characterType, overrides = {}) => {
-  // Validate character type
-  if (!characterType || !['grog', 'companion', 'magus'].includes(characterType)) {
-    throw new Error('Invalid character type');
-  }
-
-  // Validate overrides
-  if (overrides.maxVirtuePoints !== undefined && overrides.maxVirtuePoints < 0) {
-    throw new Error('Invalid rule configuration');
-  }
-
-  // Default rules by character type
-  const defaultRules = {
-    grog: {
-      allowMajorVirtues: false,
-      allowMajorFlaws: false,
-      maxVirtuePoints: 3,
-      maxFlawPoints: 3,
-      maxMinorFlaws: 3,
-      requireGift: false,
-      allowHermeticVirtues: false,
-      requirePointBalance: true,
-      maxStoryFlaws: 1,
-      maxPersonalityFlaws: 3,
-      requireSocialStatus: true,
-      checkIncompatibilities: true,
-      checkPrerequisites: true,
-      checkCharacterTypeRestrictions: true
-    },
-    companion: {
-      allowMajorVirtues: true,
-      allowMajorFlaws: true,
-      maxVirtuePoints: 10,
-      maxFlawPoints: 10,
-      maxMinorFlaws: 5,
-      requireGift: false,
-      allowHermeticVirtues: false,
-      requirePointBalance: true,
-      maxStoryFlaws: 1,
-      maxPersonalityFlaws: 3,
-      requireSocialStatus: true,
-      checkIncompatibilities: true,
-      checkPrerequisites: true,
-      checkCharacterTypeRestrictions: true
-    },
-    magus: {
-      allowMajorVirtues: true,
-      allowMajorFlaws: true,
-      maxVirtuePoints: 10,
-      maxFlawPoints: 10,
-      maxMinorFlaws: 5,
-      requireGift: true,
-      allowHermeticVirtues: true,
-      requirePointBalance: true,
-      maxStoryFlaws: 1,
-      maxPersonalityFlaws: 3,
-      requireSocialStatus: true,
-      checkIncompatibilities: true,
-      checkPrerequisites: true,
-      checkCharacterTypeRestrictions: true
+  try {
+    // Validate input parameters
+    if (!characterType) {
+      throw new Error('Character type is required');
     }
-  };
 
-  // Combine default rules with overrides and include character type
-  return {
-    ...defaultRules[characterType],
-    ...overrides,
-    characterType // Always include character type
-  };
+    const normalizedType = characterType.toLowerCase();
+    const validTypes = ['magus', 'companion', 'grog'];
+    if (!validTypes.includes(normalizedType)) {
+      throw new Error('Invalid character type');
+    }
+
+    // Validate overrides
+    if (overrides.maxVirtuePoints !== undefined && overrides.maxVirtuePoints < 0) {
+      throw new Error('maxVirtuePoints cannot be negative');
+    }
+
+    // Base rules that apply to all character types
+    const baseRules = {
+      maxVirtuePoints: 10,
+      maxMinorFlaws: 5,
+      maxMajorHermeticVirtues: 1,
+      maxStoryFlaws: 1,
+      maxPersonalityFlaws: 3,
+      allowHermeticVirtues: true,
+      requireSocialStatus: true,
+      requirePointBalance: true,
+      checkIncompatibilities: true,
+      checkPrerequisites: true,
+      checkCharacterTypeRestrictions: true
+    };
+
+    // Character type specific overrides
+    const typeSpecificRules = {
+      grog: {
+        maxVirtuePoints: 3,
+        maxMinorFlaws: 3,
+        allowHermeticVirtues: false,
+        allowMajorVirtuesFlaws: false,
+        requireEqualMinorVirtuesFlaws: true,
+        allowTheGift: false
+      },
+      companion: {
+        maxVirtuePoints: 10,
+        maxMinorFlaws: 5,
+        allowHermeticVirtues: false,
+        allowMajorVirtuesFlaws: true
+      },
+      magus: {
+        maxVirtuePoints: 10,
+        maxMinorFlaws: 5,
+        allowHermeticVirtues: true,
+        allowMajorVirtuesFlaws: true,
+        requireTheGift: true
+      }
+    };
+
+    // Merge base rules with character type specific rules and any overrides
+    const rules = {
+      ...baseRules,
+      ...typeSpecificRules[normalizedType],
+      ...overrides,
+      characterType: normalizedType
+    };
+
+    return rules;
+  } catch (error) {
+    throw new Error(`Invalid rule configuration: ${error.message}`);
+  }
 };
 
 /**
- * Validates virtues and flaws against the provided rules
- * @param {Array} virtuesFlaws - Array of virtue/flaw objects
- * @param {Object} rules - Validation rules
+ * Validates a list of virtues and flaws against the given rules
+ * @param {Array} virtuesFlaws - List of virtues and flaws to validate
+ * @param {Object} rules - Validation rules created by createValidationRules
  * @returns {Object} Validation result with isValid and warnings
  */
 export const validateVirtuesFlaws = (virtuesFlaws, rules) => {
-  // Validate rules object and required properties
-  const requiredProps = [
-    'allowMajorVirtues',
-    'allowMajorFlaws',
-    'maxVirtuePoints',
-    'maxFlawPoints',
-    'maxMinorFlaws',
-    'requireGift',
-    'allowHermeticVirtues',
-    'requirePointBalance',
-    'maxStoryFlaws',
-    'maxPersonalityFlaws',
-    'requireSocialStatus',
-    'checkIncompatibilities',
-    'checkPrerequisites',
-    'checkCharacterTypeRestrictions'
-  ];
+  if (!Array.isArray(virtuesFlaws)) {
+    throw new Error('virtuesFlaws must be an array');
+  }
 
-  if (!rules || typeof rules !== 'object' || 
-      !requiredProps.every(prop => rules.hasOwnProperty(prop))) {
+  if (!rules || typeof rules !== 'object' || !rules.characterType) {
     throw new Error('Invalid validation rules');
   }
 
   const warnings = [];
-  let isValid = true;
 
-  // Calculate points and category counts
-  let virtuePoints = 0;
-  let flawPoints = 0;
-  let minorFlawCount = 0;
-  let storyFlawCount = 0;
-  let personalityFlawCount = 0;
-  let socialStatusCount = 0;
+  // Validate character type restrictions
+  if (rules.checkCharacterTypeRestrictions) {
+    const characterTypeResult = validateCharacterTypeRestrictions(virtuesFlaws, rules);
+    warnings.push(...characterTypeResult.warnings);
+  }
 
-  // First pass: Calculate points and check non-category restrictions
-  virtuesFlaws.forEach(item => {
-    if (!item.is_house_virtue_flaw) {
-      // Check character type restrictions
-      if (rules.checkCharacterTypeRestrictions) {
-        // Check explicit character type restrictions
-        if (item.allowed_character_types) {
-          if (!item.allowed_character_types.includes(rules.characterType)) {
-            warnings.push({
-              type: 'error',
-              message: `${item.name} is only available to ${item.allowed_character_types.join('/')} characters`
-            });
-            isValid = false;
-          }
-        }
+  // Validate multiple instances
+  const multipleInstancesResult = validateMultipleInstances(virtuesFlaws, rules);
+  warnings.push(...multipleInstancesResult.warnings);
 
-        // Check Hermetic virtue restrictions
-        if (item.category === 'Hermetic' && !rules.allowHermeticVirtues) {
-          warnings.push({
-            type: 'error',
-            message: 'Cannot take Hermetic Virtues without The Gift'
-          });
-          isValid = false;
-        }
-      }
+  // Validate Hermetic Virtues
+  const hermeticResult = validateHermeticVirtues(virtuesFlaws, rules);
+  warnings.push(...hermeticResult.warnings);
 
-      if (item.type === 'Virtue') {
-        // Check major virtue restriction
-        if (item.size === 'Major' && !rules.allowMajorVirtues) {
-          warnings.push({
-            type: 'error',
-            message: `${rules.characterType === 'grog' ? 'Grogs' : 'Characters'} cannot take Major Virtues`
-          });
-          isValid = false;
-        }
+  // Validate Minor Flaws limit
+  const minorFlaws = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.size === 'Minor'
+  );
 
-        // Add up virtue points
-        virtuePoints += item.size === 'Major' ? 3 : item.size === 'Minor' ? 1 : 0;
-      } else if (item.type === 'Flaw') {
-        if (item.size === 'Minor') {
-          minorFlawCount++;
-        }
-        // Add up flaw points
-        flawPoints += item.size === 'Major' ? 3 : item.size === 'Minor' ? 1 : 0;
+  if (minorFlaws.length > rules.maxMinorFlaws) {
+    warnings.push({
+      type: 'error',
+      message: rules.characterType === 'grog'
+        ? `Grogs cannot exceed ${rules.maxMinorFlaws} Minor Flaws`
+        : `Cannot exceed ${rules.maxMinorFlaws} Minor Flaws`
+    });
+  }
+
+  // Validate Grog-specific restrictions
+  if (rules.characterType === 'grog') {
+    // Check for Major Virtues/Flaws if not allowed
+    if (!rules.allowMajorVirtuesFlaws) {
+      const majorVirtuesFlaws = virtuesFlaws.filter(vf =>
+        !vf.is_house_virtue_flaw &&
+        vf.referenceVirtueFlaw.size === 'Major'
+      );
+
+      if (majorVirtuesFlaws.length > 0) {
+        warnings.push({
+          type: 'error',
+          message: 'Grogs cannot take Major Virtues or Flaws'
+        });
       }
     }
-  });
 
-  // Second pass: Check category-specific counts
-  virtuesFlaws.forEach(item => {
-    if (item.category === 'Social Status') {
-      socialStatusCount++;
-    } else if (!item.is_house_virtue_flaw && item.type === 'Flaw') {
-      if (item.category === 'Story') {
-        storyFlawCount++;
-      } else if (item.category === 'Personality') {
-        personalityFlawCount++;
+    // Check for The Gift (this restriction cannot be overridden)
+    const hasGift = virtuesFlaws.some(vf =>
+      !vf.is_house_virtue_flaw &&
+      vf.referenceVirtueFlaw.category === 'The Gift' &&
+      vf.referenceVirtueFlaw.name === 'The Gift'
+    );
+
+    if (hasGift && !rules.allowTheGift) {
+      warnings.push({
+        type: 'error',
+        message: 'Grogs cannot take The Gift'
+      });
+    }
+
+    // Check for equal number of Minor Virtues and Flaws if required
+    if (rules.requireEqualMinorVirtuesFlaws) {
+      const minorVirtues = virtuesFlaws.filter(vf =>
+        !vf.is_house_virtue_flaw &&
+        vf.referenceVirtueFlaw.type === 'Virtue' &&
+        vf.referenceVirtueFlaw.size === 'Minor'
+      ).length;
+
+      if (minorVirtues !== minorFlaws.length) {
+        warnings.push({
+          type: 'error',
+          message: 'Grogs must have equal number of Minor Virtues and Minor Flaws'
+        });
       }
     }
-  });
+  }
 
-  // Third pass: Check incompatibilities
+  // Validate point balance
+  if (rules.requirePointBalance) {
+    const nonHouseVirtuesFlaws = virtuesFlaws.filter(vf => !vf.is_house_virtue_flaw);
+    
+    const virtuePoints = nonHouseVirtuesFlaws
+      .filter(vf => vf.referenceVirtueFlaw.type === 'Virtue')
+      .reduce((sum, vf) => sum + (vf.referenceVirtueFlaw.size === 'Major' ? 3 : 1), 0);
+
+    const flawPoints = nonHouseVirtuesFlaws
+      .filter(vf => vf.referenceVirtueFlaw.type === 'Flaw')
+      .reduce((sum, vf) => sum + (vf.referenceVirtueFlaw.size === 'Major' ? 3 : 1), 0);
+
+    if (virtuePoints !== flawPoints) {
+      warnings.push({
+        type: 'error',
+        message: `Virtue points (${virtuePoints}) must be balanced by equal Flaw points (${flawPoints})`
+      });
+    }
+
+    // Check for maximum virtue points
+    if (virtuePoints > rules.maxVirtuePoints) {
+      warnings.push({
+        type: 'error',
+        message: `Cannot exceed ${rules.maxVirtuePoints} points of Virtues`
+      });
+    }
+  }
+
+  // Validate social status
+  if (rules.requireSocialStatus) {
+    const socialStatusIndicators = virtuesFlaws.filter(vf =>
+      vf.referenceVirtueFlaw.category === 'Social Status'
+    );
+
+    if (socialStatusIndicators.length !== 1) {
+      warnings.push({
+        type: 'error',
+        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)'
+      });
+    }
+  }
+
+  // Validate incompatibilities
   if (rules.checkIncompatibilities) {
     virtuesFlaws.forEach((item, index) => {
-      if (!item.is_house_virtue_flaw && item.incompatibilities) {
+      const virtueFlaw = item.referenceVirtueFlaw;
+      if (!item.is_house_virtue_flaw && virtueFlaw.incompatibilities) {
         virtuesFlaws.forEach((otherItem, otherIndex) => {
+          const otherVirtueFlaw = otherItem.referenceVirtueFlaw;
           if (index !== otherIndex && !otherItem.is_house_virtue_flaw) {
-            if (item.incompatibilities.includes(otherItem.name)) {
+            if (virtueFlaw.incompatibilities.includes(otherVirtueFlaw.name)) {
               warnings.push({
                 type: 'error',
-                message: `Incompatible combination: ${item.name} cannot be taken with ${otherItem.name}`
+                message: `Incompatible combination: ${virtueFlaw.name} cannot be taken with ${otherVirtueFlaw.name}`
               });
-              isValid = false;
             }
           }
         });
@@ -196,83 +254,424 @@ export const validateVirtuesFlaws = (virtuesFlaws, rules) => {
     });
   }
 
-  // Fourth pass: Check prerequisites
+  // Validate prerequisites
   if (rules.checkPrerequisites) {
     virtuesFlaws.forEach(item => {
-      // Check explicit prerequisites
-      if (!item.is_house_virtue_flaw && item.prerequisites) {
-        item.prerequisites.forEach(prerequisite => {
-          const hasPrerequisite = virtuesFlaws.some(
-            other => other.name === prerequisite && !other.is_house_virtue_flaw
-          );
-          if (!hasPrerequisite) {
-            warnings.push({
-              type: 'error',
-              message: `${item.name} requires prerequisite: ${prerequisite}`
-            });
-            isValid = false;
-          }
-        });
+      const virtueFlaw = item.referenceVirtueFlaw;
+      if (!item.is_house_virtue_flaw && virtueFlaw.prerequisites) {
+        const missingPrerequisites = virtueFlaw.prerequisites.filter(prereq => 
+          !virtuesFlaws.some(otherItem => 
+            !otherItem.is_house_virtue_flaw &&
+            otherItem.referenceVirtueFlaw.name === prereq
+          )
+        );
+
+        if (missingPrerequisites.length > 0) {
+          warnings.push({
+            type: 'error',
+            message: `${virtueFlaw.name} requires prerequisite: ${missingPrerequisites.join(', ')}`
+          });
+        }
       }
     });
   }
 
-  // Check point limits
+  // Validate Story Flaws
+  const storyFlaws = virtuesFlaws.filter(vf => 
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.category === 'Story'
+  );
+
+  if (storyFlaws.length > rules.maxStoryFlaws) {
+    warnings.push({
+      type: 'error',
+      message: 'Cannot have more than one Story Flaw'
+    });
+  }
+
+  // Validate Personality Flaws
+  const personalityFlaws = virtuesFlaws.filter(vf => 
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.category === 'Personality'
+  );
+
+  if (personalityFlaws.length > rules.maxPersonalityFlaws) {
+    warnings.push({
+      type: 'error',
+      message: 'Cannot have more than three Personality Flaws'
+    });
+  }
+
+  // Validate Major Hermetic Virtues
+  const majorHermeticVirtues = virtuesFlaws.filter(vf => 
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Virtue' &&
+    vf.referenceVirtueFlaw.size === 'Major' &&
+    vf.referenceVirtueFlaw.category === 'Hermetic'
+  );
+
+  if (majorHermeticVirtues.length > rules.maxMajorHermeticVirtues) {
+    warnings.push({
+      type: 'error',
+      message: 'Cannot exceed 1 Major Hermetic Virtue'
+    });
+  }
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateGrogRestrictions = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  // Check for Major Virtues/Flaws
+  const majorVirtuesFlaws = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.size === 'Major'
+  );
+
+  if (majorVirtuesFlaws.length > 0) {
+    warnings.push({
+      type: 'error',
+      message: 'Grogs cannot take Major Virtues or Flaws'
+    });
+  }
+
+  // Check for The Gift
+  const hasGift = virtuesFlaws.some(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.category === 'The Gift' &&
+    vf.referenceVirtueFlaw.name === 'The Gift'
+  );
+
+  if (hasGift) {
+    warnings.push({
+      type: 'error',
+      message: 'Grogs cannot take The Gift'
+    });
+  }
+
+  // Check for maximum number of Minor Flaws
+  const minorFlaws = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.size === 'Minor'
+  );
+
+  if (minorFlaws.length > rules.maxMinorFlaws) {
+    warnings.push({
+      type: 'error',
+      message: `Grogs cannot exceed ${rules.maxMinorFlaws} Minor Flaws`
+    });
+  }
+
+  // Check for equal number of Minor Virtues and Flaws
+  const minorVirtues = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Virtue' &&
+    vf.referenceVirtueFlaw.size === 'Minor'
+  ).length;
+
+  if (minorVirtues !== minorFlaws.length) {
+    warnings.push({
+      type: 'error',
+      message: 'Grogs must have equal number of Minor Virtues and Minor Flaws'
+    });
+  }
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validatePointBalance = (virtuesFlaws, rules) => {
+  if (!rules.requirePointBalance) {
+    return { isValid: true, warnings: [] };
+  }
+
+  const nonHouseVirtuesFlaws = virtuesFlaws.filter(vf => !vf.is_house_virtue_flaw);
+  
+  const virtuePoints = nonHouseVirtuesFlaws
+    .filter(vf => vf.referenceVirtueFlaw.type === 'Virtue')
+    .reduce((sum, vf) => sum + (vf.referenceVirtueFlaw.size === 'Major' ? 3 : 1), 0);
+
+  const flawPoints = nonHouseVirtuesFlaws
+    .filter(vf => vf.referenceVirtueFlaw.type === 'Flaw')
+    .reduce((sum, vf) => sum + (vf.referenceVirtueFlaw.size === 'Major' ? 3 : 1), 0);
+
+  const warnings = [];
+
+  if (virtuePoints !== flawPoints) {
+    warnings.push({
+      type: 'error',
+      message: `Virtue points (${virtuePoints}) must be balanced by equal Flaw points (${flawPoints})`
+    });
+  }
+
   if (virtuePoints > rules.maxVirtuePoints) {
     warnings.push({
       type: 'error',
       message: `Cannot exceed ${rules.maxVirtuePoints} points of Virtues`
     });
-    isValid = false;
   }
 
-  // Check minor flaw limit
-  if (minorFlawCount > rules.maxMinorFlaws) {
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateCharacterTypeRestrictions = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  virtuesFlaws.forEach(vf => {
+    if (vf.is_house_virtue_flaw) {
+      return;
+    }
+
+    const { allowed_character_types } = vf.referenceVirtueFlaw;
+    if (allowed_character_types && !allowed_character_types.includes(rules.characterType)) {
+      warnings.push({
+        type: 'error',
+        message: `${vf.referenceVirtueFlaw.name} is only available to ${allowed_character_types.join(', ')} characters`
+      });
+    }
+  });
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateSocialStatus = (virtuesFlaws, rules) => {
+  if (!rules.requireSocialStatus) {
+    return { isValid: true, warnings: [] };
+  }
+
+  const socialStatusIndicators = virtuesFlaws.filter(vf =>
+    vf.referenceVirtueFlaw.category === 'Social Status'
+  );
+
+  if (socialStatusIndicators.length !== 1) {
+    return {
+      isValid: false,
+      warnings: [{
+        type: 'error',
+        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)'
+      }]
+    };
+  }
+
+  return { isValid: true, warnings: [] };
+};
+
+const validateIncompatibilities = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  virtuesFlaws.forEach(vf => {
+    if (vf.is_house_virtue_flaw) {
+      return;
+    }
+
+    const { incompatibilities } = vf.referenceVirtueFlaw;
+    if (!incompatibilities) {
+      return;
+    }
+
+    incompatibilities.forEach(incompatibleName => {
+      const hasIncompatible = virtuesFlaws.some(other =>
+        !other.is_house_virtue_flaw &&
+        other !== vf &&
+        other.referenceVirtueFlaw.name === incompatibleName
+      );
+
+      if (hasIncompatible) {
+        warnings.push({
+          type: 'error',
+          message: `Incompatible combination: ${vf.referenceVirtueFlaw.name} cannot be taken with ${incompatibleName}`
+        });
+      }
+    });
+  });
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validatePrerequisites = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  virtuesFlaws.forEach(vf => {
+    if (vf.is_house_virtue_flaw) {
+      return;
+    }
+
+    const { prerequisites } = vf.referenceVirtueFlaw;
+    if (!prerequisites) {
+      return;
+    }
+
+    const missingPrerequisites = prerequisites.filter(prereq =>
+      !virtuesFlaws.some(other =>
+        !other.is_house_virtue_flaw &&
+        other !== vf &&
+        other.referenceVirtueFlaw.name === prereq
+      )
+    );
+
+    if (missingPrerequisites.length > 0) {
+      missingPrerequisites.forEach(prereq => {
+        warnings.push({
+          type: 'error',
+          message: `${vf.referenceVirtueFlaw.name} requires prerequisite: ${prereq}`
+        });
+      });
+    }
+  });
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateMajorHermeticVirtues = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  const majorHermeticVirtues = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Virtue' &&
+    vf.referenceVirtueFlaw.size === 'Major' &&
+    vf.referenceVirtueFlaw.category === 'Hermetic'
+  );
+
+  if (majorHermeticVirtues.length > rules.maxMajorHermeticVirtues) {
     warnings.push({
       type: 'error',
-      message: `Cannot exceed ${rules.maxMinorFlaws} Minor Flaws`
+      message: 'Cannot exceed 1 Major Hermetic Virtue'
     });
-    isValid = false;
   }
 
-  // Check Story Flaw limit
-  if (storyFlawCount > rules.maxStoryFlaws) {
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateStoryFlaws = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  const storyFlaws = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.category === 'Story'
+  );
+
+  if (storyFlaws.length > rules.maxStoryFlaws) {
     warnings.push({
       type: 'error',
       message: 'Cannot have more than one Story Flaw'
     });
-    isValid = false;
   }
 
-  // Check Personality Flaw limit
-  if (personalityFlawCount > rules.maxPersonalityFlaws) {
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validatePersonalityFlaws = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  const personalityFlaws = virtuesFlaws.filter(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.type === 'Flaw' &&
+    vf.referenceVirtueFlaw.category === 'Personality'
+  );
+
+  if (personalityFlaws.length > rules.maxPersonalityFlaws) {
     warnings.push({
       type: 'error',
       message: 'Cannot have more than three Personality Flaws'
     });
-    isValid = false;
-  }
-
-  // Check Social Status requirement
-  if (rules.requireSocialStatus && socialStatusCount !== 1) {
-    warnings.push({
-      type: 'error',
-      message: 'Character must have exactly one Social Status'
-    });
-    isValid = false;
-  }
-
-  // Check point balance last
-  if (rules.requirePointBalance && virtuePoints !== flawPoints) {
-    warnings.push({
-      type: 'error',
-      message: `Virtue points (${virtuePoints}) must be balanced by equal Flaw points (${flawPoints})`
-    });
-    isValid = false;
   }
 
   return {
-    isValid,
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateHermeticVirtues = (virtuesFlaws, rules) => {
+  const warnings = [];
+
+  const hasGift = virtuesFlaws.some(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.category === 'The Gift' &&
+    vf.referenceVirtueFlaw.name === 'The Gift'
+  );
+
+  const hasHermeticVirtues = virtuesFlaws.some(vf =>
+    !vf.is_house_virtue_flaw &&
+    vf.referenceVirtueFlaw.category === 'Hermetic'
+  );
+
+  if (hasHermeticVirtues && !hasGift) {
+    warnings.push({
+      type: 'error',
+      message: 'Cannot take Hermetic Virtues without The Gift'
+    });
+  }
+
+  return {
+    isValid: warnings.length === 0,
+    warnings
+  };
+};
+
+const validateMultipleInstances = (virtuesFlaws, rules) => {
+  const warnings = [];
+  const nonHouseVirtuesFlaws = virtuesFlaws.filter(vf => !vf.is_house_virtue_flaw);
+
+  // Group non-house virtues/flaws by name
+  const groupedByName = nonHouseVirtuesFlaws.reduce((acc, vf) => {
+    const name = vf.referenceVirtueFlaw.name;
+    if (!acc[name]) {
+      acc[name] = [];
+    }
+    acc[name].push(vf);
+    return acc;
+  }, {});
+
+  // Check each group for multiple instances
+  Object.entries(groupedByName).forEach(([name, instances]) => {
+    // Skip validation for Story Flaws if maxStoryFlaws is overridden
+    if (instances[0].referenceVirtueFlaw.category === 'Story' && rules.maxStoryFlaws > 1) {
+      return;
+    }
+    // Skip validation for Personality Flaws if maxPersonalityFlaws is overridden
+    if (instances[0].referenceVirtueFlaw.category === 'Personality' && rules.maxPersonalityFlaws > 3) {
+      return;
+    }
+
+    if (instances.length > 1 && !instances[0].referenceVirtueFlaw.multiple_allowed) {
+      warnings.push({
+        type: 'error',
+        message: `Cannot take multiple instances of ${name}`
+      });
+    }
+  });
+
+  return {
+    isValid: warnings.length === 0,
     warnings
   };
 }; 

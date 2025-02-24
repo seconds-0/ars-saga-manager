@@ -51,15 +51,20 @@ function CurrentVirtueFlawList({ virtuesFlaws, onRemove, onSelect, validationRes
   };
 
   return (
-    <List
-      height={400}
-      itemCount={virtuesFlaws.length}
-      itemSize={60}
-      width="100%"
+    <div 
       className="border rounded"
+      role="list"
+      aria-label="Current virtues and flaws"
     >
-      {Row}
-    </List>
+      <List
+        height={400}
+        itemCount={virtuesFlaws.length}
+        itemSize={60}
+        width="100%"
+      >
+        {Row}
+      </List>
+    </div>
   );
 }
 

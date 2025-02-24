@@ -4,7 +4,6 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import LoginPage from './LoginPage';
 import { AuthProvider } from '../useAuth';
-import api from '../api/axios';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryClientProvider } from 'react-query';
 import { queryClient } from '../queryClient';
@@ -40,19 +39,26 @@ jest.mock('flowbite-react', () => ({
   ),
 }));
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => jest.fn().mockReturnValue(undefined),
-}));
+const mockNavigate = jest.fn();
+const mockLogin = jest.fn();
+const mockPost = jest.fn();
 
 jest.mock('../api/axios', () => ({
-  post: jest.fn().mockResolvedValue({ data: { token: 'fake-token' } }),
+  __esModule: true,
+  default: {
+    post: (...args) => mockPost(...args)
+  }
+}));
+
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
 }));
 
 jest.mock('../useAuth', () => ({
   AuthProvider: ({ children }) => <div>{children}</div>,
   useAuth: () => ({
-    login: jest.fn().mockResolvedValue(undefined),
+    login: mockLogin,
     isAuthenticated: false,
     user: null,
     logout: jest.fn(),
@@ -96,78 +102,152 @@ describe('LoginPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    mockPost.mockReset();
   });
 
-  test('LoginPage renders without crashing', () => {
-    render(<LoginPage />);
+  describe('Initial Render', () => {
+    test('renders login form with all required fields', () => {
+      renderLoginPage();
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-input-email')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-input-password')).toBeInTheDocument();
+    });
+
+    test('renders register button with correct initial text', () => {
+      renderLoginPage();
+      const registerButton = screen.getByTestId('register-button');
+      expect(registerButton).toHaveTextContent('Need an account? Register');
+    });
   });
 
-  test('renders login form', () => {
-    renderLoginPage();
-    
-    expect(screen.getByText('Sign in to your account')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-input-email')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-input-password')).toBeInTheDocument();
-    expect(screen.getByTestId('sign-in-button')).toHaveTextContent('Sign in');
+  describe('Login Functionality', () => {
+    test('calls login API with correct credentials', async () => {
+      mockPost.mockResolvedValueOnce({ data: { token: 'fake-token' } });
+      
+      renderLoginPage();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      
+      await waitFor(() => {
+        expect(mockPost).toHaveBeenCalledWith('/auth/login', { 
+          email: 'test@example.com', 
+          password: 'password123' 
+        });
+      });
+    });
+
+    test('stores token in localStorage after successful login', async () => {
+      const fakeToken = 'fake-token';
+      mockPost.mockResolvedValueOnce({ data: { token: fakeToken } });
+      
+      renderLoginPage();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      
+      await waitFor(() => {
+        expect(localStorage.getItem('token')).toBe(fakeToken);
+      });
+    });
+
+    test('navigates to home page after successful login', async () => {
+      mockPost.mockResolvedValueOnce({ data: { token: 'fake-token' } });
+      
+      renderLoginPage();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/home');
+      });
+    });
+
+    test('displays error message on login failure', async () => {
+      const errorMessage = 'Invalid credentials';
+      mockPost.mockRejectedValueOnce({ 
+        response: { data: { message: errorMessage } } 
+      });
+      
+      renderLoginPage();
+      fireEvent.submit(screen.getByTestId('login-form'));
+      
+      await waitFor(() => {
+        expect(screen.getByText(`Login failed: ${errorMessage}`))
+          .toBeInTheDocument();
+      });
+    });
   });
 
-  test('handles form submission and stores token', async () => {
-    console.log('Starting test');
-    const fakeToken = 'fake-token';
-    api.post.mockResolvedValueOnce({ data: { token: fakeToken } });
-    const mockLogin = jest.fn();
-    const mockNavigate = jest.fn();
-    
-    jest.spyOn(require('../useAuth'), 'useAuth').mockImplementation(() => ({
-      login: mockLogin,
-      isAuthenticated: false,
-      user: null,
-      logout: jest.fn(),
-    }));
-    jest.spyOn(require('react-router-dom'), 'useNavigate').mockImplementation(() => mockNavigate);
+  describe('Registration Toggle', () => {
+    test('switches to registration form when register button is clicked', () => {
+      renderLoginPage();
+      fireEvent.click(screen.getByTestId('register-button'));
+      
+      expect(screen.getByTestId('register-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('login-form')).not.toBeInTheDocument();
+      expect(screen.getByText('Create an account')).toBeInTheDocument();
+    });
 
-    console.log('Rendering component');
-    renderLoginPage();
-    
-    console.log('Submitting form');
-    fireEvent.submit(screen.getByTestId('login-form'));
-    
-    console.log('Checking expectations');
-    await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith('/auth/login', { email: 'test@example.com', password: 'password123' });
+    test('switches back to login form when toggle button is clicked again', () => {
+      renderLoginPage();
+      const toggleButton = screen.getByTestId('register-button');
+      
+      fireEvent.click(toggleButton);
+      fireEvent.click(toggleButton);
+      
+      expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('register-form')).not.toBeInTheDocument();
+      expect(screen.getByText('Sign in to your account')).toBeInTheDocument();
     });
-    await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith(fakeToken);
-    });
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/home');
-    });
-    await waitFor(() => {
-      expect(localStorage.getItem('token')).toBe(fakeToken);
-    });
-    
-    console.log('Test completed');
   });
 
-  test('displays error message on login failure', async () => {
-    api.post.mockRejectedValueOnce({ response: { data: { message: 'Invalid credentials' } } });
-    const mockLogin = jest.fn();
-    
-    jest.spyOn(require('../useAuth'), 'useAuth').mockImplementation(() => ({
-      login: mockLogin,
-      isAuthenticated: false,
-      user: null,
-      logout: jest.fn(),
-    }));
+  describe('Registration Success', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
 
-    renderLoginPage();
+    afterEach(() => {
+      jest.useRealTimers();
+    });
 
-    fireEvent.change(screen.getByTestId('mock-input-email'), { target: { value: 'test@example.com' } });
-    fireEvent.change(screen.getByTestId('mock-input-password'), { target: { value: 'wrongpassword' } });
-    fireEvent.click(screen.getByTestId('sign-in-button'));
+    test('shows success message when registration succeeds', async () => {
+      mockPost.mockResolvedValueOnce({ data: { message: 'Registration successful' } });
+      
+      renderLoginPage();
+      fireEvent.click(screen.getByTestId('register-button'));
+      
+      const registerForm = screen.getByTestId('register-form');
+      fireEvent.submit(registerForm);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Registration successful!')).toBeInTheDocument();
+      });
 
-    await waitFor(() => {
-      expect(screen.getByText('Login failed: Invalid credentials')).toBeInTheDocument();
+      await act(async () => {
+        jest.runAllTimers();
+      });
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Registration successful! Please sign in.')).toBeInTheDocument();
+      });
+    });
+
+    test('returns to login form after successful registration', async () => {
+      mockPost.mockResolvedValueOnce({ data: { message: 'Registration successful' } });
+      
+      renderLoginPage();
+      fireEvent.click(screen.getByTestId('register-button'));
+      
+      const registerForm = screen.getByTestId('register-form');
+      fireEvent.submit(registerForm);
+      
+      await act(async () => {
+        jest.runAllTimers();
+      });
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('login-form')).toBeInTheDocument();
+      });
     });
   });
 });

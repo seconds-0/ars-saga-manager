@@ -1,19 +1,48 @@
-const winston = require('winston');
+const pino = require('pino');
 
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'user-service' },
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
+// Define log levels based on environment
+const level = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+
+// Create the logger instance
+const logger = pino({
+  level,
+  // Enable pretty printing in development
+  transport: process.env.NODE_ENV !== 'production' 
+    ? {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          levelFirst: true,
+          translateTime: 'SYS:standard'
+        }
+      }
+    : undefined,
+  // Add timestamp and environment info
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: {
+    env: process.env.NODE_ENV,
+    version: process.env.npm_package_version
+  },
+  // Redact sensitive information
+  redact: [
+    'req.headers.authorization',
+    'req.headers.cookie',
+    'req.body.password',
+    'req.body.confirmPassword'
+  ]
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-  }));
-}
+// Export a function to create child loggers with request context
+const createRequestLogger = (req) => {
+  return logger.child({
+    reqId: req.id,
+    method: req.method,
+    url: req.url,
+    ip: req.ip
+  });
+};
 
-module.exports = logger;
+module.exports = {
+  logger,
+  createRequestLogger
+};

@@ -29,14 +29,14 @@ function RegisterForm({ onRegisterSuccess }) {
       }, 3000);
     } catch (error) {
       console.error('Registration failed', error.response?.data || error.message);
-      setToastMessage('Registration failed: ' + (error.response?.data?.message || error.message));
+      setToastMessage(error.response?.data?.message || 'An error occurred during registration');
       setToastType('error');
     }
   };
 
   return (
     <div>
-      <form onSubmit={handleRegister} className="space-y-6">
+      <form onSubmit={handleRegister} className="space-y-6" data-testid="register-form">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
             Email address

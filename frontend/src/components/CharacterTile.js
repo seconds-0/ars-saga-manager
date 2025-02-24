@@ -15,7 +15,9 @@ function CharacterTile({ character, onDelete }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <h3 className="text-xl font-semibold mb-2 text-dark-brown">{character.characterName}</h3>
+      <div className="p-4">
+        <h3 className="text-xl font-semibold mb-2 text-dark-brown">{character.name}</h3>
+      </div>
       <button
         onClick={() => navigate(`/character/${character.id}`)}
         className="mt-4 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors duration-150 ease-in-out"

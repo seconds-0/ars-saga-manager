@@ -8,6 +8,7 @@ const { validateVirtueFlaw, validateCharacter } = require('../middleware/validat
 const { AppError, handleError } = require('../utils/errorHandler');
 const sanitizeInputs = require('../middleware/sanitizer');
 const { Op } = require('sequelize');
+const { sequelize } = require('../models');
 
 const validateCharacteristics = (characteristics) => {
   const validCharacteristics = ['strength', 'stamina', 'dexterity', 'quickness', 'intelligence', 'presence', 'communication', 'perception'];
@@ -29,7 +30,7 @@ const calculateDerivedCharacteristics = (character) => {
 
 const checkCharacterOwnership = async (req, res, next) => {
   const character = await Character.findOne({
-    where: { id: req.params.id, userId: req.user.id }
+    where: { id: req.params.id, user_id: req.user.id }
   });
   if (!character) {
     return res.status(404).json({ message: 'Character not found or you do not have permission' });
@@ -40,21 +41,47 @@ const checkCharacterOwnership = async (req, res, next) => {
 
 const router = express.Router();
 
-// Use authenticateToken middleware for all character routes
-router.use(authenticateToken);
-
 // Create a new character
-router.post('/', validateCharacter, async (req, res) => {
+router.post('/', authenticateToken, validateCharacter, async (req, res) => {
   try {
-    const { characterName, characterType, characteristics = {}, useCunning = false } = req.body;
-    console.log('Received request body:', req.body);
-    console.log('User ID:', req.user.id);
+    const { name, character_type, characteristics = {}, use_cunning = false } = req.body;
+    
+    // Enhanced logging for debugging auth issues
+    console.log('Request headers:', {
+      authorization: req.headers.authorization ? 'Present' : 'Missing',
+      contentType: req.headers['content-type']
+    });
+    console.log('Auth user data:', {
+      userPresent: !!req.user,
+      userId: req.user?.id,
+      tokenPayload: req.user
+    });
 
-    if (!characterName || characterName.trim() === '') {
-      return res.status(400).json({ message: 'Character name is required' });
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
+      console.error('Authentication error:', {
+        userPresent: !!req.user,
+        userIdPresent: !!req.user?.id,
+        headers: req.headers
+      });
+      return res.status(401).json({ message: 'Invalid user ID' });
     }
-    if (!characterType || !['Magus', 'Companion', 'Grog', 'Animal', 'Demon', 'Spirit', 'Faerie'].includes(characterType)) {
-      return res.status(400).json({ message: 'Valid character type is required' });
+
+    // Use the ID directly from the token payload
+    const user_id = req.user.id;
+
+    // Verify user exists with enhanced error logging
+    const user = await sequelize.models.User.findByPk(user_id);
+    if (!user) {
+      console.error('Database user not found:', {
+        requestedId: user_id,
+        tokenPayload: req.user
+      });
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ message: 'Character name is required' });
     }
 
     // Ensure all characteristics are present, defaulting to 0 if not provided
@@ -71,15 +98,23 @@ router.post('/', validateCharacter, async (req, res) => {
       return res.status(400).json({ message: validationError });
     }
 
-    const character = await Character.create({ 
-      characterName, 
-      userId: req.user.id,
-      characterType,
+    console.log('Creating character with data:', {
+      name,
+      user_id,
+      character_type,
+      characteristics: fullCharacteristics,
+      use_cunning
+    });
+
+    const character = await Character.create({
+      name,
+      user_id, // Use user_id from token
+      character_type,
       entityType: 'character',
       entityId: uuidv4(),
-      ...characteristics,
-      useCunning,
-      totalImprovementPoints: 7 // Default value
+      ...fullCharacteristics,
+      use_cunning,
+      total_improvement_points: 7 // Default value
     });
     console.log('Character created:', character.toJSON());
 
@@ -89,7 +124,10 @@ router.post('/', validateCharacter, async (req, res) => {
   } catch (error) {
     console.error('Error creating character:', error);
     console.error('Error stack:', error.stack);
-    res.status(500).json({ message: 'Error creating character', error: error.message, stack: error.stack });
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+    res.status(500).json({ message: 'Error creating character', error: error.message });
   }
 });
 
@@ -110,10 +148,8 @@ router.get('/', async (req, res) => {
     }
 
     const characters = await Character.findAll({ 
-      where: { userId: req.user.id },
-      attributes: { 
-        include: ['id', 'characterName', 'virtueFlawPoints', 'maxVirtueFlawPoints']
-      }
+      where: { user_id: req.user.id },
+      attributes: ['id', 'name', 'character_type', 'house_id']
     });
     
     console.timeEnd('characterFetch');
@@ -163,7 +199,7 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
     console.log('Received update request for character:', req.params.id);
     console.log('Request body:', req.body);
 
-    const { useCunning, totalImprovementPoints, ...characteristics } = req.body;
+    const { use_cunning, total_improvement_points, ...characteristics } = req.body;
     
     // Validate characteristics
     const validationError = validateCharacteristics(characteristics);
@@ -173,7 +209,7 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
     }
 
     const [updated] = await Character.update(
-      { ...characteristics, useCunning, totalImprovementPoints },
+      { ...characteristics, use_cunning, total_improvement_points },
       { where: { id: req.params.id, userId: req.user.id } }
     );
 

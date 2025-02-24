@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useVirtuesAndFlaws } from '../../hooks/useVirtuesAndFlaws';
 import CurrentVirtueFlawList from './CurrentVirtueFlawList';
 import VirtueFlawSelector from './VirtueFlawSelector';
@@ -18,29 +18,30 @@ function VirtuesAndFlawsTab({ character }) {
   } = useVirtuesAndFlaws(character.id);
 
   const [selectedVirtueFlaw, setSelectedVirtueFlaw] = React.useState(null);
-  const [validationResult, setValidationResult] = useState({ isValid: true, warnings: [] });
 
-  useEffect(() => {
-    if (virtuesFlaws) {
-      const rules = createValidationRules({
-        characterType: character.type,
-        allowHermeticVirtues: character.hasTheGift,
-        allowMajorVirtues: character.type !== 'grog',
-        maxVirtuePoints: 10,
-        maxMinorFlaws: 5,
-        maxStoryFlaws: 1,
-        maxPersonalityFlaws: 3,
-        requireSocialStatus: true,
-        requirePointBalance: true,
-        checkCharacterTypeRestrictions: true,
-        checkIncompatibilities: true,
-        checkPrerequisites: true,
-      });
+  // Memoize validation rules
+  const validationRules = useMemo(() => {
+    return createValidationRules(character.type, {
+      allowMajorVirtues: character.type !== 'grog',
+      maxVirtuePoints: 10,
+      maxMinorFlaws: 5,
+      maxStoryFlaws: 1,
+      maxPersonalityFlaws: 3,
+      requireSocialStatus: true,
+      requirePointBalance: true,
+      checkCharacterTypeRestrictions: true,
+      checkIncompatibilities: true,
+      checkPrerequisites: true,
+    });
+  }, [character.type]);
 
-      const result = validateVirtuesFlaws(virtuesFlaws, rules);
-      setValidationResult(result);
+  // Memoize validation result
+  const validationResult = useMemo(() => {
+    if (!virtuesFlaws) {
+      return { isValid: true, warnings: [] };
     }
-  }, [virtuesFlaws, character]);
+    return validateVirtuesFlaws(virtuesFlaws, validationRules);
+  }, [virtuesFlaws, validationRules]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;

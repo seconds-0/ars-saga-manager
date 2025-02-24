@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { AuthProvider } from './useAuth';
 import App from './App';
 import * as authHook from './useAuth';
 
@@ -25,9 +24,7 @@ const renderWithProviders = (ui, { route = '/' } = {}) => {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[route]}>
-        <AuthProvider>
-          {ui}
-        </AuthProvider>
+        {ui}
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -40,7 +37,7 @@ test('renders login page when not authenticated', async () => {
     isAuthenticated: false,
   }));
 
-  renderWithProviders(<App />, { route: '/login' });
+  renderWithProviders(<App RouterComponent={({ children }) => children} />, { route: '/login' });
 
   expect(await screen.findByTestId('login-page')).toBeInTheDocument();
   expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
@@ -51,7 +48,7 @@ test('renders home page when authenticated', async () => {
     isAuthenticated: true,
   }));
 
-  renderWithProviders(<App />);
+  renderWithProviders(<App RouterComponent={({ children }) => children} />);
   // Wait for the home page to be rendered
   await screen.findByTestId('home-page', {}, { timeout: 5000 }); // Increase timeout to 5 seconds
 

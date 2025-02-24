@@ -20,7 +20,7 @@ jest.mock('../../useAuth', () => {
 });
 
 jest.mock('../LoadingSpinner', () => () => <div data-testid="loading-spinner">Loading...</div>);
-jest.mock('./CharacterSheetTabs', () => ({ character, onSave }) => <div data-testid="character-sheet-tabs">Mocked Tabs for {character.characterName}</div>);
+jest.mock('./CharacterSheetTabs', () => ({ character, onSave }) => <div data-testid="character-sheet-tabs">Mocked Tabs for {character.name}</div>);
 jest.mock('../../api/axios', () => ({
   get: jest.fn().mockResolvedValue({ data: {} }),
 }));
@@ -125,13 +125,13 @@ describe('CharacterSheet Component', () => {
     // Set the authentication state to true
     useAuth.mockReturnValue({ isAuthenticated: true, user: { id: '1', name: 'Test User' } });
 
-    const mockCharacter = { id: '1', characterName: 'Test Character', characterType: 'Magus' };
+    const mockCharacter = { id: '1', name: 'Test Character', characterType: 'magus' };
     api.get.mockResolvedValueOnce({ data: mockCharacter });
 
     renderCharacterSheet();
 
     await waitFor(() => {
-      expect(screen.getByText('Test Character - Magus')).toBeInTheDocument();
+      expect(screen.getByText('Test Character - magus')).toBeInTheDocument();
     });
     expect(screen.getByTestId('character-sheet-tabs')).toBeInTheDocument();
   });

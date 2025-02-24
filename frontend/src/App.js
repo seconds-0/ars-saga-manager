@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginPage from './components/LoginPage';
 import HomePage from './components/HomePage';
@@ -38,13 +38,15 @@ function AppContent() {
   );
 }
 
-function App() {
+function App({ RouterComponent = BrowserRouter }) {
   return (
     <QueryClientProvider client={queryClient}>
       <Flowbite>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <RouterComponent>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </RouterComponent>
         <ReactQueryDevtools initialIsOpen={false} />
       </Flowbite>
     </QueryClientProvider>

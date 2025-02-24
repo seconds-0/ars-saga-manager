@@ -12,7 +12,17 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false
       }
+    }, {
+      underscored: true,
+      tableName: 'Users'
     });
+
+    User.associate = function(models) {
+      User.hasMany(models.Character, {
+        foreignKey: 'user_id',
+        as: 'characters'
+      });
+    };
   
     return User;
   };

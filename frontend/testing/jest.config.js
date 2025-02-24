@@ -25,12 +25,15 @@ module.exports = {
   ],
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(js|jsx|mjs|cjs|ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx|mjs|cjs|ts|tsx)$': ['babel-jest', { 
+      presets: ['@babel/preset-env', '@babel/preset-react'],
+      plugins: ['@babel/plugin-transform-runtime']
+    }],
     '^.+\\.css$': '<rootDir>/testing/cssTransform.js',
     '^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)': '<rootDir>/testing/fileTransform.js',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!axios|camelcase)/',
+    'node_modules/(?!axios|camelcase|msw|@mswjs|@bundled-es-modules)/',
   ],
   modulePaths: [],
   moduleNameMapper: {
