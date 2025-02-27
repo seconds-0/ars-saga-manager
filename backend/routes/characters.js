@@ -177,7 +177,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     console.log('User ID:', req.user.id);
 
     const character = await Character.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+      where: { id: req.params.id, user_id: req.user.id }
     });
 
     if (!character) {
@@ -210,7 +210,7 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
 
     const [updated] = await Character.update(
       { ...characteristics, use_cunning, total_improvement_points },
-      { where: { id: req.params.id, userId: req.user.id } }
+      { where: { id: req.params.id, user_id: req.user.id } }
     );
 
     if (updated) {
@@ -231,7 +231,7 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
 router.delete('/:id', async (req, res) => {
   try {
     const deleted = await Character.destroy({ 
-      where: { id: req.params.id, userId: req.user.id } 
+      where: { id: req.params.id, user_id: req.user.id } 
     });
     if (deleted) {
       return res.status(204).send();
@@ -293,13 +293,16 @@ router.get('/:id/eligible-virtues-flaws', authenticateToken, checkCharacterOwner
 // Get virtues and flaws for a specific character
 router.get('/:id/virtues-flaws', async (req, res) => {
   try {
+    console.log('Fetching virtues and flaws for character:', req.params.id);
+    
     const character = await Character.findByPk(req.params.id, {
       include: [{
         model: CharacterVirtueFlaw,
         as: 'CharacterVirtueFlaws',
         include: [{
           model: ReferenceVirtueFlaw,
-          as: 'referenceVirtueFlaw'
+          as: 'referenceVirtueFlaw',
+          attributes: ['id', 'name', 'description', 'type', 'size', 'category', 'realm', 'prerequisites', 'incompatibilities']
         }]
       }]
     });
@@ -310,13 +313,19 @@ router.get('/:id/virtues-flaws', async (req, res) => {
 
     const virtuesFlaws = character.CharacterVirtueFlaws.map(cvf => ({
       id: cvf.id,
-      name: cvf.referenceVirtueFlaw.name,
-      description: cvf.referenceVirtueFlaw.description,
+      referenceVirtueFlaw: cvf.referenceVirtueFlaw,
+      is_house_virtue_flaw: cvf.is_house_virtue_flaw || false,
       cost: cvf.cost,
       selections: cvf.selections
     }));
 
-    res.json(virtuesFlaws);
+    // Calculate remaining points (default is 10)
+    const remainingPoints = 10 - (character.virtueFlawPoints || 0);
+
+    res.json({
+      virtuesFlaws: virtuesFlaws,
+      remainingPoints: remainingPoints
+    });
   } catch (error) {
     console.error('Error fetching virtues and flaws:', error);
     res.status(500).json({ message: 'Error fetching virtues and flaws', error: error.message });
@@ -327,68 +336,116 @@ router.get('/:id/virtues-flaws', async (req, res) => {
 router.post('/:id/virtues-flaws', authenticateToken, checkCharacterOwnership, sanitizeInputs, validateVirtueFlaw, async (req, res) => {
   try {
     const { referenceVirtueFlawId, cost, selections } = req.body;
+    console.log('Adding virtue/flaw to character:', req.params.id, 'virtue/flaw ID:', referenceVirtueFlawId);
+    console.log('Request body:', req.body);
+    
     const character = req.character;
     if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
+      return res.status(404).json({ status: 'fail', message: 'Character not found' });
     }
 
     const virtueFlaw = await ReferenceVirtueFlaw.findByPk(referenceVirtueFlawId);
     if (!virtueFlaw) {
-      return res.status(404).json({ message: 'Virtue or Flaw not found' });
+      return res.status(404).json({ status: 'fail', message: 'Virtue or Flaw not found' });
     }
 
-    if (!ruleEngine.isVirtueFlawEligible(character, virtueFlaw)) {
+    console.log('Found virtue/flaw:', { id: virtueFlaw.id, name: virtueFlaw.name, type: virtueFlaw.type });
+    
+    // Check for eligibility
+    const isEligible = ruleEngine.isVirtueFlawEligible(character, virtueFlaw);
+    if (!isEligible) {
       throw new AppError('Character is not eligible for this Virtue or Flaw', 400);
     }
 
+    // Calculate cost if not provided
+    const calculatedCost = cost || (virtueFlaw.type === 'Virtue' ? 
+      (virtueFlaw.size === 'Major' ? 3 : 1) : 0);
+
+    console.log('Calculated cost:', calculatedCost);
+    
+    // Create the virtue/flaw entry
     const newVirtueFlaw = await CharacterVirtueFlaw.create({
-      characterId: character.id,
-      referenceVirtueFlawId,
-      cost,
-      selections
+      character_id: character.id,
+      reference_virtue_flaw_id: referenceVirtueFlawId,
+      cost: calculatedCost,
+      selections: selections || null,
+      is_house_virtue_flaw: req.body.is_house_virtue_flaw || false
     });
+    
+    console.log('Created virtue/flaw entry:', newVirtueFlaw.id);
 
-    // Update character's virtue/flaw points
+    // Update character's virtue/flaw points - handle null values
+    const currentPoints = character.virtueFlawPoints || 0;
+    console.log('Current virtueFlawPoints:', currentPoints, 'Adding cost:', calculatedCost);
+    
     await character.update({
-      virtueFlawPoints: character.virtueFlawPoints + cost
+      virtueFlawPoints: currentPoints + calculatedCost
     });
 
-    logger.info(`Virtue/Flaw added to character ${req.params.id}`);
+    logger.logger.info(`Virtue/Flaw added to character ${req.params.id}`);
     res.status(201).json(newVirtueFlaw);
   } catch (error) {
-    logger.error(`Error adding Virtue/Flaw to character ${req.params.id}: ${error.message}`);
+    console.error('Error stack:', error.stack);
+    console.error('Error adding Virtue/Flaw:', error.name, error.message);
+    
+    // Log more data for debugging
+    if (req.character) {
+      console.log('Character data:', { 
+        id: req.character.id, 
+        name: req.character.name,
+        virtueFlawPoints: req.character.virtueFlawPoints 
+      });
+    }
+    
+    logger.logger.error(`Error adding Virtue/Flaw to character ${req.params.id}: ${error.message}`);
     handleError(error, res);
   }
 });
 
 // Remove a virtue or flaw from a character
-router.delete('/:characterId/virtues-flaws/:virtueFlawId', checkCharacterOwnership, async (req, res) => {
+router.delete('/:id/virtues-flaws/:virtueFlawId', authenticateToken, checkCharacterOwnership, async (req, res) => {
   try {
-    const { characterId, virtueFlawId } = req.params;
+    const characterId = req.params.id;
+    const { virtueFlawId } = req.params;
+    
+    console.log('Removing virtue/flaw:', { characterId, virtueFlawId });
+    
     const characterVirtueFlaw = await CharacterVirtueFlaw.findOne({
-      where: { id: virtueFlawId, characterId }
+      where: { 
+        id: virtueFlawId, 
+        character_id: characterId 
+      }
     });
-
+    
     if (!characterVirtueFlaw) {
-      return res.status(404).json({ message: 'Virtue or Flaw not found for this character' });
+      console.log('Virtue/flaw not found:', { virtueFlawId, characterId });
+      return res.status(404).json({ status: 'fail', message: 'Virtue or Flaw not found for this character' });
     }
-
+    
+    console.log('Found virtue/flaw to delete:', characterVirtueFlaw.id);
+    
     const character = req.character;
     if (!character) {
-      return res.status(404).json({ message: 'Character not found' });
+      return res.status(404).json({ status: 'fail', message: 'Character not found' });
     }
-
-    // Update character's virtue/flaw points
+    
+    // Update character's virtue/flaw points - handle null values
+    const currentPoints = character.virtueFlawPoints || 0;
+    console.log('Current virtue/flaw points:', currentPoints, 'Subtracting cost:', characterVirtueFlaw.cost);
+    
     await character.update({
-      virtueFlawPoints: character.virtueFlawPoints - characterVirtueFlaw.cost
+      virtueFlawPoints: Math.max(0, currentPoints - characterVirtueFlaw.cost)
     });
-
+    
     await characterVirtueFlaw.destroy();
-
+    
+    logger.logger.info(`Removed virtue/flaw ${virtueFlawId} from character ${characterId}`);
     res.status(204).send();
   } catch (error) {
-    logger.error('Error removing virtue or flaw:', error);
-    res.status(500).json({ message: 'Error removing virtue or flaw' });
+    console.error('Error stack:', error.stack);
+    console.error('Error removing virtue/flaw:', error.name, error.message);
+    logger.logger.error(`Error removing virtue or flaw: ${error.message}`);
+    res.status(500).json({ status: 'error', message: 'Error removing virtue or flaw' });
   }
 });
 
