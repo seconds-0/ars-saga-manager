@@ -92,8 +92,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: -2,
         communication: 1,
         perception: -3,
-        useCunning: true,
-        totalImprovementPoints: 10
+        use_cunning: true,
+        total_improvement_points: 10
       };
 
       renderComponent({ character: mockCharacter });
@@ -109,7 +109,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
       expect(screen.getByText('Save Characteristics')).toBeInTheDocument();
 
       const characteristicEntries = Object.entries(mockCharacter).filter(
-        ([char]) => char !== 'useCunning' && char !== 'totalImprovementPoints'
+        ([char]) => char !== 'use_cunning' && char !== 'total_improvement_points'
       );
 
       characteristicEntries.forEach(([char, value]) => {
@@ -138,7 +138,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7
+          total_improvement_points: 7
         };
 
         renderComponent({ character: mockCharacter });
@@ -169,14 +169,14 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 6  // Providing 6 points
+          total_improvement_points: 6  // Providing 6 points
         };
 
         renderComponent({ character: mockCharacter });
         
         // Test passes if the component correctly uses the provided points
         const points = getAvailablePoints();
-        expect(points).toBe(6);  // Should match the provided totalImprovementPoints
+        expect(points).toBe(6);  // Should match the provided total_improvement_points
         expect(points).not.toBe(7);  // Should not use the default value
       });
 
@@ -190,7 +190,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7
+          total_improvement_points: 7
         };
 
         renderComponent({ character: mockCharacter });
@@ -214,7 +214,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7
+          total_improvement_points: 7
         };
 
         renderComponent({ character: mockCharacter });
@@ -245,7 +245,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7  // Total points available
+          total_improvement_points: 7  // Total points available
         };
 
         renderComponent({ character: mockCharacter });
@@ -276,7 +276,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7
+          total_improvement_points: 7
         };
 
         renderComponent({ character: mockCharacter });
@@ -300,7 +300,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
           presence: 0,
           communication: 0,
           perception: 0,
-          totalImprovementPoints: 7
+          total_improvement_points: 7
         };
 
         renderComponent({ character: mockCharacter });
@@ -324,7 +324,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 3  // Only 3 points total
+        total_improvement_points: 3  // Only 3 points total
       };
 
       renderComponent({ character: mockCharacter });
@@ -356,7 +356,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 15
+        total_improvement_points: 15
       };
 
       renderComponent({ character: mockCharacter });
@@ -386,7 +386,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 15
+        total_improvement_points: 15
       };
 
       renderComponent({ character: mockCharacter });
@@ -416,7 +416,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 7
+        total_improvement_points: 7
       };
 
       renderComponent({ character: mockCharacter });
@@ -470,7 +470,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 15
+        total_improvement_points: 15
       };
 
       renderComponent({ character: mockCharacter });
@@ -503,7 +503,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 7
+        total_improvement_points: 7
       };
 
       renderComponent({ character: mockCharacter });
@@ -536,7 +536,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 20
+        total_improvement_points: 20
       };
 
       renderComponent({ character: mockCharacter });
@@ -574,7 +574,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10
+        total_improvement_points: 10
       };
 
       renderComponent({ character: mockCharacter });
@@ -603,8 +603,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -622,7 +622,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         ...mockCharacter,
         strength: 1,
         intelligence: 1,
-        totalImprovementPoints: 10  // The component doesn't update totalImprovementPoints
+        total_improvement_points: 10  // The component doesn't update total_improvement_points
       });
 
       // Verify success message appears
@@ -665,8 +665,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -683,7 +683,7 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         expect(mockOnSave).toHaveBeenCalledWith({
           ...mockCharacter,
           strength: 1,  // We only incremented once
-          totalImprovementPoints: 10  // The component doesn't update totalImprovementPoints
+          total_improvement_points: 10  // The component doesn't update total_improvement_points
         });
       }, { timeout: 6000 });
 
@@ -705,8 +705,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -740,8 +740,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -754,10 +754,10 @@ describe('CharacteristicsAndAbilitiesTab', () => {
       const saveButton = screen.getByText('Save Characteristics');
       fireEvent.click(saveButton);
 
-      // Verify onSave was called with useCunning: true
+      // Verify onSave was called with use_cunning: true
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalledWith(expect.objectContaining({
-          useCunning: true
+          use_cunning: true
         }));
       });
 
@@ -777,8 +777,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: true  // Pre-enabled
+        total_improvement_points: 10,
+        use_cunning: true  // Pre-enabled
       };
 
       renderComponent({ character: mockCharacter });
@@ -799,15 +799,15 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: true
+        total_improvement_points: 10,
+        use_cunning: true
       };
 
       renderComponent({ character: mockCharacter });
 
       // Verify the checkbox correctly reflects the initial state
       const checkbox = screen.getByRole('checkbox', { name: /use cunning instead of intelligence/i });
-      expect(checkbox).toBeChecked();  // Should be checked because useCunning is true
+      expect(checkbox).toBeChecked();  // Should be checked because use_cunning is true
       expect(checkbox).not.toHaveAttribute('checked', false);  // Should not be unchecked
     });
 
@@ -821,8 +821,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -854,8 +854,8 @@ describe('CharacteristicsAndAbilitiesTab', () => {
         presence: 0,
         communication: 0,
         perception: 0,
-        totalImprovementPoints: 10,
-        useCunning: false
+        total_improvement_points: 10,
+        use_cunning: false
       };
 
       renderComponent({ character: mockCharacter });
@@ -871,13 +871,13 @@ describe('CharacteristicsAndAbilitiesTab', () => {
       // Verify the saved state is correct
       await waitFor(() => {
         const savedData = mockOnSave.mock.calls[0][0];
-        expect(savedData.useCunning).toBe(true);  // Should be true because we toggled it on
+        expect(savedData.use_cunning).toBe(true);  // Should be true because we toggled it on
       });
 
       // Verify the saved state is not incorrect
       await waitFor(() => {
         const savedData = mockOnSave.mock.calls[0][0];
-        expect(savedData.useCunning).not.toBe(false);  // Should not be false
+        expect(savedData.use_cunning).not.toBe(false);  // Should not be false
       });
         
       // Verify UI state is correct

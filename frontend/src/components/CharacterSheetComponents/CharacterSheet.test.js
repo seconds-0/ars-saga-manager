@@ -125,7 +125,7 @@ describe('CharacterSheet Component', () => {
     // Set the authentication state to true
     useAuth.mockReturnValue({ isAuthenticated: true, user: { id: '1', name: 'Test User' } });
 
-    const mockCharacter = { id: '1', name: 'Test Character', characterType: 'magus' };
+    const mockCharacter = { id: '1', name: 'Test Character', character_type: 'magus' };
     api.get.mockResolvedValueOnce({ data: mockCharacter });
 
     renderCharacterSheet();
