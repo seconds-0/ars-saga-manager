@@ -6,11 +6,13 @@ import { validateVirtuesFlaws, createValidationRules } from '../../utils/virtueF
 
 function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationResult = { isValid: true, warnings: [] } }) {
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [showDetails, setShowDetails] = useState(null);
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [showOnlyEligible, setShowOnlyEligible] = useState(true);
 
   const fetchReferenceVirtuesFlaws = async () => {
     const response = await api.get('/reference-virtues-flaws');
@@ -32,6 +34,13 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
     }, 300),
     []
   );
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    debouncedSearch(value);
+  };
 
   // Cleanup debounce on unmount
   useEffect(() => {
@@ -102,10 +111,15 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
 
   // Get general warning messages that aren't tied to a specific virtue/flaw
   const getGeneralWarnings = useCallback(() => {
+    if (!allVirtuesFlaws) return [];
+    
     return (validationResult?.warnings || [])
       .map(w => w.message || '')
-      .filter(msg => !filteredVirtuesFlaws.some(vf => msg.includes(vf.name)));
-  }, [validationResult, filteredVirtuesFlaws]);
+      .filter(msg => !allVirtuesFlaws.some(vf => 
+        // Only check against visible virtues/flaws to avoid circular dependency
+        msg.includes(vf.name) && vf.name.toLowerCase().includes(search.toLowerCase())
+      ));
+  }, [validationResult, allVirtuesFlaws, search]);
 
   // Get point cost for a virtue/flaw
   const getPointCost = useCallback((virtueFlaw) => {
@@ -151,12 +165,14 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
   const filteredVirtuesFlaws = useMemo(() => {
     if (!allVirtuesFlaws) return [];
 
-    // Filter by search term, category, and type
+    // Filter by search term, category, type, and eligibility
     const filtered = allVirtuesFlaws.filter(vf => {
       const matchesSearch = vf.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || vf.category === selectedCategory;
       const matchesType = selectedType === 'all' || vf.type === selectedType;
-      return matchesSearch && matchesCategory && matchesType;
+      const isEligible = !showOnlyEligible || !isVirtueFlawDisabled(vf);
+      
+      return matchesSearch && matchesCategory && matchesType && isEligible;
     });
 
     // Group by category
@@ -176,69 +192,87 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
         if (b === 'The Gift') return 1;
         return a.localeCompare(b);
       })
-      .flatMap(([category, items]) => [
-        // Add category header
-        { isHeader: true, category },
-        // Sort items within category
-        ...sortItems(items)
-      ]);
-  }, [search, selectedCategory, selectedType, allVirtuesFlaws, isHouseVirtue, sortItems]);
+      .flatMap(([category, items]) => {
+        if (items.length === 0) return [];
+        return [
+          // Add category header
+          { isHeader: true, category },
+          // Sort items within category
+          ...sortItems(items)
+        ];
+      });
+  }, [search, selectedCategory, selectedType, showOnlyEligible, allVirtuesFlaws, isHouseVirtue, sortItems, isVirtueFlawDisabled]);
 
   if (isLoading) return <div>Loading virtues and flaws...</div>;
   if (error) return <div>Error loading virtues and flaws: {error.message}</div>;
 
   return (
     <div role="region" aria-label="Virtue and Flaw Selection">
-      <div className="flex gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search virtues and flaws"
-          onChange={(e) => debouncedSearch(e.target.value)}
-          className="flex-grow p-2 border rounded"
-          aria-label="Search virtues and flaws"
-          role="searchbox"
-        />
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-2 border rounded"
-          aria-label="Filter by category"
-        >
-          {categories.map(cat => (
-            <option key={cat} value={cat}>
-              {cat === 'all' ? 'All Categories' : cat}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="p-2 border rounded"
-          aria-label="Filter by type"
-        >
-          <option value="all">All Types</option>
-          <option value="Virtue">Virtues</option>
-          <option value="Flaw">Flaws</option>
-        </select>
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 mb-4">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Search virtues and flaws"
+            value={searchInput}
+            onChange={handleSearchChange}
+            className="flex-grow p-2 border rounded"
+            aria-label="Search virtues and flaws"
+            role="searchbox"
+          />
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className="p-2 border rounded"
-            aria-label="Sort by"
+            aria-label="Filter by category"
           >
-            <option value="name">Name</option>
-            <option value="type">Type</option>
-            <option value="size">Size</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'all' ? 'All Categories' : cat}
+              </option>
+            ))}
           </select>
-          <button
-            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-            className="p-2 border rounded hover:bg-gray-50"
-            aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
-            title={`Sort ${sortDirection === 'asc' ? 'Z to A' : 'A to Z'}`}
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="p-2 border rounded"
+            aria-label="Filter by type"
           >
-            {sortDirection === 'asc' ? '↑' : '↓'}
-          </button>
+            <option value="all">All Types</option>
+            <option value="Virtue">Virtues</option>
+            <option value="Flaw">Flaws</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="p-2 border rounded"
+              aria-label="Sort by"
+            >
+              <option value="name">Name</option>
+              <option value="type">Type</option>
+              <option value="size">Size</option>
+            </select>
+            <button
+              onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="p-2 border rounded hover:bg-gray-50"
+              aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+              title={`Sort ${sortDirection === 'asc' ? 'Z to A' : 'A to Z'}`}
+            >
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="showOnlyEligible"
+            checked={showOnlyEligible}
+            onChange={(e) => setShowOnlyEligible(e.target.checked)}
+            className="mr-2 h-4 w-4"
+          />
+          <label htmlFor="showOnlyEligible" className="text-sm text-gray-700">
+            Only show eligible choices
+          </label>
         </div>
       </div>
 
