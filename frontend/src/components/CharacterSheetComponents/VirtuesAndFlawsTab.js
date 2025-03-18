@@ -21,13 +21,17 @@ function VirtuesAndFlawsTab({ character }) {
 
   // Memoize validation rules
   const validationRules = useMemo(() => {
+    // Get the character type from the appropriate property (character_type from API, normalized to lowercase)
+    const characterType = character?.character_type?.toLowerCase();
+    
     // Guard against undefined character or character type
-    if (!character?.type) {
+    if (!characterType) {
+      console.log('Character type is missing:', character);
       return null;
     }
     
-    return createValidationRules(character.type, {
-      allowMajorVirtues: character.type !== 'grog',
+    return createValidationRules(characterType, {
+      allowMajorVirtues: characterType !== 'grog',
       maxVirtuePoints: 10,
       maxMinorFlaws: 5,
       maxStoryFlaws: 1,
@@ -37,10 +41,10 @@ function VirtuesAndFlawsTab({ character }) {
       checkCharacterTypeRestrictions: true,
       checkIncompatibilities: true,
       checkPrerequisites: true,
-      house: character.house,
-      allowHermeticVirtues: character.hasTheGift,
+      house: character.house_id, // Use house_id from the API
+      allowHermeticVirtues: character.has_the_gift, // Use has_the_gift from the API
     });
-  }, [character?.type, character?.house, character?.hasTheGift]);
+  }, [character?.character_type, character?.house_id, character?.has_the_gift]);
 
   // Memoize validation result
   const validationResult = useMemo(() => {

@@ -51,10 +51,14 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
 
   // Memoize validation rules
   const validationRules = useMemo(() => {
-    if (!character?.type) return null;
-    return createValidationRules(character.type, {
-      allowHermeticVirtues: character.hasTheGift,
-      allowMajorVirtues: character.type !== 'grog',
+    // Get the character type from the appropriate property (character_type from API, normalized to lowercase)
+    const characterType = character?.character_type?.toLowerCase();
+    
+    if (!characterType) return null;
+    
+    return createValidationRules(characterType, {
+      allowHermeticVirtues: character.has_the_gift,
+      allowMajorVirtues: characterType !== 'grog',
       maxVirtuePoints: 10,
       maxMinorFlaws: 5,
       maxStoryFlaws: 1,
@@ -64,23 +68,26 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
       checkCharacterTypeRestrictions: true,
       checkIncompatibilities: true,
       checkPrerequisites: true,
-      house: character.house,
+      house: character.house_id,
     });
-  }, [character?.type, character?.hasTheGift, character?.house]);
+  }, [character?.character_type, character?.has_the_gift, character?.house_id]);
 
   // Determine if a virtue/flaw is a house virtue
   const isHouseVirtue = useCallback((virtueFlaw) => {
-    if (!character?.house) return false;
-    return virtueFlaw.is_house_virtue && virtueFlaw.house === character.house;
-  }, [character?.house]);
+    if (!character?.house_id) return false;
+    return virtueFlaw.is_house_virtue && virtueFlaw.house_id === character.house_id;
+  }, [character?.house_id]);
 
   // Memoize the isVirtueFlawDisabled function
   const isVirtueFlawDisabled = useCallback((virtueFlaw) => {
     // House virtues are always available if they match the character's house
     if (isHouseVirtue(virtueFlaw)) return false;
     
+    // Get the character type from the appropriate property
+    const characterType = character?.character_type?.toLowerCase();
+    
     // Early return if we don't have required data
-    if (!character?.type || !validationRules) return true;
+    if (!characterType || !validationRules) return true;
 
     try {
       // Create a temporary list with the new virtue/flaw added
@@ -105,7 +112,7 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
       console.error("Error in isVirtueFlawDisabled:", error);
       return true;
     }
-  }, [character?.type, character?.virtuesFlaws, remainingPoints, validationRules, isHouseVirtue]);
+  }, [character?.character_type, character?.virtuesFlaws, remainingPoints, validationRules, isHouseVirtue]);
 
   // Get warning messages for a specific virtue/flaw with type safety
   const getWarningMessages = useCallback((virtueFlaw) => {
