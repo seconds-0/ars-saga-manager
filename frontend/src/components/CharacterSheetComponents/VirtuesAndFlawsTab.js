@@ -21,6 +21,11 @@ function VirtuesAndFlawsTab({ character }) {
 
   // Memoize validation rules
   const validationRules = useMemo(() => {
+    // Guard against undefined character or character type
+    if (!character?.type) {
+      return null;
+    }
+    
     return createValidationRules(character.type, {
       allowMajorVirtues: character.type !== 'grog',
       maxVirtuePoints: 10,
@@ -32,12 +37,14 @@ function VirtuesAndFlawsTab({ character }) {
       checkCharacterTypeRestrictions: true,
       checkIncompatibilities: true,
       checkPrerequisites: true,
+      house: character.house,
+      allowHermeticVirtues: character.hasTheGift,
     });
-  }, [character.type]);
+  }, [character?.type, character?.house, character?.hasTheGift]);
 
   // Memoize validation result
   const validationResult = useMemo(() => {
-    if (!virtuesFlaws) {
+    if (!virtuesFlaws || !validationRules) {
       return { isValid: true, warnings: [] };
     }
     return validateVirtuesFlaws(virtuesFlaws, validationRules);

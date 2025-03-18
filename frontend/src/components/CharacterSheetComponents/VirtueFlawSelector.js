@@ -82,38 +82,44 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
     // Early return if we don't have required data
     if (!character?.type || !validationRules) return true;
 
-    // Create a temporary list with the new virtue/flaw added
-    const tempVirtuesFlaws = [
-      ...(character.virtuesFlaws || []),
-      {
-        referenceVirtueFlaw: virtueFlaw,
-        is_house_virtue_flaw: false,
-      }
-    ];
-    
-    // Validate the temporary list
-    const result = validateVirtuesFlaws(tempVirtuesFlaws, validationRules);
+    try {
+      // Create a temporary list with the new virtue/flaw added
+      const tempVirtuesFlaws = [
+        ...(character.virtuesFlaws || []),
+        {
+          referenceVirtueFlaw: virtueFlaw,
+          is_house_virtue_flaw: false,
+        }
+      ];
+      
+      // Validate the temporary list
+      const result = validateVirtuesFlaws(tempVirtuesFlaws, validationRules);
 
-    // Check if adding this virtue/flaw would make the character invalid
-    return !result.isValid || 
-           (!isHouseVirtue(virtueFlaw) && virtueFlaw.type === 'Virtue' && 
-            ((virtueFlaw.size === 'Minor' && remainingPoints < 1) || 
-             (virtueFlaw.size === 'Major' && remainingPoints < 3)));
+      // Check if adding this virtue/flaw would make the character invalid
+      return !result.isValid || 
+            (!isHouseVirtue(virtueFlaw) && virtueFlaw.type === 'Virtue' && 
+              ((virtueFlaw.size === 'Minor' && remainingPoints < 1) || 
+              (virtueFlaw.size === 'Major' && remainingPoints < 3)));
+    } catch (error) {
+      // If validation fails for any reason, disable the virtue/flaw
+      console.error("Error in isVirtueFlawDisabled:", error);
+      return true;
+    }
   }, [character?.type, character?.virtuesFlaws, remainingPoints, validationRules, isHouseVirtue]);
 
   // Get warning messages for a specific virtue/flaw with type safety
   const getWarningMessages = useCallback((virtueFlaw) => {
-    if (!virtueFlaw?.name) return [];
-    return (validationResult?.warnings || [])
+    if (!virtueFlaw?.name || !validationResult?.warnings) return [];
+    return (validationResult.warnings || [])
       .filter(w => w?.message?.includes(virtueFlaw.name))
       .map(w => w.message || '');
   }, [validationResult]);
 
   // Get general warning messages that aren't tied to a specific virtue/flaw
   const getGeneralWarnings = useCallback(() => {
-    if (!allVirtuesFlaws) return [];
+    if (!allVirtuesFlaws || !validationResult?.warnings) return [];
     
-    return (validationResult?.warnings || [])
+    return (validationResult.warnings || [])
       .map(w => w.message || '')
       .filter(msg => !allVirtuesFlaws.some(vf => 
         // Only check against visible virtues/flaws to avoid circular dependency
