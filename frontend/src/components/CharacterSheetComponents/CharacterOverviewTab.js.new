@@ -1,0 +1,152 @@
+import React, { useState, useEffect } from 'react';
+
+function CharacterOverviewTab({ character, onSave }) {
+  const [age, setAge] = useState(character.age || 25);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    age: character.age || 25
+  });
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setAge(character.age || 25);
+    setFormData({ age: character.age || 25 });
+  }, [character]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData({ age: character.age || 25 });
+    setError('');
+  };
+
+  const handleChange = (e) => {
+    const value = parseInt(e.target.value, 10);
+    setFormData({ ...formData, [e.target.name]: value });
+    
+    // Validate age
+    if (isNaN(value) || value < 5 || value > 1000) {
+      setError('Age must be a number between 5 and 1000');
+    } else {
+      setError('');
+    }
+  };
+
+  const handleSave = () => {
+    if (error) return;
+    
+    onSave({
+      ...character,
+      age: formData.age
+    });
+    setIsEditing(false);
+  };
+
+  // Determine which experience pools to display
+  const isMagus = character.character_type && character.character_type.toLowerCase() === 'magus';
+  
+  // Get all non-zero category-specific experience pools
+  const categoryPools = [
+    { name: 'Martial', field: 'martial_exp_available' },
+    { name: 'Academic', field: 'academic_exp_available' },
+    { name: 'Arcane', field: 'arcane_exp_available' },
+    { name: 'Supernatural', field: 'supernatural_exp_available' },
+    { name: 'Social', field: 'social_exp_available' }
+  ].filter(pool => (character[pool.field] || 0) > 0);
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold mb-4">Character Overview</h2>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="font-semibold">Name: <span className="font-normal">{character.name}</span></p>
+          <p className="font-semibold">Type: <span className="font-normal">{character.character_type}</span></p>
+          
+          {/* Age Field */}
+          <div className="mt-2">
+            <label className="font-semibold">Age: </label>
+            {isEditing ? (
+              <input
+                type="number"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                min="5"
+                max="1000"
+                className="border rounded px-2 py-1 ml-2 w-20"
+              />
+            ) : (
+              <span className="font-normal">{age}</span>
+            )}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+          </div>
+          
+          {/* Edit/Save/Cancel Buttons */}
+          <div className="mt-4">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  disabled={!!error}
+                  className={`px-3 py-1 rounded mr-2 ${error ? 'bg-gray-400' : 'bg-blue-500 text-white'}`}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="px-3 py-1 bg-gray-300 rounded"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleEdit}
+                className="px-3 py-1 bg-blue-500 text-white rounded"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Experience Pools */}
+        <div className="border p-4 rounded bg-gray-50">
+          <h3 className="text-lg font-semibold mb-2">Available Experience</h3>
+          
+          {/* General Experience */}
+          <p className="font-medium">
+            General Exp: <span className="font-normal">{character.general_exp_available || 0}</span>
+          </p>
+          
+          {/* Magical Experience (for magi only) */}
+          {isMagus && (
+            <p className="font-medium">
+              Magical Exp: <span className="font-normal">{character.magical_exp_available || 0}</span>
+            </p>
+          )}
+          
+          {/* Category-specific Experience */}
+          {categoryPools.length > 0 && (
+            <div className="mt-2">
+              <p className="font-medium">Category-Specific Experience:</p>
+              <ul className="list-disc pl-6">
+                {categoryPools.map(pool => (
+                  <li key={pool.field}>
+                    {pool.name}: <span className="font-normal">{character[pool.field] || 0}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default CharacterOverviewTab;
