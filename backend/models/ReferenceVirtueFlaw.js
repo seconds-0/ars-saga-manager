@@ -19,7 +19,22 @@ module.exports = (sequelize, DataTypes) => {
     max_selections: DataTypes.INTEGER,
     prerequisites: DataTypes.JSONB,
     incompatibilities: DataTypes.JSONB,
-    effects: DataTypes.JSONB
+    effects: DataTypes.JSONB,
+    // New fields for experience modifiers
+    magical_exp_modifier: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    general_exp_modifier: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    general_exp_modifier_category: {
+      type: DataTypes.STRING,
+      allowNull: true
+    }
   }, {
     sequelize,
     modelName: 'ReferenceVirtueFlaw',
