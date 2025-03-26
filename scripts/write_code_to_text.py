@@ -162,20 +162,13 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
         Tuple of (success, message)
     """
     import time
-    import signal
+    import sys
+    import platform
     
-    # Setup timeout handler
-    class TimeoutException(Exception):
-        pass
-    
-    def timeout_handler(signum, frame):
-        raise TimeoutException("Processing timed out")
-    
-    # Register the timeout handler
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(timeout_seconds)
-    
+    # Simple timeout approach that works on all platforms
     start_time = time.time()
+    end_time_limit = start_time + timeout_seconds
+    
     root_dir = os.path.dirname(os.path.abspath(__file__)) + '/..'
     file_count = 0
     large_file_count = 0
@@ -187,6 +180,10 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
             # Write title
             f.write("# Codebase Documentation\n\n")
             print("Generating directory tree...")
+            
+            # Check for timeout
+            if time.time() > end_time_limit:
+                return (False, f"Timeout exceeded while generating directory tree")
             
             # Write directory structure
             f.write("## Directory Structure\n\n")
@@ -202,11 +199,16 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
             
             print("Beginning file processing...")
             progress_interval = 50  # Show progress every 50 files
+            check_timeout_interval = 20  # Check for timeout every 20 files
             
             for root, dirs, files in os.walk(root_dir):
                 # Skip node_modules entirely - it's huge and unnecessary
                 if 'node_modules' in root:
                     continue
+                
+                # Check for timeout periodically
+                if time.time() > end_time_limit:
+                    return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files ({processed_size/1024:.1f} KB) so far.")
                     
                 # Process each file
                 for file in sorted(files):
@@ -216,6 +218,10 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                     # Skip if already processed or should be ignored
                     if rel_path in processed_files or should_ignore(file_path, root_pathspec, additional_pathspecs, respect_gitignore):
                         continue
+                    
+                    # Check for timeout every few files
+                    if file_count % check_timeout_interval == 0 and time.time() > end_time_limit:
+                        return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files ({processed_size/1024:.1f} KB) so far.")
                     
                     # Handle large files
                     try:
@@ -235,7 +241,8 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                     # Show progress
                     if file_count % progress_interval == 0:
                         elapsed = time.time() - start_time
-                        print(f"Processed {file_count} files ({processed_size/1024:.1f} KB) in {elapsed:.1f} seconds...")
+                        remaining = end_time_limit - time.time()
+                        print(f"Processed {file_count} files ({processed_size/1024:.1f} KB) in {elapsed:.1f} seconds... (timeout in {remaining:.1f}s)")
                     
                     if is_binary_file(file_path):
                         continue
@@ -260,21 +267,19 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                         f.write(f"### {rel_path}\n\n")
                         f.write(f"Error reading file: {str(e)}\n\n")
         
-        # Turn off the alarm
-        signal.alarm(0)
-        
         end_time = time.time()
         total_time = end_time - start_time
         
-        return (True, f"Successfully processed {file_count} files ({processed_size/1024:.1f} KB) in {total_time:.1f} seconds")
+        # Add stats about large files if relevant
+        large_files_info = ""
+        if skip_large_files and large_file_count > 0:
+            large_files_info = f" (skipped {large_file_count} large files totaling {skipped_size/1024/1024:.1f} MB)"
+            
+        return (True, f"Successfully processed {file_count} files ({processed_size/1024:.1f} KB) in {total_time:.1f} seconds{large_files_info}")
     
-    except TimeoutException:
-        return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files so far.")
     except Exception as e:
-        return (False, f"Error processing codebase: {str(e)}")
-    finally:
-        # Make sure to turn off the alarm in all cases
-        signal.alarm(0)
+        elapsed = time.time() - start_time
+        return (False, f"Error processing codebase after {elapsed:.1f} seconds: {str(e)}")
 
 def main():
     """Main function to generate the codebase text file."""
