@@ -175,6 +175,25 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
     processed_size = 0
     skipped_size = 0
     
+    # Debugging - track the largest files
+    largest_files = []
+    def track_large_file(path, size):
+        nonlocal largest_files
+        largest_files.append((path, size))
+        largest_files.sort(key=lambda x: x[1], reverse=True)
+        if len(largest_files) > 10:
+            largest_files = largest_files[:10]
+    
+    # Additional directories to always skip
+    always_skip_dirs = [
+        'node_modules',
+        '.git',
+        'build',
+        'dist',
+        '__pycache__',
+        '.cache'
+    ]
+    
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
             # Write title
@@ -202,13 +221,27 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
             check_timeout_interval = 20  # Check for timeout every 20 files
             
             for root, dirs, files in os.walk(root_dir):
-                # Skip node_modules entirely - it's huge and unnecessary
-                if 'node_modules' in root:
+                # Skip problematic directories
+                should_skip = False
+                for skip_dir in always_skip_dirs:
+                    if skip_dir in root.split(os.path.sep):
+                        should_skip = True
+                        break
+                if should_skip:
                     continue
+                    
+                # Remove problem directories from the dirs list so they won't be visited
+                for skip_dir in always_skip_dirs:
+                    if skip_dir in dirs:
+                        dirs.remove(skip_dir)
                 
                 # Check for timeout periodically
                 if time.time() > end_time_limit:
                     return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files ({processed_size/1024:.1f} KB) so far.")
+                
+                # Debug output about current directory
+                if file_count % check_timeout_interval == 0:
+                    print(f"Scanning directory: {root}")
                     
                 # Process each file
                 for file in sorted(files):
@@ -223,15 +256,34 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                     if file_count % check_timeout_interval == 0 and time.time() > end_time_limit:
                         return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files ({processed_size/1024:.1f} KB) so far.")
                     
+                    # Skip files that are likely problematic
+                    file_ext = os.path.splitext(file_path)[1].lower()
+                    if file_ext in ['.log', '.lock', '.bin', '.exe', '.dll', '.o', '.obj', 
+                                   '.pyc', '.pyo', '.so', '.dylib', '.zip', '.tar', '.gz', 
+                                   '.7z', '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg']:
+                        continue
+                        
                     # Handle large files
                     try:
                         file_size = os.path.getsize(file_path)
-                        if skip_large_files and file_size > max_file_size:
+                        
+                        # Track large files for debugging
+                        if file_size > 100 * 1024:  # Larger than 100KB
+                            track_large_file(rel_path, file_size)
+                        
+                        # Skip large files if requested
+                        if file_size > max_file_size:
                             large_file_count += 1
                             skipped_size += file_size
-                            f.write(f"### {rel_path}\n\n")
-                            f.write(f"File skipped (too large): {file_size/1024:.1f} KB\n\n")
-                            continue
+                            
+                            # Always skip extremely large files
+                            if file_size > 10 * 1024 * 1024:  # Larger than 10MB
+                                continue
+                                
+                            if skip_large_files:
+                                f.write(f"### {rel_path}\n\n")
+                                f.write(f"File skipped (too large): {file_size/1024:.1f} KB\n\n")
+                                continue
                     except Exception:
                         pass
                     
@@ -248,8 +300,17 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                         continue
                     
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as file_content:
-                            content = file_content.read()
+                        # Use a file size limit when reading content
+                        max_readable_size = 1 * 1024 * 1024  # 1MB max readable
+                        if os.path.getsize(file_path) > max_readable_size:
+                            f.write(f"### {rel_path}\n\n")
+                            f.write(f"File content truncated (too large to display in full): {os.path.getsize(file_path)/1024:.1f} KB\n\n")
+                            with open(file_path, 'r', encoding='utf-8', errors='replace') as file_content:
+                                content = file_content.read(max_readable_size)
+                                content += "\n\n... [content truncated] ...\n\n"
+                        else:
+                            with open(file_path, 'r', encoding='utf-8', errors='replace') as file_content:
+                                content = file_content.read()
                         
                         processed_size += len(content)
                         
@@ -272,8 +333,13 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
         
         # Add stats about large files if relevant
         large_files_info = ""
-        if skip_large_files and large_file_count > 0:
+        if large_file_count > 0:
             large_files_info = f" (skipped {large_file_count} large files totaling {skipped_size/1024/1024:.1f} MB)"
+            
+        # Print the largest files for debugging
+        print("\nLargest files encountered:")
+        for path, size in largest_files:
+            print(f"  {path}: {size/1024/1024:.2f} MB")
             
         return (True, f"Successfully processed {file_count} files ({processed_size/1024:.1f} KB) in {total_time:.1f} seconds{large_files_info}")
     
