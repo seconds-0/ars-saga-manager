@@ -7,12 +7,15 @@
     "health": "node scripts/health-check.js",
     "start:backend": "cd backend && npm run dev",
     "start:frontend": "cd frontend && npm start",
-    "start:logs": "docker-compose up -d",
-    "stop:logs": "docker-compose down",
+    "start:logs": "docker-compose -f docker/docker-compose.yml up -d",
+    "stop:logs": "docker-compose -f docker/docker-compose.yml down",
     "start:all": "node scripts/start-all.js",
     "stop:all": "node scripts/stop-all.js",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
-    "test:all": "cd backend && npm test && cd ../frontend && npm test"
+    "test:all": "cd backend && npm test && cd ../frontend && npm test",
+    "test:batched": "node test-utils/batched-test-runner.js",
+    "test:debug": "node test-utils/debug-test-runner.js",
+    "test:simple": "node test-utils/simple-test-runner.js"
   },
   "author": "",
   "license": "ISC",

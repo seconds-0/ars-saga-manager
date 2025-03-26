@@ -1,0 +1,55 @@
+version: "3"
+
+services:
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"  # Loki API
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    ports:
+      - "3200:3000"  # Map Grafana's internal 3000 to host 3200 to avoid conflict with frontend
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_SERVER_HTTP_PORT=3000
+      - GF_SERVER_HTTP_ADDR=0.0.0.0
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_ROOT_URL=http://localhost:3200
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    volumes:
+      - ./backend/logs:/var/log
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+# Port Usage:
+# - Frontend: 3000 (React default)
+# - Backend: 3001 (Express)
+# - Grafana: 3200 (mapped from internal 3000)
+# - Loki: 3100 (Log aggregation)
+
+networks:
+  monitoring:
+
+volumes:
+  grafana-data:

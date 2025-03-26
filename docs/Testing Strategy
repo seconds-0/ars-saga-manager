@@ -1,0 +1,311 @@
+# Ars Saga Manager Testing Strategy
+
+## 1. Overview
+
+This document outlines the testing strategy for the Ars Saga Manager application. It covers different types of tests, their purposes, and guidelines for implementation.
+
+## 2. Types of Tests
+
+### 2.1 Unit Tests
+
+- Purpose: Test individual components, functions, and modules in isolation.
+- Tools: Jest, React Testing Library
+- Coverage goal: 80% code coverage
+
+### 2.2 Integration Tests
+
+- Purpose: Test interactions between different parts of the application.
+- Tools: Jest, React Testing Library, Supertest (for API testing)
+- Focus: API integrations, database operations, complex component interactions
+
+### 2.3 End-to-End Tests
+
+- Purpose: Test complete user flows and scenarios.
+- Tools: Cypress
+- Coverage: Key user journeys (e.g., character creation, login flow)
+
+### 2.4 Snapshot Tests
+
+- Purpose: Detect unintended changes in UI components.
+- Tools: Jest
+- Coverage: All reusable UI components
+
+## 3. Test Organization
+
+### 3.1 Frontend Tests
+
+- Place test files next to the component or module they're testing.
+- Use the naming convention `[ComponentName].test.js`.
+- Group tests using `describe` blocks for better organization.
+
+### 3.2 Backend Tests
+
+- Create a `__tests__` directory in each module (e.g., `routes`, `models`, `utils`).
+- Use the naming convention `[ModuleName].test.js`.
+- Separate unit tests and integration tests into different files if necessary.
+
+## 4. Best Practices
+
+- Write descriptive test names using the "it should..." format.
+- Use setup and teardown functions (`beforeEach`, `afterEach`) to maintain a clean test environment.
+- Mock external dependencies and API calls.
+- Use factories or fixtures to generate test data.
+- Aim for test independence - tests should not rely on the state from other tests.
+- Provide detailed component props, state management, and API endpoint information in test files.
+- Include mock data examples for various entities (characters, virtues, flaws, etc.).
+- Document specific error scenarios and expected error messages.
+- Detail expected behavior for user interactions.
+- Specify validation rules for inputs.
+
+## 5. Continuous Integration
+
+- Run all tests on every pull request.
+- Integrate with GitHub Actions or similar CI/CD tool.
+- Enforce minimum code coverage requirements before merging.
+
+## 6. Performance Testing
+
+- Implement load testing for critical API endpoints using tools like Apache JMeter or k6.
+- Monitor and set performance budgets for frontend components.
+- Specify and test any performance requirements (e.g., render times).
+
+## 7. Accessibility Testing
+
+- Integrate accessibility checks using tools like jest-axe.
+- Ensure all components meet WCAG 2.1 AA standards.
+- Document and test specific accessibility requirements for each component.
+
+## 8. Security Testing
+
+- Implement security scans using tools like OWASP ZAP.
+- Regularly update and scan dependencies for vulnerabilities.
+- Test for common security issues like XSS, CSRF, and SQL injection.
+
+## 9. Responsive Design Testing
+
+- Test components on various screen sizes to ensure mobile responsiveness.
+- Use tools like React Testing Library's `createResponsiveTests` for systematic responsive testing.
+
+## 10. Browser Compatibility
+
+- Specify target browsers and versions for compatibility testing.
+- Use tools like BrowserStack or Sauce Labs for cross-browser testing.
+
+## 11. Test Data and Attributes
+
+- Use consistent `data-testid` attributes for selecting elements in tests.
+- Maintain a centralized repository of test data and fixtures.
+
+## 12. Custom Hooks Testing
+
+- Create separate test files for custom hooks (e.g., `useVirtuesAndFlaws.test.js`).
+- Use the `@testing-library/react-hooks` library for testing custom hooks.
+
+## 13. Test Environment Setup
+
+- Document any necessary providers or setup required for testing (e.g., QueryClientProvider, AuthProvider).
+- Use a consistent setup file (`setupTests.js`) for global test configuration.
+
+## 14. Maintenance
+
+- Review and update tests regularly, especially after major feature additions or changes.
+- Refactor tests as needed to reduce duplication and improve maintainability.
+- Keep test documentation up-to-date with any changes in component behavior or API contracts.
+
+## 15. Reporting and Monitoring
+
+- Generate and review test coverage reports regularly.
+- Set up alerts for failing tests in the CI/CD pipeline.
+- Use tools like Jest's test report generators for detailed test result analysis.
+
+## 16. Test Templates and Patterns
+
+To ensure consistency across our test suite, we should follow these patterns and use these templates:
+
+### 16.1 Component Test Template
+
+vascript
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
+import { QueryClientProvider } from 'react-query';
+import { AuthProvider } from '../useAuth';
+import { queryClient } from '../queryClient';
+import ComponentToTest from './ComponentToTest';
+// Mock dependencies
+jest.mock('dependency-to-mock', () => ({
+// Mock implementation
+}));
+// Render helper function
+const renderComponent = (props = {}) => {
+return render(
+<QueryClientProvider client={queryClient}>
+<MemoryRouter>
+<AuthProvider>
+<ComponentToTest {...props} />
+</AuthProvider>
+</MemoryRouter>
+</QueryClientProvider>
+);
+};
+describe('ComponentToTest', () => {
+beforeEach(() => {
+jest.clearAllMocks();
+});
+test('renders without crashing', () => {
+renderComponent();
+// Add assertions
+});
+// Add more test cases
+});
+
+### 16.2 Mocking Patterns
+
+#### Mocking Hooks
+
+javascript
+jest.mock('../useAuth', () => ({
+useAuth: () => ({
+isAuthenticated: true,
+login: jest.fn(),
+// Add other properties/methods as needed
+}),
+}));
+
+#### Mocking API Calls
+
+javascript
+jest.mock('../api/axios', () => ({
+post: jest.fn().mockResolvedValue({ data: { / mock response data / } }),
+get: jest.fn().mockResolvedValue({ data: { / mock response data / } }),
+// Add other methods as needed
+}));
+
+### 16.3 Error Boundary Testing
+
+Include an Error Boundary component in your tests to catch and display errors:
+javascript
+import { ErrorBoundary } from '../ErrorBoundary';
+const ErrorFallback = ({error}) => (
+
+<div role="alert">
+<p>Something went wrong:</p>
+<pre>{error.message}</pre>
+</div>
+);
+// In your render function:
+<ErrorBoundary FallbackComponent={ErrorFallback}>
+<ComponentToTest />
+</ErrorBoundary>
+
+## 16.4 Testing Asynchronous Operations
+
+Use `act` and `waitFor` for testing asynchronous operations:
+javascript
+test('handles asynchronous operations', async () => {
+renderComponent();
+await act(async () => {
+fireEvent.click(screen.getByTestId('action-button'));
+});
+await waitFor(() => {
+expect(screen.getByText('Operation Complete')).toBeInTheDocument();
+});
+});
+
+### 16.5 Testing Routes and Navigation
+
+Use MemoryRouter for testing components that involve routing:
+javascript
+import { MemoryRouter } from 'react-router-dom';
+const renderWithRouter = (ui, { route = '/' } = {}) => {
+return render(
+<MemoryRouter initialEntries={[route]}>
+{ui}
+</MemoryRouter>
+);
+};
+test('navigates to correct route', () => {
+renderWithRouter(<App />, { route: '/login' });
+// Add assertions
+});
+
+### 16.6 Consistent Test Structure
+
+Follow this structure for organizing tests:
+
+1. Imports
+2. Mocks
+3. Render helper function
+4. Describe block
+5. BeforeEach for setup/cleanup
+6. Individual test cases
+
+### 16.7 Use of Test IDs
+
+Prefer using test IDs for selecting elements in tests:
+avascript
+// In component
+<button data-testid="submit-button">Submit</button>
+// In test
+fireEvent.click(screen.getByTestId('submit-button'));
+
+These patterns and templates should be followed across all test files to maintain consistency and improve the maintainability of our test suite.
+
+## 17. Mock Organization
+
+- Always create mocks in separate files, never inline within test files.
+- Place mock files in a `__mocks__` directory at the same level as the module being mocked.
+- Use the same name for the mock file as the module it's mocking (e.g., `useAuth.js` for mocking `useAuth.js`).
+- In test files, use `jest.mock()` to specify the path to the mock file.
+- Keep mock implementations simple and focused on the needs of the tests.
+- Update mock implementations as needed when the actual module changes.
+
+Example structure:
+src/
+**mocks**/
+useAuth.js
+api.js
+components/
+MyComponent/
+MyComponent.js
+MyComponent.test.js
+hooks/
+useAuth.js
+api/
+api.js
+
+Example usage in a test file:
+javascript
+// 1. Imports
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import MyComponent from './MyComponent';
+import { useAuth } from '../../hooks/useAuth';
+import api from '../../api/api';
+// 2. Mock declarations
+jest.mock('../../hooks/useAuth');
+jest.mock('../../api/api');
+// 3. Test setup and helper functions
+const renderComponent = (props = {}) => {
+return render(<MyComponent {...props} />);
+};
+// 4. Test cases
+describe('MyComponent', () => {
+beforeEach(() => {
+jest.clearAllMocks();
+});
+it('renders correctly', () => {
+renderComponent();
+// Add assertions
+});
+// More test cases...
+});
+
+This structure ensures that:
+
+- Imports are at the top, following JavaScript conventions.
+- Mock declarations are clearly visible and grouped together.
+- The actual test setup and cases are separate and easy to find.
+
+Remember that Jest hoists mock declarations, so they will effectively run before the imports regardless of their position in the file. However, placing them after imports improves readability and follows common JavaScript practices.

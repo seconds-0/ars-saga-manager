@@ -146,7 +146,7 @@ npm run build       # Create production build
 # Logging Stack
 npm run start:logs   # Start logging stack (Grafana, Loki, Promtail)
 npm run stop:logs    # Stop logging stack
-docker-compose logs  # View logging stack logs
+docker-compose -f docker/docker-compose.yml logs  # View logging stack logs
 
 # All Services
 npm run start:all    # Start everything (frontend, backend, logging)
@@ -186,13 +186,25 @@ ars-saga-manager/
 │   ├── models/            # Database models
 │   ├── routes/            # API routes
 │   ├── middleware/        # Express middleware
+│   ├── tests/             # Backend tests
 │   └── utils/             # Utility functions
+├── docs/                  # Project documentation
+│   ├── architecture/      # Architecture diagrams
+│   ├── development/       # Development guidelines
+│   ├── plans/             # Feature plans
+│   ├── system/            # System configuration
+│   └── testing/           # Testing strategies
+├── docker/                # Docker configuration
+│   ├── logging/           # Logging configuration
+│   └── docker-compose.yml # Main Docker composition
 ├── frontend/              # React frontend
 │   ├── src/
 │   │   ├── components/    # React components
 │   │   ├── hooks/        # Custom React hooks
+│   │   ├── __test-utils__/ # Frontend test utilities
 │   │   └── utils/        # Utility functions
-└── docker-compose.yml     # Logging stack configuration
+├── scripts/               # Helper scripts
+└── test-utils/            # Testing utilities
 ```
 
 ### Troubleshooting
