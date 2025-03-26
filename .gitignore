@@ -155,3 +155,9 @@ yarn-error.log*
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Generated documentation
+docs/codebase_documentation*.txt
+docs/codebase_documentation*.md
+codebase_documentation*.md
+codebase_documentation*.txt
