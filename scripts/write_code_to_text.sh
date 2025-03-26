@@ -22,9 +22,9 @@ while [[ $# -gt 0 ]]; do
       echo "Will write to output file: $2"
       shift 2
       ;;
-    --timestamp)
-      ARGS="$ARGS --timestamp"
-      echo "Will add timestamp to output filename"
+    --no-timestamp)
+      ARGS="$ARGS --no-timestamp"
+      echo "Will not add timestamp to output filename"
       shift
       ;;
     --timeout)
@@ -70,4 +70,4 @@ if [[ ! "$ARGS" =~ "--include-docs" ]]; then
   echo "Note: To include documentation files that are listed in .gitignore, run this script with the --include-docs flag"
 fi
 
-echo "Example: ./write_code_to_text.sh --commit --include-docs --output-file codebase.txt --timestamp --timeout 300 --skip-large-files --max-file-size 2097152"
+echo "Example: ./write_code_to_text.sh --commit --include-docs --output-file codebase.txt --no-timestamp --timeout 300 --skip-large-files --max-file-size 2097152"

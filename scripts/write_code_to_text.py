@@ -292,7 +292,7 @@ def main():
     parser.add_argument('--commit', action='store_true', help='Stage the generated file for commit')
     parser.add_argument('--include-docs', action='store_true', help='Include documentation files even if in .gitignore')
     parser.add_argument('--output-file', default='codebase_documentation.txt', help='Output file name (default: codebase_documentation.txt)')
-    parser.add_argument('--timestamp', action='store_true', help='Add timestamp to output filename')
+    parser.add_argument('--no-timestamp', action='store_true', help='Don\'t add timestamp to output filename (timestamp is added by default)')
     parser.add_argument('--timeout', type=int, default=120, help='Timeout in seconds (default: 120)')
     parser.add_argument('--skip-large-files', action='store_true', help='Skip files larger than specified max size')
     parser.add_argument('--max-file-size', type=int, default=1024*1024, 
@@ -308,7 +308,7 @@ def main():
     
     # Determine output filename
     output_filename = args.output_file
-    if args.timestamp:
+    if not args.no_timestamp:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_filename = f"{os.path.splitext(output_filename)[0]}_{timestamp}{os.path.splitext(output_filename)[1]}"
     

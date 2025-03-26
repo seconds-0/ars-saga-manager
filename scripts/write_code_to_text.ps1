@@ -2,7 +2,7 @@ param(
     [switch]$commit = $false,
     [switch]$includeDocs = $false,
     [string]$outputFile = "codebase_documentation.txt",
-    [switch]$timestamp = $false,
+    [switch]$noTimestamp = $false,
     [int]$timeout = 120,
     [switch]$skipLargeFiles = $false,
     [int]$maxFileSize = 1048576 # Default 1MB
@@ -28,9 +28,9 @@ if ($outputFile -ne "codebase_documentation.txt") {
     $argList += "$outputFile"
     Write-Host "Will save to $outputFile" -ForegroundColor Yellow
 }
-if ($timestamp) {
-    $argList += "--timestamp"
-    Write-Host "Will add timestamp to output filename" -ForegroundColor Yellow
+if ($noTimestamp) {
+    $argList += "--no-timestamp"
+    Write-Host "Will not add timestamp to output filename" -ForegroundColor Yellow
 }
 if ($timeout -ne 120) {
     $argList += "--timeout"
