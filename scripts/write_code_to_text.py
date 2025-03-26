@@ -191,7 +191,30 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
         'build',
         'dist',
         '__pycache__',
-        '.cache'
+        '.cache',
+    ]
+    
+    # Specific files to always skip
+    always_skip_files = [
+        'package-lock.json',
+        'package.json',
+        'codebase_documentation.txt',
+        'codebase_documentation_*.txt',  # Pattern for timestamp versions
+        '*.lock',
+        '*.env',
+        '*.min.js',
+        '*.min.css',
+        '*.map',
+        '*.woff',
+        '*.woff2',
+        '*.ttf',
+        '*.eot',
+        'yarn.lock',
+        'npm-shrinkwrap.json',
+        'composer.lock',
+        'Gemfile.lock',
+        'Cargo.lock',
+        'poetry.lock',
     ]
     
     try:
@@ -250,6 +273,24 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                     
                     # Skip if already processed or should be ignored
                     if rel_path in processed_files or should_ignore(file_path, root_pathspec, additional_pathspecs, respect_gitignore):
+                        continue
+                    
+                    # Skip our own documentation files - prevent circular inclusion 
+                    # or accidentally including the file we're currently writing
+                    if file.startswith('codebase_documentation') and file.endswith('.txt'):
+                        continue
+                    
+                    # Specifically check if this is the output file we're currently writing to
+                    if os.path.samefile(file_path, output_file) if os.path.exists(output_file) else False:
+                        continue
+                    
+                    # Skip specific files we want to exclude
+                    should_skip_file = False
+                    for skip_pattern in always_skip_files:
+                        if fnmatch.fnmatch(file, skip_pattern):
+                            should_skip_file = True
+                            break
+                    if should_skip_file:
                         continue
                     
                     # Check for timeout every few files
