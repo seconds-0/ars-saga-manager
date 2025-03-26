@@ -72,9 +72,9 @@ function AbilitySelector({ onSelectAbility, characterType, existingAbilities = [
       setError(null);
       
       try {
-        let url = '/api/reference-abilities';
+        let url = '/reference-abilities';
         if (selectedCategory) {
-          url = `/api/reference-abilities/category/${selectedCategory}`;
+          url = `/reference-abilities/category/${selectedCategory}`;
         }
         
         const response = await axios.get(url);
@@ -157,6 +157,7 @@ function AbilitySelector({ onSelectAbility, characterType, existingAbilities = [
       category: ability.category,
       score: 0,
       experience_points: 0,
+      xp_for_next_level: 5, // Default: 5 XP for next level
       specialty: null
     };
     

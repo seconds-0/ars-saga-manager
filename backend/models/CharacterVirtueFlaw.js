@@ -56,6 +56,11 @@ module.exports = (sequelize, DataTypes) => {
           }
         }
       }
+    },
+    selections: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: null
     }
   }, {
     sequelize,

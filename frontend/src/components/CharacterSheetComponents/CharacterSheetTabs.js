@@ -20,10 +20,33 @@ const tabs = [
 function CharacterSheetTabs({ character, onSave }) {
   const [activeTab, setActiveTab] = useState(0);
 
+  // Determine if character has magical abilities
+  const hasMagic = character.character_type?.toLowerCase() === 'magus' || 
+                  (character.CharacterVirtueFlaws || [])
+                    .some(vf => vf.ReferenceVirtueFlaw?.magical || vf.referenceVirtueFlaw?.magical);
+  
+  // Filter tabs based on character type
+  const visibleTabs = tabs.filter(tab => {
+    // Hide Arts tab for non-magical characters
+    if (tab.name === 'Arts' && !hasMagic) {
+      return false;
+    }
+    // Hide Spells tab for non-magical characters
+    if (tab.name === 'Spells' && !hasMagic) {
+      return false;
+    }
+    return true;
+  });
+
+  // Adjust the active tab if it's pointing to a now-hidden tab
+  if (activeTab >= visibleTabs.length) {
+    setActiveTab(0);
+  }
+
   return (
     <div>
       <div className="flex border-b">
-        {tabs.map((tab, index) => (
+        {visibleTabs.map((tab, index) => (
           <button
             key={index}
             className={`flex-1 py-2 px-4 text-center ${
@@ -36,7 +59,7 @@ function CharacterSheetTabs({ character, onSave }) {
         ))}
       </div>
       <ErrorBoundary>
-        {React.createElement(tabs[activeTab].component, { character, onSave })}
+        {React.createElement(visibleTabs[activeTab].component, { character, onSave })}
       </ErrorBoundary>
     </div>
   );

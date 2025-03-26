@@ -8,6 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'character_id',
         as: 'character'
       });
+      
+      CharacterAbility.belongsTo(models.ReferenceAbility, {
+        foreignKey: 'ability_name',
+        targetKey: 'name',
+        as: 'referenceAbility'
+      });
     }
   }
   

@@ -4,7 +4,8 @@
  * @returns {string} The normalized character type
  * @throws {Error} If the character type is invalid
  */
-const normalizeCharacterType = (characterType) => {
+// Function is not used directly but may be useful in future
+export const normalizeCharacterType = (characterType) => {
   if (!characterType) {
     throw new Error('Character type is required');
   }
@@ -412,6 +413,28 @@ export const validateVirtuesFlaws = (virtuesFlaws, rules) => {
       max: rules.maxMajorHermeticVirtues
     });
   }
+  
+  // 13. Missing Specifications
+  virtuesFlaws.forEach(vf => {
+    // Skip if not a virtue/flaw that requires specification
+    if (!vf.referenceVirtueFlaw?.requires_specification) {
+      return;
+    }
+    
+    // Check if selections are missing or empty
+    if (!vf.selections || 
+        Object.keys(vf.selections).length === 0 || 
+        !vf.selections[vf.referenceVirtueFlaw.specification_type]) {
+      warnings.push({
+        type: 'warning', // Make this a warning instead of error initially
+        message: `${vf.referenceVirtueFlaw.name} requires a ${vf.referenceVirtueFlaw.specification_type} selection`,
+        source: 'missing_specification',
+        target: vf.referenceVirtueFlaw.name,
+        id: vf.id,
+        specification_type: vf.referenceVirtueFlaw.specification_type
+      });
+    }
+  });
 
   return {
     isValid: warnings.length === 0,
@@ -431,7 +454,8 @@ export const validateVirtuesFlaws = (virtuesFlaws, rules) => {
   };
 };
 
-const validateGrogRestrictions = (virtuesFlaws, rules) => {
+// Export these utility functions for potential reuse
+export const validateGrogRestrictions = (virtuesFlaws, rules) => {
   const warnings = [];
 
   // Check for Major Virtues/Flaws
@@ -495,7 +519,7 @@ const validateGrogRestrictions = (virtuesFlaws, rules) => {
   };
 };
 
-const validatePointBalance = (virtuesFlaws, rules) => {
+export const validatePointBalance = (virtuesFlaws, rules) => {
   if (!rules.requirePointBalance) {
     return { isValid: true, warnings: [] };
   }
@@ -532,7 +556,7 @@ const validatePointBalance = (virtuesFlaws, rules) => {
   };
 };
 
-const validateCharacterTypeRestrictions = (virtuesFlaws, rules) => {
+export const validateCharacterTypeRestrictions = (virtuesFlaws, rules) => {
   const warnings = [];
 
   virtuesFlaws.forEach(vf => {
@@ -555,7 +579,7 @@ const validateCharacterTypeRestrictions = (virtuesFlaws, rules) => {
   };
 };
 
-const validateSocialStatus = (virtuesFlaws, rules) => {
+export const validateSocialStatus = (virtuesFlaws, rules) => {
   if (!rules.requireSocialStatus) {
     return { isValid: true, warnings: [] };
   }
@@ -577,7 +601,7 @@ const validateSocialStatus = (virtuesFlaws, rules) => {
   return { isValid: true, warnings: [] };
 };
 
-const validateIncompatibilities = (virtuesFlaws, rules) => {
+export const validateIncompatibilities = (virtuesFlaws, rules) => {
   const warnings = [];
 
   virtuesFlaws.forEach(vf => {
@@ -612,7 +636,7 @@ const validateIncompatibilities = (virtuesFlaws, rules) => {
   };
 };
 
-const validatePrerequisites = (virtuesFlaws, rules) => {
+export const validatePrerequisites = (virtuesFlaws, rules) => {
   const warnings = [];
 
   virtuesFlaws.forEach(vf => {
@@ -674,7 +698,7 @@ const validatePrerequisites = (virtuesFlaws, rules) => {
   };
 };
 
-const validateMajorHermeticVirtues = (virtuesFlaws, rules) => {
+export const validateMajorHermeticVirtues = (virtuesFlaws, rules) => {
   const warnings = [];
 
   const majorHermeticVirtues = virtuesFlaws.filter(vf =>
@@ -697,7 +721,7 @@ const validateMajorHermeticVirtues = (virtuesFlaws, rules) => {
   };
 };
 
-const validateStoryFlaws = (virtuesFlaws, rules) => {
+export const validateStoryFlaws = (virtuesFlaws, rules) => {
   const warnings = [];
 
   const storyFlaws = virtuesFlaws.filter(vf =>
@@ -719,7 +743,7 @@ const validateStoryFlaws = (virtuesFlaws, rules) => {
   };
 };
 
-const validatePersonalityFlaws = (virtuesFlaws, rules) => {
+export const validatePersonalityFlaws = (virtuesFlaws, rules) => {
   const warnings = [];
 
   const personalityFlaws = virtuesFlaws.filter(vf =>
@@ -741,7 +765,7 @@ const validatePersonalityFlaws = (virtuesFlaws, rules) => {
   };
 };
 
-const validateHermeticVirtues = (virtuesFlaws, rules) => {
+export const validateHermeticVirtues = (virtuesFlaws, rules) => {
   const warnings = [];
 
   const hasGift = virtuesFlaws.some(vf =>
@@ -768,7 +792,7 @@ const validateHermeticVirtues = (virtuesFlaws, rules) => {
   };
 };
 
-const validateMultipleInstances = (virtuesFlaws, rules) => {
+export const validateMultipleInstances = (virtuesFlaws, rules) => {
   const warnings = [];
   const nonHouseVirtuesFlaws = virtuesFlaws.filter(vf => !vf.is_house_virtue_flaw);
 

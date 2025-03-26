@@ -28,14 +28,34 @@ describe('VirtueFlawDetails Component', () => {
       description: 'You have a supernatural affinity with one type of animal.',
       prerequisites: ['The Gift'],
       incompatibilities: ['Animal Companion', 'Blatant Gift'],
-      customizable: true,
-      customization_fields: ['Animal Type'],
       multiple_allowed: false,
-      allowed_character_types: ['magus', 'companion']
+      allowed_character_types: ['magus', 'companion'],
+      requires_specification: true,
+      specification_type: 'Animal',
+      specification_options_query: null
     },
     selections: {
-      'Animal Type': 'Wolves'
+      'Animal': 'Wolves'
     },
+    is_house_virtue_flaw: false
+  };
+  
+  const mockVirtueFlawPuissant = {
+    id: 2,
+    referenceVirtueFlaw: {
+      id: 102,
+      name: 'Puissant (Ability)',
+      size: 'Minor',
+      type: 'Virtue',
+      category: 'General',
+      description: 'You have a natural talent with a particular Ability.',
+      multiple_allowed: false,
+      requires_specification: true,
+      specification_type: 'Ability',
+      specification_options_query: '/api/reference-abilities',
+      ability_score_bonus: 2
+    },
+    selections: null,
     is_house_virtue_flaw: false
   };
 
@@ -72,6 +92,22 @@ describe('VirtueFlawDetails Component', () => {
       
       // Verify onClose was called
       expect(mockOnClose).toHaveBeenCalled();
+    });
+    
+    it('displays existing selections correctly', () => {
+      setup();
+      
+      // Look for the display of the selection
+      expect(screen.getByText('Animal:')).toBeInTheDocument();
+      expect(screen.getByText('Wolves')).toBeInTheDocument();
+    });
+    
+    it('shows warning for virtues requiring specification without selections', () => {
+      setup({ virtueFlaw: mockVirtueFlawPuissant });
+      
+      // Look for the warning message
+      expect(screen.getByText(/This Virtue requires you to select/)).toBeInTheDocument();
+      expect(screen.getByText(/Ability/)).toBeInTheDocument();
     });
   });
 });

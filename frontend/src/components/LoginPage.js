@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// Not using navigate since login function now handles redirection
+// import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../useAuth';
 import { Card, TextInput, Button, Alert, Label } from 'flowbite-react';
@@ -10,7 +11,8 @@ export default function LoginPage() {
   const { values, handleChange, handleSubmit } = useForm({ email: '', password: '' });
   const [showRegister, setShowRegister] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const navigate = useNavigate();
+  // navigate is not being used since login function handles redirection
+  // const navigate = useNavigate();
   const { login } = useAuth();
 
   const handleLogin = async (email, password) => {

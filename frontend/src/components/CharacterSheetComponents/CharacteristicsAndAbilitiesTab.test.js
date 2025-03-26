@@ -712,7 +712,45 @@ describe('CharacteristicsAndAbilitiesTab', () => {
     });
   });
 
-  describe('3.5 Use Cunning Functionality', () => {
+  describe('3.5 Experience Points Display', () => {
+    it('should display character experience points correctly', () => {
+      const mockCharacter = {
+        id: 123,
+        strength: 0,
+        stamina: 0,
+        dexterity: 0,
+        quickness: 0,
+        intelligence: 0,
+        presence: 0,
+        communication: 0,
+        perception: 0,
+        total_improvement_points: 10,
+        use_cunning: false,
+        age: 25,
+        general_exp_available: 45,
+        magical_exp_available: 30,
+        restricted_exp_pools: {
+          'ACADEMIC': 15
+        },
+        character_type: 'magus'
+      };
+
+      renderComponent({ character: mockCharacter });
+
+      // Verify experience point display
+      expect(screen.getByText('General XP:')).toBeInTheDocument();
+      expect(screen.getByText('45')).toBeInTheDocument();
+      expect(screen.getByText('Magical XP:')).toBeInTheDocument();
+      expect(screen.getByText('30')).toBeInTheDocument();
+      expect(screen.getByText('ACADEMIC XP:')).toBeInTheDocument();
+      expect(screen.getByText('15')).toBeInTheDocument();
+      
+      // Verify experience info tooltip is present
+      expect(screen.getByTitle('Click on ability scores to toggle score/XP view')).toBeInTheDocument();
+    });
+  });
+
+  describe('3.6 Use Cunning Functionality', () => {
     it('should toggle the Use Cunning checkbox', () => {
       const mockCharacter = {
         strength: 0,

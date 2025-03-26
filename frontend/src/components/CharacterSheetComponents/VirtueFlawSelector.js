@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from 'react-query';
 import api from '../../api/axios';
-import { debounce } from 'lodash';
-import { validateVirtuesFlaws, createValidationRules } from '../../utils/virtueFlawValidation';
+// We're not using these functions directly in this component anymore
+// import { validateVirtuesFlaws, createValidationRules } from '../../utils/virtueFlawValidation';
 
 function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtueFlaw, validationResult = { isValid: true, warnings: [] } }) {
   const [search, setSearch] = useState('');
@@ -25,20 +25,7 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
     }
   );
 
-  // Memoize the debounced search function
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      setSearch(value);
-    }, 300),
-    []
-  );
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
+  // Search is now debounced directly in the input's onChange handler
 
   // We no longer need the validation rules here as the parent component handles validation
   // and passes the canAddVirtueFlaw function
@@ -176,7 +163,15 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
         <input
           type="text"
           placeholder="Search virtues and flaws"
-          onChange={(e) => debouncedSearch(e.target.value)}
+          onChange={(e) => {
+            // Clear any previous timers
+            if (window.searchTimer) clearTimeout(window.searchTimer);
+            
+            // Set a new timer
+            window.searchTimer = setTimeout(() => {
+              setSearch(e.target.value);
+            }, 300);
+          }}
           className="flex-grow p-2 border rounded"
           aria-label="Search virtues and flaws"
           role="searchbox"
@@ -321,6 +316,11 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
                       {item.incompatible_with?.length > 0 && (
                         <div className="mt-1">
                           <strong>Incompatible with:</strong> {item.incompatible_with.join(', ')}
+                        </div>
+                      )}
+                      {item.requires_specification && (
+                        <div className="mt-1 text-amber-600">
+                          <strong>Note:</strong> After adding, you'll need to specify a {item.specification_type}.
                         </div>
                       )}
                     </div>

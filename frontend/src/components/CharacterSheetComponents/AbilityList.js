@@ -14,7 +14,8 @@ const CATEGORY_CONFIG = [
 function AbilityList({ 
   abilities, 
   onIncrementAbility, 
-  onDecrementAbility, 
+  onDecrementAbility,
+  onIncrementXP,
   onUpdateSpecialty 
 }) {
   // Group abilities by category (memoized)
@@ -65,10 +66,13 @@ function AbilityList({
                   name={ability.ability_name}
                   baseValue={ability.score}
                   effectiveValue={ability.effective_score}
+                  experience={ability.experience_points}
+                  xpForNextLevel={ability.xp_for_next_level || 5}
                   specialty={ability.specialty}
                   category={ability.category}
-                  onIncrement={() => onIncrementAbility(ability.id, ability.score)}
-                  onDecrement={() => onDecrementAbility(ability.id, ability.score)}
+                  onIncrement={() => onIncrementAbility(ability.id, ability.score, ability.experience_points)}
+                  onDecrement={() => onDecrementAbility(ability.id, ability.score, ability.experience_points)}
+                  onIncrementXP={(amount) => onIncrementXP && onIncrementXP(ability.id, ability.experience_points, amount)}
                   onSpecialtyChange={(value) => onUpdateSpecialty(ability.id, value)}
                 />
               ))}
@@ -94,12 +98,15 @@ AbilityList.propTypes = {
       ability_name: PropTypes.string.isRequired,
       score: PropTypes.number.isRequired,
       effective_score: PropTypes.number,
+      experience_points: PropTypes.number,
+      xp_for_next_level: PropTypes.number,
       specialty: PropTypes.string,
       category: PropTypes.string.isRequired
     })
   ).isRequired,
   onIncrementAbility: PropTypes.func.isRequired,
   onDecrementAbility: PropTypes.func.isRequired,
+  onIncrementXP: PropTypes.func,
   onUpdateSpecialty: PropTypes.func.isRequired
 };
 

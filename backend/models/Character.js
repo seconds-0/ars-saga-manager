@@ -78,6 +78,36 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
+    },
+    age: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 25, // Updated default age to 25
+      validate: {
+        min: 5 // Ensure validation min 5
+      }
+    },
+    general_exp_available: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    magical_exp_available: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
+    },
+    restricted_exp_pools: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+      validate: {
+        isArray(value) {
+          if (!Array.isArray(value)) {
+            throw new Error('restricted_exp_pools must be an array');
+          }
+        }
+      }
     }
   }, {
     sequelize,

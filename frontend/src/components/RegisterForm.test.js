@@ -4,14 +4,23 @@ import '@testing-library/jest-dom';
 import RegisterForm from './RegisterForm';
 import { 
   setupComponent, 
-  setupConsoleSuppress,
-  createAxiosMock 
+  setupConsoleSuppress
 } from '../__test-utils__';
 
-// Setup console error suppression
-setupConsoleSuppress();
-
 // Mock dependencies
+const createAxiosMock = () => ({
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  api: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn()
+  }
+});
+
 jest.mock('../api/axios', () => createAxiosMock());
 jest.mock('./Toast', () => {
   return function MockToast({ message, type, onClose }) {
@@ -22,6 +31,9 @@ jest.mock('./Toast', () => {
     );
   };
 });
+
+// Setup console error suppression
+setupConsoleSuppress();
 
 // Standard setup function
 function setup(customProps = {}) {

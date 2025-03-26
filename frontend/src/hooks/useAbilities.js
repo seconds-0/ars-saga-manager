@@ -118,15 +118,41 @@ function useAbilities(characterId) {
     }
   };
 
-  // Increment ability score
-  const incrementAbility = async (abilityId, currentScore) => {
-    return updateAbility(abilityId, { score: currentScore + 1 });
+  // Increment ability experience
+  const incrementAbilityXP = async (abilityId, currentXP, amountToAdd = 1) => {
+    return updateAbility(abilityId, { experience_points: currentXP + amountToAdd });
   };
 
-  // Decrement ability score
-  const decrementAbility = async (abilityId, currentScore) => {
+  // Decrement ability experience (only if allowed by backend)
+  const decrementAbilityXP = async (abilityId, currentXP, amountToSubtract = 1) => {
+    if (currentXP <= 0 || amountToSubtract > currentXP) return true; // Already at minimum or would go below 0
+    return updateAbility(abilityId, { experience_points: currentXP - amountToSubtract });
+  };
+  
+  // Increment ability score by 1 level
+  const incrementAbility = async (abilityId, currentScore, currentXP) => {
+    // Find the ability to get its current data
+    const ability = abilities.find(a => a.id === abilityId);
+    if (!ability) return false;
+    
+    // Calculate XP needed for next level
+    const xpForNextLevel = ability.xp_for_next_level || 5; // Default to 5 if not available
+    
+    return updateAbility(abilityId, { experience_points: currentXP + xpForNextLevel });
+  };
+
+  // Decrement ability score (only if allowed by backend)
+  const decrementAbility = async (abilityId, currentScore, currentXP) => {
     if (currentScore <= 0) return true; // Already at minimum
-    return updateAbility(abilityId, { score: currentScore - 1 });
+    
+    // This might not be supported by the backend in V1
+    try {
+      // Find the previous level's XP threshold
+      return updateAbility(abilityId, { score: currentScore - 1 });
+    } catch (err) {
+      setError('Decreasing ability scores is not supported');
+      return false;
+    }
   };
 
   // Update ability specialty
@@ -145,6 +171,8 @@ function useAbilities(characterId) {
     deleteAbility,
     incrementAbility,
     decrementAbility,
+    incrementAbilityXP,
+    decrementAbilityXP,
     updateSpecialty
   };
 }

@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 function AbilityInput({ 
   name, 
   baseValue, 
   effectiveValue = null, 
+  experience = 0,
+  xpForNextLevel = 0,
   specialty = null, 
   onIncrement, 
   onDecrement,
+  onIncrementXP,
   onSpecialtyChange,
   category,
   disabled = false
 }) {
+  const [showXP, setShowXP] = useState(false);
+  
   // If effective value is not provided, use base value
   const displayValue = effectiveValue !== null ? effectiveValue : baseValue;
   
@@ -43,6 +48,11 @@ function AbilityInput({
     if (displayValue > 0) return 'text-blue-600';
     return 'text-red-600';
   };
+  
+  // Toggle between showing score and XP
+  const toggleShowXP = () => {
+    setShowXP(prev => !prev);
+  };
 
   return (
     <div className={`flex flex-col md:flex-row items-start md:items-center p-2 rounded-md border ${getCategoryStyle()} transition-all hover:shadow-sm`}>
@@ -68,32 +78,80 @@ function AbilityInput({
         />
         
         {/* Value controls */}
-        <div className="flex items-center">
-          <button 
-            onClick={onDecrement}
-            className={`bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-l hover:bg-red-600 transition-colors
-              ${(baseValue <= 0 || disabled) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={`Decrease ${name}`}
-            disabled={baseValue <= 0 || disabled}
-            title={baseValue <= 0 ? "Cannot reduce below 0" : "Decrease value"}
+        <div className="flex flex-col">
+          {/* Value/XP toggle */}
+          <div 
+            className="text-xs text-gray-500 mb-1 text-center cursor-pointer hover:text-blue-500 transition-colors"
+            onClick={toggleShowXP}
+            title={showXP ? "Show ability score" : "Show experience points"}
           >
-            -
-          </button>
-          
-          <div className={`px-3 py-1 border-t border-b select-none min-w-[32px] text-center ${getValueStyle()}`}>
-            {displayValue}
+            {showXP ? `${experience} XP` : `Score: ${displayValue}`}
+            {xpForNextLevel > 0 && showXP && (
+              <span className="ml-1">(+{xpForNextLevel} for next level)</span>
+            )}
           </div>
           
-          <button 
-            onClick={onIncrement}
-            className={`bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded-r hover:bg-blue-600 transition-colors
-              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={`Increase ${name}`}
-            disabled={disabled}
-            title="Increase value"
-          >
-            +
-          </button>
+          <div className="flex items-center">
+            {showXP ? (
+              // XP controls
+              <>
+                <button 
+                  onClick={() => onIncrementXP && onIncrementXP(1)}
+                  className={`bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded-l hover:bg-blue-600 transition-colors
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label={`Add 1 XP to ${name}`}
+                  disabled={disabled}
+                  title="Add 1 XP"
+                >
+                  +1
+                </button>
+                
+                <div className={`px-3 py-1 border-t border-b select-none min-w-[32px] text-center`}>
+                  {experience} XP
+                </div>
+                
+                <button 
+                  onClick={() => onIncrementXP && onIncrementXP(xpForNextLevel)}
+                  className={`bg-green-500 text-white w-10 h-6 flex items-center justify-center rounded-r hover:bg-green-600 transition-colors text-xs
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label={`Add XP for next level to ${name}`}
+                  disabled={disabled}
+                  title={`Add ${xpForNextLevel} XP to reach next level`}
+                >
+                  +{xpForNextLevel}
+                </button>
+              </>
+            ) : (
+              // Score controls
+              <>
+                <button 
+                  onClick={onDecrement}
+                  className={`bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-l hover:bg-red-600 transition-colors
+                    ${(baseValue <= 0 || disabled) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label={`Decrease ${name}`}
+                  disabled={baseValue <= 0 || disabled}
+                  title={baseValue <= 0 ? "Cannot reduce below 0" : "Decrease value"}
+                >
+                  -
+                </button>
+                
+                <div className={`px-3 py-1 border-t border-b select-none min-w-[32px] text-center ${getValueStyle()}`}>
+                  {displayValue}
+                </div>
+                
+                <button 
+                  onClick={onIncrement}
+                  className={`bg-blue-500 text-white w-6 h-6 flex items-center justify-center rounded-r hover:bg-blue-600 transition-colors
+                    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  aria-label={`Increase ${name}`}
+                  disabled={disabled}
+                  title="Increase value"
+                >
+                  +
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -104,9 +162,12 @@ AbilityInput.propTypes = {
   name: PropTypes.string.isRequired,
   baseValue: PropTypes.number.isRequired,
   effectiveValue: PropTypes.number,
+  experience: PropTypes.number,
+  xpForNextLevel: PropTypes.number,
   specialty: PropTypes.string,
   onIncrement: PropTypes.func.isRequired,
   onDecrement: PropTypes.func.isRequired,
+  onIncrementXP: PropTypes.func,
   onSpecialtyChange: PropTypes.func,
   category: PropTypes.string,
   disabled: PropTypes.bool

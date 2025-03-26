@@ -4,7 +4,12 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ReferenceAbility extends Model {
     static associate(models) {
-      // define association here
+      // Define associations here
+      ReferenceAbility.hasMany(models.CharacterAbility, {
+        foreignKey: 'ability_name',
+        sourceKey: 'name',
+        as: 'characterAbilities'
+      });
     }
   }
   

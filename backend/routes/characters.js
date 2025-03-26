@@ -9,6 +9,7 @@ const { AppError, handleError } = require('../utils/errorHandler');
 const sanitizeInputs = require('../middleware/sanitizer');
 const { Op } = require('sequelize');
 const { sequelize } = require('../models');
+const { calculateCharacterExperience, recalculateAndUpdateExp } = require('../utils/experienceUtils');
 
 const validateCharacteristics = (characteristics) => {
   const validCharacteristics = ['strength', 'stamina', 'dexterity', 'quickness', 'intelligence', 'presence', 'communication', 'perception'];
@@ -114,9 +115,15 @@ router.post('/', authenticateToken, validateCharacter, async (req, res) => {
       entityId: uuidv4(),
       ...fullCharacteristics,
       use_cunning,
-      total_improvement_points: 7 // Default value
+      total_improvement_points: 7, // Default value
+      age: req.body.age || 20 // Set initial age from request or default to 20
     });
     console.log('Character created:', character.toJSON());
+
+    // Calculate initial Exp pools
+    const expValues = calculateCharacterExperience(character, []);
+    await character.update(expValues);
+    console.log('Experience values calculated:', expValues);
 
     const derivedCharacteristics = calculateDerivedCharacteristics(character);
 
@@ -149,7 +156,7 @@ router.get('/', async (req, res) => {
 
     const characters = await Character.findAll({ 
       where: { user_id: req.user.id },
-      attributes: ['id', 'name', 'character_type', 'house_id']
+      attributes: ['id', 'name', 'character_type', 'house_id', 'age', 'general_exp_available', 'magical_exp_available']
     });
     
     console.timeEnd('characterFetch');
@@ -199,7 +206,7 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
     console.log('Received update request for character:', req.params.id);
     console.log('Request body:', req.body);
 
-    const { use_cunning, total_improvement_points, ...characteristics } = req.body;
+    const { use_cunning, total_improvement_points, age, ...characteristics } = req.body;
     
     // Validate characteristics
     const validationError = validateCharacteristics(characteristics);
@@ -208,12 +215,23 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
       return res.status(400).json({ message: validationError });
     }
 
+    // Check if age is being updated or recalculation is requested
+    const character = await Character.findByPk(req.params.id);
+    const isAgeUpdated = age !== undefined && age !== character.age;
+    const forceRecalculate = req.body.recalculateXp === true;
+
     const [updated] = await Character.update(
-      { ...characteristics, use_cunning, total_improvement_points },
+      { ...characteristics, use_cunning, total_improvement_points, age },
       { where: { id: req.params.id, user_id: req.user.id } }
     );
 
     if (updated) {
+      // If age was updated or recalculation is requested, recalculate experience
+      if (isAgeUpdated || forceRecalculate) {
+        console.log('Age updated or recalculation requested, recalculating experience');
+        await recalculateAndUpdateExp(req.params.id, { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw });
+      }
+      
       const updatedCharacter = await Character.findOne({ where: { id: req.params.id } });
       const derivedCharacteristics = calculateDerivedCharacteristics(updatedCharacter);
       console.log('Character updated successfully:', updatedCharacter.toJSON());
@@ -381,6 +399,10 @@ router.post('/:id/virtues-flaws', authenticateToken, checkCharacterOwnership, sa
     await character.update({
       virtueFlawPoints: currentPoints + calculatedCost
     });
+    
+    // Recalculate experience after adding virtue/flaw
+    await recalculateAndUpdateExp(character.id, { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw });
+    console.log('Experience recalculated after adding virtue/flaw');
 
     logger.logger.info(`Virtue/Flaw added to character ${req.params.id}`);
     res.status(201).json(newVirtueFlaw);
@@ -399,6 +421,71 @@ router.post('/:id/virtues-flaws', authenticateToken, checkCharacterOwnership, sa
     
     logger.logger.error(`Error adding Virtue/Flaw to character ${req.params.id}: ${error.message}`);
     handleError(error, res);
+  }
+});
+
+// Update virtue/flaw selections
+router.put('/:id/virtues-flaws/:virtueFlawId', authenticateToken, checkCharacterOwnership, sanitizeInputs, async (req, res) => {
+  try {
+    const characterId = req.params.id;
+    const { virtueFlawId } = req.params;
+    const { selections } = req.body;
+    
+    console.log('Updating virtue/flaw selections:', { characterId, virtueFlawId, selections });
+    
+    // Find the CharacterVirtueFlaw and include the ReferenceVirtueFlaw data
+    const characterVirtueFlaw = await CharacterVirtueFlaw.findOne({
+      where: { 
+        id: virtueFlawId, 
+        character_id: characterId 
+      },
+      include: [{
+        model: ReferenceVirtueFlaw,
+        as: 'referenceVirtueFlaw'
+      }]
+    });
+    
+    if (!characterVirtueFlaw) {
+      console.log('Virtue/flaw not found:', { virtueFlawId, characterId });
+      return res.status(404).json({ status: 'fail', message: 'Virtue or Flaw not found for this character' });
+    }
+    
+    // Validate selections based on specification_type
+    const referenceVirtueFlaw = characterVirtueFlaw.referenceVirtueFlaw;
+    if (referenceVirtueFlaw.requires_specification && !selections) {
+      return res.status(400).json({
+        status: 'fail',
+        message: `This ${referenceVirtueFlaw.type} requires a selection of type: ${referenceVirtueFlaw.specification_type}`
+      });
+    }
+    
+    // Update the selections in the CharacterVirtueFlaw record
+    await characterVirtueFlaw.update({ selections });
+    
+    // Fetch the updated record to return to the client
+    const updatedCharacterVirtueFlaw = await CharacterVirtueFlaw.findOne({
+      where: { id: virtueFlawId },
+      include: [{
+        model: ReferenceVirtueFlaw,
+        as: 'referenceVirtueFlaw',
+        attributes: ['id', 'name', 'description', 'type', 'size', 'category', 'realm', 
+                    'requires_specification', 'specification_type', 'ability_score_bonus']
+      }]
+    });
+    
+    // Recalculate abilities scores for Puissant-like virtues
+    // This will be handled by the GET /characters/:id/abilities endpoint
+    
+    logger.logger.info(`Updated virtue/flaw ${virtueFlawId} selections for character ${characterId}`);
+    res.status(200).json({
+      status: 'success',
+      data: updatedCharacterVirtueFlaw
+    });
+  } catch (error) {
+    console.error('Error stack:', error.stack);
+    console.error('Error updating virtue/flaw selections:', error.name, error.message);
+    logger.logger.error(`Error updating virtue/flaw selections: ${error.message}`);
+    res.status(500).json({ status: 'error', message: 'Error updating virtue/flaw selections' });
   }
 });
 
@@ -438,6 +525,10 @@ router.delete('/:id/virtues-flaws/:virtueFlawId', authenticateToken, checkCharac
     });
     
     await characterVirtueFlaw.destroy();
+    
+    // Recalculate experience after removing virtue/flaw
+    await recalculateAndUpdateExp(character.id, { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw });
+    console.log('Experience recalculated after removing virtue/flaw');
     
     logger.logger.info(`Removed virtue/flaw ${virtueFlawId} from character ${characterId}`);
     res.status(204).send();

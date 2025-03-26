@@ -50,6 +50,7 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
   const addAbility = abilitiesHook?.addAbility || (() => Promise.resolve(true));
   const incrementAbility = abilitiesHook?.incrementAbility || (() => Promise.resolve(true));
   const decrementAbility = abilitiesHook?.decrementAbility || (() => Promise.resolve(true));
+  const incrementAbilityXP = abilitiesHook?.incrementAbilityXP || (() => Promise.resolve(true));
   const updateSpecialty = abilitiesHook?.updateSpecialty || (() => Promise.resolve(true));
 
   // Initialize character data
@@ -136,29 +137,32 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
     }
   }, [characteristics]);
 
-  // Memoized validation for save button
-  const canSave = useMemo(() => {
-    return availablePoints >= 0;
-  }, [availablePoints]);
-
-  // Handle saving character data
-  const handleSave = async () => {
-    try {
-      const updatedData = {
-        ...characteristics,
-        use_cunning,
-        total_improvement_points: totalPoints
-      };
-      
-      await onSave(updatedData);
-      setToastMessage('Characteristics saved successfully');
-      setToastType('success');
-    } catch (error) {
-      console.error('Error saving characteristics:', error);
-      setToastMessage('Failed to save characteristics. Please try again.');
-      setToastType('error');
-    }
-  };
+  // Auto-save characteristics when they change
+  useEffect(() => {
+    const saveCharacteristics = async () => {
+      // Only save if the points are valid
+      if (availablePoints >= 0) {
+        try {
+          const updatedData = {
+            ...characteristics,
+            use_cunning,
+            total_improvement_points: totalPoints
+          };
+          
+          await onSave(updatedData);
+          // No need to show a toast for automatic saves
+        } catch (error) {
+          console.error('Error saving characteristics:', error);
+          setToastMessage('Failed to save characteristics automatically. Please reload the page.');
+          setToastType('error');
+        }
+      }
+    };
+    
+    // Add a small delay to avoid too many saves
+    const timer = setTimeout(saveCharacteristics, 1000);
+    return () => clearTimeout(timer);
+  }, [characteristics, use_cunning, totalPoints, availablePoints, onSave]);
 
   // Handle adding a new ability
   const handleAddAbility = async (abilityData) => {
@@ -229,20 +233,55 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
               {availablePoints}
             </span>
           </p>
-          <button
-            onClick={handleSave}
-            className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors 
-              ${!canSave ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!canSave}
-          >
-            Save Characteristics
-          </button>
+          {availablePoints < 0 && (
+            <span className="text-red-600">
+              Over budget! Please reduce some characteristics.
+            </span>
+          )}
         </div>
       </section>
       
       {/* Abilities Section */}
       <section>
-        <h2 className="text-xl font-bold mb-4">Abilities</h2>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <h2 className="text-xl font-bold">Abilities</h2>
+            <div className="ml-2 text-gray-500 cursor-help group relative" title="Click on ability scores to toggle score/XP view">
+              <span className="text-sm">ⓘ</span>
+              <div className="hidden group-hover:block absolute left-0 bottom-full mb-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg p-3 z-10 text-sm">
+                <p className="font-semibold mb-1">Experience Points:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Click on score/XP to toggle view</li>
+                  <li>Add XP in increments of 1 or the full amount needed for next level</li>
+                  <li>XP will be spent from restricted pools first, then magical or general</li>
+                  <li>Abilities increase automatically when XP threshold is reached</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          {character && (
+            <div className="flex flex-wrap gap-2">
+              <div className="bg-blue-50 px-3 py-1 rounded-md border border-blue-100">
+                <span className="font-medium text-blue-700">General XP:</span>
+                <span className="ml-1">{character.general_exp_available || 0}</span>
+              </div>
+              <div className="bg-green-50 px-3 py-1 rounded-md border border-green-100">
+                <span className="font-medium text-green-700">Magical XP:</span>
+                <span className="ml-1">{character.magical_exp_available || 0}</span>
+              </div>
+              
+              {/* Render restricted XP pools if available */}
+              {character.restricted_exp_pools && Object.entries(character.restricted_exp_pools).map(([category, amount]) => (
+                amount > 0 && (
+                  <div key={category} className="bg-purple-50 px-3 py-1 rounded-md border border-purple-100">
+                    <span className="font-medium text-purple-700">{category} XP:</span>
+                    <span className="ml-1">{amount}</span>
+                  </div>
+                )
+              ))}
+            </div>
+          )}
+        </div>
         
         {abilitiesLoading && <p className="text-gray-500">Loading abilities...</p>}
         {abilitiesError && <p className="text-red-500">{abilitiesError}</p>}
@@ -253,6 +292,7 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
               abilities={abilities}
               onIncrementAbility={incrementAbility}
               onDecrementAbility={decrementAbility}
+              onIncrementXP={incrementAbilityXP}
               onUpdateSpecialty={updateSpecialty}
             />
             
@@ -290,7 +330,11 @@ CharacteristicsAndAbilitiesTab.propTypes = {
     perception: PropTypes.number,
     use_cunning: PropTypes.bool,
     total_improvement_points: PropTypes.number,
-    character_type: PropTypes.string
+    character_type: PropTypes.string,
+    age: PropTypes.number,
+    general_exp_available: PropTypes.number,
+    magical_exp_available: PropTypes.number,
+    restricted_exp_pools: PropTypes.object
   }),
   onSave: PropTypes.func.isRequired
 };

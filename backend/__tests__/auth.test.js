@@ -1,7 +1,15 @@
 const request = require('supertest');
 const express = require('express');
-const { router } = require('../routes/auth');
+const routesModule = require('../routes/auth');
 const { sequelize } = require('../models');
+
+// Mock the password validator middleware
+jest.mock('../middleware/passwordValidator', () => {
+  return jest.fn((req, res, next) => next());
+});
+
+// Get the router
+const router = typeof routesModule === 'function' ? routesModule : routesModule.router;
 
 // Create an Express app for testing
 const app = express();
@@ -22,7 +30,7 @@ describe('Auth Routes', () => {
         .post('/auth/register')
         .send({
           email: 'existing@example.com',
-          password: 'password123'
+          password: 'Password123!'
         });
 
       expect(response.status).toBe(400);

@@ -14,10 +14,12 @@
   - **Debugging complex issues requiring multiple fix attempts** (REQUIRED)
   - **Troubleshooting auth flows or token systems** (REQUIRED)
   - **Investigating circular dependencies or infinite loops** (REQUIRED)
+  - **Planning and reviewing core game logic implementations** (e.g., detailed Experience point calculations, Ability cost/spending validation, Virtue/Flaw effect interactions)
+  - Reviewing the interaction points between major systems (e.g., Virtues/Flaws, Experience, Abilities)
   - Database schema design validation
   - Performance optimization recommendations
   - Technical debt assessment
-- **Usage**: Use whenever needed for complex issues, especially those related to security, state management, or multi-component interactions
+- **Usage**: Use whenever needed for complex issues, especially those related to security, state management, core game mechanics, or multi-component interactions
 - **How it works**: Pulls the entire codebase and analyzes it with a powerful LLM to provide comprehensive insights
 - **Important**: For authentication fixes, refresh token implementations, or debugging infinite loops/circular dependencies, ALWAYS use this MCP before implementing solutions
 
@@ -96,17 +98,16 @@ Before implementing any feature or bugfix:
 ### Workplan Execution
 
 1. Update the workplan Status from "Not Started" to "In Progress" when you begin implementation
-2. Check off items in the checklist as they are completed
-3. Add notes about implementation decisions or challenges encountered
-4. For non-blocking uncertainties:
+2. **Continuously update the workplan `.md` file** as you complete checklist items. Check off items as they are completed. Add implementation notes, challenges encountered, and any deviations from the plan directly into the 'Notes' section of the workplan file. Change the 'Status' field as appropriate.
+3. For non-blocking uncertainties:
    - Document your working assumption
    - Proceed with implementation based on that assumption
    - Flag the assumption in the Notes section for future review
-5. For blocking uncertainties:
+4. For blocking uncertainties:
    - Document the specific question or issue
    - Update status to "Blocked" if you cannot proceed
    - Once resolved, document the resolution and continue
-6. Update the Status to "Completed" once all steps are finished and verified
+5. Update the Status to "Completed" once all steps are finished and verified
 
 ### Memory Integration
 
@@ -129,9 +130,17 @@ Before implementing any feature or bugfix:
 
 ## Testing Environment Options
 
-The project provides multiple ways to run tests, each with different performance characteristics:
+The project provides multiple ways to run tests, each with different performance characteristics, especially relevant in WSL environments.
 
-### 1. Batched Test Runner (WSL)
+### Recommended Testing Workflow During Development
+
+1.  **Logic & Utilities (Backend/Frontend):** For pure logic files (`experienceUtils.js`, `abilityUtils.js`, `virtueFlawValidation.js`, `virtueFlawPoints.js`), **use the Simple Test Runner (`npm run test:simple path/to/your.test.js`)** for the fastest feedback loop during implementation and debugging.
+2.  **Frontend Components & Hooks:** For React components (`AbilityInput.js`, `AbilityList.js`) and hooks (`useAbilities.js`), use either the **Batched Test Runner (`npm run test:batched:frontend`)** or the **Docker Runner (`npm run test:docker:frontend`)** if Docker is available and faster on your system. Avoid direct `npm test` in WSL for frontend tests due to likely timeouts.
+3.  **Full Suite:** Run the full suite (`npm run test:all` or `npm run test:batched`) less frequently, primarily before committing major changes or requesting reviews.
+
+### Detailed Runner Options
+
+#### 1. Batched Test Runner (WSL)
 
 For running tests in WSL with batching to mitigate timeouts:
 
@@ -152,9 +161,9 @@ The batched test runner creates a detailed Markdown report in `/test-results/bat
 - Detailed error information for failing tests
 - Batch execution metadata
 
-### 2. Docker-based Testing (Recommended)
+#### 2. Docker-based Testing (Recommended for Full Suite)
 
-For optimal performance, the Docker-based test runner provides isolated environment with better performance:
+For optimal performance, the Docker-based test runner provides an isolated environment:
 
 - Run all tests in Docker: `npm run test:docker`
 - Build and run tests: `npm run test:docker:build`
@@ -165,60 +174,44 @@ For optimal performance, the Docker-based test runner provides isolated environm
 Benefits of Docker testing:
 
 - Consistent environment across machines
-- Significantly faster than WSL
+- Significantly faster than WSL for the full suite
 - Avoids Windows filesystem performance issues
-- Isolated dependencies from host system
+- Isolated dependencies
 
-### 3. WSL Optimization
+#### 3. WSL Optimization
 
 To improve WSL performance, run the optimization script:
-
-```
+Use code with caution.
+Markdown
 npm run test:wsl-optimize
-```
 
-This script:
+This script configures `.wslconfig`, Linux memory/swap, disk I/O, and Node.js settings. Restart WSL (`wsl --shutdown`) after running.
 
-- Creates optimal .wslconfig in Windows home directory
-- Adjusts Linux memory and swap settings
-- Configures disk I/O optimizations
-- Sets up Node.js memory optimizations
+#### 4. Simple Test Runner (Fastest for Logic)
 
-After running, restart WSL with `wsl --shutdown` from PowerShell.
-
-### 4. Simple Test Runner (Fastest)
-
-For ultra-fast testing during development, the simple test runner bypasses Jest entirely:
-
-```
+For ultra-fast validation of non-UI code during development:
+Use code with caution.
 npm run test:simple path/to/test.js
-```
 
 The simple test runner:
 
-- Uses pure Node.js, avoiding Jest's overhead
-- Supports basic Jest API (test/describe/expect)
-- Runs in milliseconds instead of minutes
-- Perfect for quick validation of logic
-- Limitations: no UI component testing, limited matchers
+- Uses pure Node.js, avoiding Jest's overhead.
+- Supports basic Jest API (test/describe/expect).
+- Runs in milliseconds.
+- Perfect for validating business logic, utilities, backend code.
+- Limitations: no UI component testing, limited matchers.
 
-Example test file:
+## Database Management
 
-```javascript
-test("addition works", () => {
-  expect(1 + 1).toBe(2);
-});
-
-describe("Array methods", () => {
-  test("map works", () => {
-    const arr = [1, 2, 3];
-    const result = arr.map((x) => x * 2);
-    expect(result).toEqual([2, 4, 6]);
-  });
-});
-```
-
-This option is ideal for quickly validating business logic, utilities, and other non-UI code during development.
+- **Migrations:**
+  - For any changes to the database schema (adding tables, columns, constraints), **create a new migration file** in `backend/migrations/` using `npx sequelize-cli migration:generate --name descriptive-name`.
+  - Implement both the `up` and `down` functions carefully.
+  - Test migrations locally before committing, if feasible (e.g., using `db:migrate:undo` then `db:migrate` again).
+- **Seeders:**
+  - If reference data needs updating due to schema changes (e.g., adding new fields like `exp_rate_modifier` to existing Virtues), **update the relevant seeder files** in `backend/seeders/`.
+  - Ensure seeders are idempotent or handle potential conflicts if run multiple times.
+  - Consider the order if seeders depend on each other.
+- **Database Schema Documentation:** After successful migration and testing, run `npm run docs:db-schema` to update `Documentation/databaseSchema.txt`.
 
 ## Code Style Guidelines
 
@@ -252,310 +245,18 @@ This option is ideal for quickly validating business logic, utilities, and other
   - Custom hooks for reusable state logic (e.g., `useVirtuesAndFlaws`, `useAuth`)
 
 - **Testing Guidelines**:
-  - Use the standardized test file structure from TEST-STANDARDIZATION.md
-  - Include setup function with this pattern:
-    ```javascript
-    function setup(customProps = {}) {
-      const defaultProps = {
-        /* Default props */
-      };
-      const props = { ...defaultProps, ...customProps };
-      const utils = render(<Component {...props} />);
-      return { ...utils, mockFn: props.mockFn, props };
-    }
-    ```
-  - Suppress console errors with this pattern:
-    ```javascript
-    const originalError = console.error;
-    beforeAll(() => {
-      console.error = jest.fn((message) => {
-        if (message.includes("specific warning")) return;
-        originalError.call(console, message);
-      });
-    });
-    ```
-  - Group tests with descriptive describe blocks (Rendering, User interactions, Edge cases)
-  - Focus on testing behavior, not implementation details
-  - Use data-testid selectors for reliable DOM interaction
-  - Mock dependencies appropriately and consistently between tests
-  - Reset mocks between tests with beforeEach/afterEach
-  - Only use waitFor() for truly async operations
-  - Test files should be colocated with components
 
-## Unit Testing Best Practices
-
-> **Note:** For comprehensive testing guidelines and examples, refer to:
->
-> - [TEST-PATTERNS.md](./Documentation/TEST-PATTERNS.md) - General patterns
-> - [TEST-STANDARDIZATION.md](./Documentation/Plans/TEST-STANDARDIZATION.md) - Standardized approach with example code
-> - [**test-utils**/README.md](./frontend/src/__test-utils__/README.md) - Reusable test utilities and fixtures
-
-### Test Utilities Module
-
-The project provides a comprehensive set of standardized test utilities in the `__test-utils__` directory to ensure consistent testing patterns across all components:
-
-```javascript
-// Import all utilities (for small tests)
-import * as testUtils from "../__test-utils__";
-
-// Or import only what you need (preferred for larger test files)
-import {
-  setupComponent,
-  setupWithQueryClient,
-  setupConsoleSuppress,
-  createAxiosMock,
-  MOCK_CHARACTER,
-} from "../__test-utils__";
-```
-
-#### Core Utilities
-
-1. **Component Setup Functions**:
-
-   - `setupComponent(Component, defaultProps, customProps)` - Basic component setup
-   - `setupWithQueryClient(Component, defaultProps, customProps)` - With React Query provider
-   - `setupWithRouter(Component, defaultProps, customProps)` - With React Router
-   - `setupWithAuth(Component, defaultProps, customProps)` - With Auth provider
-   - `setupWithAllProviders(Component, defaultProps, customProps)` - With all providers
-
-2. **Console Error Suppression**:
-
-   - `setupConsoleSuppress()` - Suppresses specific console errors during tests
-   - `setupConsoleSuppress(['Warning:', 'Error:'])` - With custom patterns to suppress
-
-3. **Mock Implementations**:
-
-   - `createAxiosMock()` - Creates a standardized mock for axios
-   - `mockUseAuth(authState)` - Creates mock implementation of useAuth hook
-   - `AUTH_STATES` - Predefined auth states (AUTHENTICATED, UNAUTHENTICATED, etc.)
-
-4. **Testing Fixtures**:
-   - `CHARACTER_FIXTURES` - Mock character data
-   - `VIRTUE_FLAW_FIXTURES` - Mock virtue/flaw data
-   - `ABILITY_FIXTURES` - Mock ability data
-   - `QUERY_STATES` - Predefined states for React Query tests
-
-#### Standard Test Pattern
-
-Every test file should follow this consistent pattern:
-
-````javascript
-import React from 'react';
-import { screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import YourComponent from './YourComponent';
-import { setupComponent, setupConsoleSuppress } from '../__test-utils__';
-
-// Setup console error suppression
-setupConsoleSuppress();
-
-// Component-specific setup function
-function setup(customProps = {}) {
-  const defaultProps = {
-    // Default prop values
-  };
-
-  return setupComponent(YourComponent, defaultProps, customProps);
-}
-
-describe('YourComponent', () => {
-  describe('Rendering', () => {
-    test('renders correctly', () => {
-      setup();
-      expect(screen.getByText('Expected Text')).toBeInTheDocument();
-    });
-  });
-
-  describe('User interactions', () => {
-    test('handles user input', () => {
-      const { props } = setup();
-      fireEvent.click(screen.getByRole('button'));
-      expect(props.onButtonClick).toHaveBeenCalled();
-    });
-  });
-});
-
-```javascript
-// Import only what you need from the test utilities
-import {
-  setupWithQueryClient,
-  setupConsoleSuppress,
-  QUERY_STATES,
-  createTestCharacter
-} from '../__test-utils__';
-````
-
-Key utility categories:
-
-- **Setup Functions**: `setupComponent()`, `setupWithQueryClient()`, `setupWithAuth()`, etc.
-- **Mock Data**: Character, virtue/flaw, and ability fixtures
-- **Query Helpers**: Predefined query states and mock implementations
-- **Error Suppression**: Utilities to suppress specific console errors
-
-Example standard test structure:
-
-```javascript
-import { setupWithQueryClient, setupConsoleSuppress } from "../__test-utils__";
-
-// Suppress specific console errors
-setupConsoleSuppress(["Warning:", "act(...)"]);
-
-describe("MyComponent", () => {
-  function setup(customProps = {}) {
-    const defaultProps = {
-      /* defaults */
-    };
-    return setupWithQueryClient(MyComponent, defaultProps, customProps);
-  }
-
-  describe("Rendering", () => {
-    test("renders correctly", () => {
-      const { getByText } = setup();
-      expect(getByText("Expected Content")).toBeInTheDocument();
-    });
-  });
-});
-```
-
-### Test Structure
-
-- Begin each test file with standard imports and mock setup
-- Group tests using descriptive describe blocks (Rendering, Interactions, Error handling, etc.)
-- Use consistent setup functions for component rendering
-- Test behavior, not implementation details
-
-### Component Testing Checklist
-
-- Initial render state verification
-- Props handling and propagation
-- User interactions (clicks, inputs, form submission)
-- Conditional rendering paths
-- Error states and messages
-- Loading states
-- Empty/null state handling
-- Accessibility concerns
-
-### Mock Guidelines
-
-- Mock all external dependencies (API calls, hooks, context)
-- Use consistent mock patterns across files
-- Reset mocks between tests with beforeEach/afterEach
-- Document complex mocks with comments
-
-### Test Organization for Complex Components
-
-- **Structure:**
-
-  - Organize test files to mirror component hierarchy
-  - For large components, split tests into logical sections with separate describe blocks
-  - Create dedicated test files for complex subcomponents
-  - Use a consistent naming pattern: `ComponentName.test.js` and `ComponentName.integration.test.js`
-
-- **Shared Resources:**
-
-  - Create `__test-utils__` directories for shared fixtures and helpers
-  - Extract common setup functions into reusable utilities
-  - Build mock factories for commonly tested data structures
-  - Document test fixtures with comments explaining their purpose
-
-- **Refactoring Existing Tests:**
-  - Identify and extract repeated setup code into helper functions
-  - Split monolithic test files into dedicated context-specific files
-  - Move common mock configurations to shared setup files
-  - Add explicit describe blocks to group related tests
-
-### Testing Complex State Management
-
-- **Hook Testing Strategy:**
-
-  - Create separate test files for custom hooks: `useCustomHook.test.js`
-  - Test hooks in isolation using `renderHook` from Testing Library
-  - Verify all state transitions with explicit assertions
-  - Test effect cleanup functions to prevent memory leaks
-
-- **Component State Testing:**
-
-  - Test each distinct state representation in the UI
-  - Verify state transitions triggered by user interactions
-  - Test asynchronous state updates with appropriate waiting patterns
-  - Ensure error states are properly represented in the UI
-
-- **Refactoring Existing Tests:**
-  - Extract state management testing into dedicated hook tests
-  - Add missing tests for state transition edge cases
-  - Add explicit tests for async loading/error states
-  - Document complex state flows with test comments
-
-### Testing Error Boundaries and Recovery
-
-- **Error Boundary Testing:**
-
-  - Create dedicated tests for error boundary components
-  - Test both error and non-error rendering paths
-  - Verify error details are appropriately displayed/logged
-  - Test recovery mechanisms (retries, resets, fallbacks)
-
-- **Component Error Testing:**
-
-  - Add explicit tests that trigger component errors
-  - Verify fallback UI rendering when errors occur
-  - Test that errors are properly contained and don't cascade
-  - Verify error reporting mechanisms work correctly
-
-- **Refactoring Existing Tests:**
-  - Add error boundary tests for components missing them
-  - Review error states in existing components and add missing tests
-  - Implement consistent error simulation techniques
-  - Document expected error behavior in test descriptions
-
-### Balancing Test Coverage and Maintenance
-
-- **Coverage Strategy:**
-
-  - **Core Business Logic:** 90%+ coverage
-  - **UI Components:** Focus on key user interactions and rendering paths
-  - **Utility Functions:** 100% coverage
-  - **Configuration/Constants:** Minimal testing
-
-- **Optimizing Test Efficiency:**
-
-  - Use parameterized tests for similar scenarios
-  - Test behaviors, not implementation details
-  - Limit snapshot testing to stable components
-  - Group related assertions to minimize test runs
-
-- **Sustainable Maintenance:**
-
-  - Update tests when component behavior changes
-  - Delete tests for removed functionality
-  - Document complex test setups with comments
-  - Mark explicitly ignored tests with reasons
-
-- **Refactoring Existing Tests:**
-  - Identify over-tested areas and simplify
-  - Add missing tests for critical functionality
-  - Convert imperative test sequences to declarative assertions
-  - Add JSDoc comments for test intent and coverage decisions
-
-### Basic Usability Testing
-
-- Verify interactive elements (buttons, links) function properly
-- Ensure form elements can be completed and submitted
-- Test that error messages are visible and understandable
-- Use data-testid attributes for stable test selectors
-
-### Performance Considerations
-
-- Add specific tests for expensive operations
-- Test memo/callback optimizations actually prevent rerenders
-- Test lazy-loaded components render correctly
-
-### Test Maintenance
-
-- Colocate tests with components
-- Update tests with component changes
-- Avoid brittle selectors dependent on DOM structure
-- Document test assumptions in comments
+  - **Mandatory:** Use the standardized test utilities provided in `frontend/src/__test-utils__` for all new frontend component and hook tests. Refer to `frontend/src/__test-utils__/README.md` for usage details.
+  - Use the standardized test file structure from TEST-STANDARDIZATION.md.
+  - Include setup function pattern from `__test-utils__`.
+  - Suppress expected console errors using utilities from `__test-utils__`.
+  - Group tests with descriptive describe blocks (Rendering, User interactions, Edge cases).
+  - Focus on testing behavior, not implementation details.
+  - Use data-testid selectors primarily for stable DOM interaction, but prefer user-facing roles/text where feasible.
+  - Mock dependencies appropriately and consistently. Reset mocks between tests.
+  - Use `waitFor()` only for truly async operations.
+  - Colocate tests with components/modules.
+  - **Logic Tests:** Pay special attention to creating thorough unit tests for core game logic (e.g., `experienceUtils.js`, `abilityUtils.js`). Use the **Simple Test Runner** for these during development.
 
 - **Error Handling**:
 
@@ -582,6 +283,125 @@ describe("MyComponent", () => {
   - HTTP status codes matching response content
   - Structured error messages for validation failures
 
-## Current Development Focus
+## Unit Testing Best Practices
 
+> **Note:** For comprehensive testing guidelines and examples, refer to:
+>
+> - [TEST-PATTERNS.md](./Documentation/TEST-PATTERNS.md) - General patterns
+> - [TEST-STANDARDIZATION.md](./Documentation/Plans/TEST-STANDARDIZATION.md) - Standardized approach with example code
+> - [**test-utils**/README.md](./frontend/src/__test-utils__/README.md) - Reusable test utilities and fixtures
+
+### Test Utilities Module (**REQUIRED for Frontend Tests**)
+
+The project provides a comprehensive set of standardized test utilities in the `__test-utils__` directory to ensure consistent testing patterns across all components:
+
+```javascript
+// Import only what you need (preferred)
+import {
+  setupComponent,
+  setupWithQueryClient,
+  setupConsoleSuppress,
+  createAxiosMock,
+  CHARACTER_FIXTURES,
+  AUTH_STATES
+} from '../__test-utils__';
+Use code with caution.
+Core Utilities
+Component Setup Functions: setupComponent(), setupWithQueryClient(), setupWithRouter(), setupWithAuth(), setupWithAllProviders()
+
+Console Error Suppression: setupConsoleSuppress(), suppressConsoleErrors()
+
+Mock Implementations: createAxiosMock(), mockUseAuth(), AUTH_STATES
+
+Testing Fixtures: CHARACTER_FIXTURES, VIRTUE_FLAW_FIXTURES, ABILITY_FIXTURES, QUERY_STATES
+
+Hook Testing Utilities: setupHook(), setupHookWithQueryClient(), setupHookWithAuth(), waitForHookToSettle(), HOOK_STATES
+
+Standard Test Pattern
+Every test file should follow this consistent pattern:
+
+import React from 'react';
+import { screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import YourComponent from './YourComponent';
+import { setupComponent, setupConsoleSuppress } from '../__test-utils__';
+
+// Setup console error suppression
+setupConsoleSuppress();
+
+// Component-specific setup function
+function setup(customProps = {}) {
+  const defaultProps = { /* Default prop values */ };
+  return setupComponent(YourComponent, defaultProps, customProps);
+}
+
+describe('YourComponent', () => {
+  describe('Rendering', () => {
+    test('renders correctly', () => {
+      setup();
+      expect(screen.getByText('Expected Text')).toBeInTheDocument();
+    });
+  });
+
+  describe('User interactions', () => {
+    test('handles user input', () => {
+      const { props } = setup();
+      fireEvent.click(screen.getByRole('button'));
+      expect(props.onButtonClick).toHaveBeenCalled();
+    });
+  });
+});
+Use code with caution.
+JavaScript
+Test Structure
+Begin each test file with standard imports and mock setup using __test-utils__.
+
+Group tests using descriptive describe blocks.
+
+Use consistent setup functions for component rendering.
+
+Test behavior, not implementation details.
+
+Component Testing Checklist
+Initial render state verification
+
+Props handling
+
+User interactions
+
+Conditional rendering
+
+Error/Loading/Empty states
+
+Accessibility concerns
+
+Mock Guidelines
+Mock all external dependencies using __test-utils__ helpers where possible.
+
+Use consistent mock patterns. Reset mocks between tests.
+
+Testing Complex State Management
+Test custom hooks in isolation using renderHook and hookUtils.
+
+Verify all state transitions.
+
+Balancing Test Coverage and Maintenance
+Coverage Strategy: Aim for high coverage on core logic (utils, services) and critical UI paths.
+
+Efficiency: Use parameterized tests, test behaviors, limit snapshots.
+
+Maintenance: Update tests with component changes, document complex tests.
+
+Current Development Focus
 <Checklist of its current state. Claude updates this>
+
+## Tool Constraints
+
+- **Unable to run Sequelize CLI commands** - When database migrations and seeds need to be executed, prompt the user to run commands like `npx sequelize-cli db:migrate` and `npx sequelize-cli db:seed:all` rather than attempting to run them directly.
+- **Auth middleware consistency** - The project uses `authenticateToken` from `auth.js` for all protected routes. Do not use `isAuthenticated` which doesn't exist.
+
+## Tool Constraints
+
+- **Unable to run Sequelize CLI commands** - When database migrations and seeds need to be executed, prompt the user to run commands like `npx sequelize-cli db:migrate` and `npx sequelize-cli db:seed:all` rather than attempting to run them directly.
+- **Auth middleware consistency** - The project uses `authenticateToken` from `auth.js` for all protected routes. Do not use `isAuthenticated` which doesn't exist.
+```

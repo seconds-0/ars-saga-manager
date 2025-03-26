@@ -164,41 +164,148 @@ const isAbilityAppropriateForCharacterType = (abilityName, abilityCategory, char
  * Applies virtue effects to ability calculations
  * @param {number} score - The base ability score
  * @param {number} xp - The experience points
- * @param {Array} virtues - The character's virtues
+ * @param {Array} characterVirtuesFlaws - The character's virtues and flaws with referenceVirtueFlaw included
  * @param {string} abilityName - The name of the ability
  * @returns {Object} - The modified score and xp
  */
-const applyVirtueEffects = (score, xp, virtues, abilityName) => {
+const applyVirtueEffects = (score, xp, characterVirtuesFlaws, abilityName) => {
   let modifiedScore = score;
   let modifiedXP = xp;
   
-  if (!virtues || !Array.isArray(virtues)) {
+  if (!characterVirtuesFlaws || !Array.isArray(characterVirtuesFlaws)) {
     return { score: modifiedScore, xp: modifiedXP };
   }
   
-  // Check for Puissant virtue
-  const puissantVirtue = virtues.find(v => 
-    v.virtue_name === 'Puissant (Ability)' && 
-    v.specification === abilityName
-  );
+  // Filter for virtues that apply to this ability
+  const relevantVirtuesFlaws = characterVirtuesFlaws.filter(cvf => {
+    // Skip if no referenceVirtueFlaw
+    if (!cvf.referenceVirtueFlaw) return false;
+    
+    // Skip if no selections
+    if (!cvf.selections) return false;
+    
+    // Check if it affects abilities
+    const affectsAbilities = cvf.referenceVirtueFlaw.ability_score_bonus !== 0 || 
+                            cvf.referenceVirtueFlaw.affects_ability_cost;
+    
+    if (!affectsAbilities) return false;
+    
+    // Check if it applies to this specific ability
+    if (cvf.referenceVirtueFlaw.specification_type === 'Ability') {
+      return cvf.selections.Ability === abilityName;
+    }
+    
+    // Handle general abilities affecting virtues (like Book Learner)
+    return cvf.referenceVirtueFlaw.affects_ability_cost && !cvf.referenceVirtueFlaw.requires_specification;
+  });
   
-  if (puissantVirtue) {
-    // Puissant adds +2 to the effective ability score
-    modifiedScore += 2;
+  // Apply score bonuses from virtues like Puissant
+  relevantVirtuesFlaws.forEach(cvf => {
+    if (cvf.referenceVirtueFlaw.ability_score_bonus !== 0) {
+      modifiedScore += cvf.referenceVirtueFlaw.ability_score_bonus;
+    }
+  });
+  
+  return { score: modifiedScore, xp: modifiedXP, relevantVirtuesFlaws };
+};
+
+/**
+ * Calculates the cost to increase an ability, accounting for virtues like Affinity
+ * @param {number} targetXP - Target experience points
+ * @param {number} currentXP - Current experience points
+ * @param {string} abilityName - Name of the ability
+ * @param {Array} characterVirtuesFlaws - Character's virtues and flaws
+ * @param {string} abilityCategory - Category of the ability (ACADEMIC, MARTIAL, etc.)
+ * @returns {number} - The adjusted experience cost
+ */
+const getAbilityCost = (targetXP, currentXP, abilityName, characterVirtuesFlaws, abilityCategory) => {
+  if (targetXP <= currentXP) {
+    return 0;
   }
   
-  // Check for Affinity virtue
-  const affinityVirtue = virtues.find(v => 
-    v.virtue_name === 'Affinity with (Ability)' && 
-    v.specification === abilityName
-  );
+  const baseCost = targetXP - currentXP;
+  let costMultiplier = 1.0; // Default: no discount
   
-  if (affinityVirtue) {
-    // Affinity reduces XP costs (this is handled differently in character advancement)
-    // For display purposes, we don't modify the XP here
+  // Skip if no virtues/flaws provided
+  if (!characterVirtuesFlaws || !Array.isArray(characterVirtuesFlaws)) {
+    return baseCost;
   }
   
-  return { score: modifiedScore, xp: modifiedXP };
+  // Find virtues that reduce ability costs
+  characterVirtuesFlaws.forEach(cvf => {
+    // Skip if not a virtue or doesn't affect ability cost
+    if (!cvf.referenceVirtueFlaw || !cvf.referenceVirtueFlaw.affects_ability_cost) {
+      return;
+    }
+    
+    // Handle Affinity with specific ability
+    if (cvf.referenceVirtueFlaw.name === 'Affinity with (Ability)' && 
+        cvf.selections && cvf.selections.Ability === abilityName) {
+      // Affinity reduces cost by 25%
+      costMultiplier = Math.min(costMultiplier, 0.75);
+    }
+    
+    // Handle Book Learner (reduces Academic ability costs)
+    if (cvf.referenceVirtueFlaw.name === 'Book Learner' && 
+        abilityCategory === 'ACADEMIC') {
+      // Book Learner reduces cost by 25% for Academic abilities
+      costMultiplier = Math.min(costMultiplier, 0.75);
+    }
+    
+    // Add more virtue handling as needed
+    // e.g., Apt Student, etc.
+  });
+  
+  // Apply the cost multiplier and round up (minimum cost of 1)
+  return Math.max(1, Math.ceil(baseCost * costMultiplier));
+};
+
+/**
+ * Determines if character has affinity with an ability based on their virtues
+ * @param {string} abilityName - Name of the ability
+ * @param {Array} characterVirtuesFlaws - The character's virtues and flaws
+ * @returns {boolean} - Whether the character has affinity with this ability
+ */
+const hasAffinityWithAbility = (abilityName, characterVirtuesFlaws) => {
+  if (!characterVirtuesFlaws || !Array.isArray(characterVirtuesFlaws)) {
+    return false;
+  }
+  
+  return characterVirtuesFlaws.some(cvf => {
+    if (!cvf.referenceVirtueFlaw) return false;
+    
+    return cvf.referenceVirtueFlaw.name === 'Affinity with (Ability)' && 
+           cvf.selections && cvf.selections.Ability === abilityName;
+  });
+};
+
+/**
+ * Calculate effective score for an ability including virtue/flaw effects
+ * @param {string} abilityName - Name of the ability
+ * @param {number} baseScore - The base ability score
+ * @param {Array} characterVirtuesFlaws - Character virtues and flaws
+ * @returns {number} - The effective score after applying modifiers
+ */
+const calculateEffectiveScore = (abilityName, baseScore, characterVirtuesFlaws) => {
+  if (!characterVirtuesFlaws || !Array.isArray(characterVirtuesFlaws)) {
+    return baseScore;
+  }
+  
+  let scoreModifier = 0;
+  
+  // Calculate score modifiers from virtues and flaws
+  characterVirtuesFlaws.forEach(cvf => {
+    if (!cvf.referenceVirtueFlaw) return;
+    
+    // Check for ability-specific virtues like Puissant
+    if (cvf.referenceVirtueFlaw.ability_score_bonus !== 0 && 
+        cvf.referenceVirtueFlaw.specification_type === 'Ability' &&
+        cvf.selections && cvf.selections.Ability === abilityName) {
+      scoreModifier += cvf.referenceVirtueFlaw.ability_score_bonus;
+    }
+  });
+  
+  return baseScore + scoreModifier;
 };
 
 module.exports = {
@@ -207,5 +314,8 @@ module.exports = {
   xpForNextLevel,
   initializeAbilitiesForCharacterType,
   isAbilityAppropriateForCharacterType,
-  applyVirtueEffects
+  applyVirtueEffects,
+  getAbilityCost,
+  hasAffinityWithAbility,
+  calculateEffectiveScore
 };
