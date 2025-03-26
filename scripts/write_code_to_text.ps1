@@ -2,7 +2,9 @@ param(
     [switch]$commit = $false,
     [switch]$includeDocs = $false,
     [int]$timeout = 120,
-    [switch]$skipCopy = $false
+    [switch]$skipCopy = $false,
+    [switch]$skipLargeFiles = $false,
+    [int]$maxFileSize = 1048576 # Default 1MB
 )
 
 Write-Host "Installing required dependencies..." -ForegroundColor Green
@@ -28,6 +30,15 @@ if ($timeout -ne 120) {
 if ($skipCopy) {
     $argList += "--skip-copy"
     Write-Host "Will skip creating non-timestamped copy" -ForegroundColor Yellow
+}
+if ($skipLargeFiles) {
+    $argList += "--skip-large-files"
+    Write-Host "Will skip large files (> $($maxFileSize/1MB) MB)" -ForegroundColor Yellow
+}
+if ($skipLargeFiles -and $maxFileSize -ne 1048576) {
+    $argList += "--max-file-size"
+    $argList += "$maxFileSize"
+    Write-Host "Max file size set to $($maxFileSize/1KB) KB" -ForegroundColor Yellow
 }
 
 # Run the Python script with appropriate arguments

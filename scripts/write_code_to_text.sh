@@ -28,9 +28,19 @@ while [[ $# -gt 0 ]]; do
       echo "Will skip creating non-timestamped copy"
       shift
       ;;
+    --skip-large-files)
+      ARGS="$ARGS --skip-large-files"
+      echo "Will skip large files"
+      shift
+      ;;
+    --max-file-size)
+      ARGS="$ARGS --max-file-size $2"
+      echo "Max file size set to $2 bytes"
+      shift 2
+      ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--commit] [--include-docs] [--timeout SECONDS] [--skip-copy]"
+      echo "Usage: $0 [--commit] [--include-docs] [--timeout SECONDS] [--skip-copy] [--skip-large-files] [--max-file-size BYTES]"
       exit 1
       ;;
   esac
@@ -55,4 +65,4 @@ if [[ ! "$ARGS" =~ "--include-docs" ]]; then
   echo "Note: To include documentation files that are listed in .gitignore, run this script with the --include-docs flag"
 fi
 
-echo "Example: ./write_code_to_text.sh --commit --include-docs"
+echo "Example: ./write_code_to_text.sh --commit --include-docs --timeout 300 --skip-large-files --max-file-size 2097152"

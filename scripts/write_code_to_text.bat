@@ -3,6 +3,8 @@ setlocal
 
 set ARGS=
 set TIMEOUT=120
+set SKIP_LARGE=0
+set MAX_FILE_SIZE=1048576
 
 if "%~1"=="-commit" (
     set ARGS=--commit
@@ -66,6 +68,42 @@ if "%~4"=="-skip-copy" (
     echo Will skip creating non-timestamped copy
 )
 
+if "%~1"=="-skip-large-files" (
+    set SKIP_LARGE=1
+    set ARGS=%ARGS% --skip-large-files
+    echo Will skip large files
+)
+if "%~2"=="-skip-large-files" (
+    set SKIP_LARGE=1
+    set ARGS=%ARGS% --skip-large-files
+    echo Will skip large files
+)
+if "%~3"=="-skip-large-files" (
+    set SKIP_LARGE=1
+    set ARGS=%ARGS% --skip-large-files
+    echo Will skip large files
+)
+if "%~4"=="-skip-large-files" (
+    set SKIP_LARGE=1
+    set ARGS=%ARGS% --skip-large-files
+    echo Will skip large files
+)
+
+if "%~1"=="-max-file-size" (
+    if %SKIP_LARGE%==1 (
+        set MAX_FILE_SIZE=%~2
+        set ARGS=%ARGS% --max-file-size %MAX_FILE_SIZE%
+        echo Max file size set to %MAX_FILE_SIZE% bytes
+    )
+)
+if "%~3"=="-max-file-size" (
+    if %SKIP_LARGE%==1 (
+        set MAX_FILE_SIZE=%~4
+        set ARGS=%ARGS% --max-file-size %MAX_FILE_SIZE%
+        echo Max file size set to %MAX_FILE_SIZE% bytes
+    )
+)
+
 echo Installing required dependencies...
 pip install pathspec
 
@@ -89,7 +127,7 @@ if not "%ARGS%"=="--commit" if not "%ARGS:~0,9%"=="--commit " (
 if not "%ARGS%"=="--include-docs" if not "%ARGS:~-13%"==" --include-docs" (
     echo Note: To include documentation files that are listed in .gitignore, run this script with the -include-docs parameter
 )
-echo Example: write_code_to_text.bat -commit -include-docs -timeout 300 -skip-copy
+echo Example: write_code_to_text.bat -commit -include-docs -timeout 300 -skip-copy -skip-large-files -max-file-size 2097152
 
 pause
 endlocal

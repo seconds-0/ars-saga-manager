@@ -145,7 +145,8 @@ def generate_directory_tree(start_path, root_pathspec, additional_pathspecs, ind
     
     return tree
 
-def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_gitignore=True, timeout_seconds=180):
+def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_gitignore=True, 
+                 timeout_seconds=180, skip_large_files=False, max_file_size=1024*1024):
     """Process the codebase and write to text file.
     
     Args:
@@ -154,6 +155,8 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
         additional_pathspecs: Additional .gitignore PathSpecs
         respect_gitignore: Whether to respect gitignore rules
         timeout_seconds: Maximum time in seconds to allow for processing
+        skip_large_files: Whether to skip files larger than max_file_size
+        max_file_size: Maximum file size in bytes (default 1MB)
     
     Returns:
         Tuple of (success, message)
@@ -175,8 +178,9 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
     start_time = time.time()
     root_dir = os.path.dirname(os.path.abspath(__file__)) + '/..'
     file_count = 0
+    large_file_count = 0
     processed_size = 0
-    max_file_size = 1024 * 1024  # 1MB max per file to avoid huge files
+    skipped_size = 0
     
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -213,10 +217,12 @@ def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_g
                     if rel_path in processed_files or should_ignore(file_path, root_pathspec, additional_pathspecs, respect_gitignore):
                         continue
                     
-                    # Skip large files
+                    # Handle large files
                     try:
                         file_size = os.path.getsize(file_path)
-                        if file_size > max_file_size:
+                        if skip_large_files and file_size > max_file_size:
+                            large_file_count += 1
+                            skipped_size += file_size
                             f.write(f"### {rel_path}\n\n")
                             f.write(f"File skipped (too large): {file_size/1024:.1f} KB\n\n")
                             continue
@@ -283,9 +289,14 @@ def main():
     parser.add_argument('--output-dir', default='docs', help='Directory to save output (default: docs)')
     parser.add_argument('--timeout', type=int, default=120, help='Timeout in seconds (default: 120)')
     parser.add_argument('--skip-copy', action='store_true', help='Skip creating the non-timestamped copy')
+    parser.add_argument('--skip-large-files', action='store_true', help='Skip files larger than specified max size')
+    parser.add_argument('--max-file-size', type=int, default=1024*1024, 
+                      help='Maximum file size in bytes (default: 1MB)')
     args = parser.parse_args()
     
     print(f"Starting code-to-text conversion with a {args.timeout} second timeout...")
+    if args.skip_large_files:
+        print(f"Will skip files larger than {args.max_file_size/1024/1024:.1f}MB")
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.join(script_dir, '..')
@@ -329,7 +340,9 @@ def main():
         root_pathspec, 
         additional_pathspecs, 
         respect_gitignore=respect_gitignore,
-        timeout_seconds=args.timeout
+        timeout_seconds=args.timeout,
+        skip_large_files=args.skip_large_files,
+        max_file_size=args.max_file_size
     )
     
     if success:
