@@ -3,9 +3,17 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { ReferenceAbility, CharacterAbility, Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
-const { isAuthenticated } = require('../middleware/validation');
-const { calculateXPForLevel, calculateLevelFromXP, applyVirtueEffects, isAbilityAppropriateForCharacterType } = require('../utils/abilityUtils');
+const { sequelize, ReferenceAbility, CharacterAbility, Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
+const { authenticateToken } = require('./auth');
+const { 
+  calculateXPForLevel, 
+  calculateLevelFromXP, 
+  applyVirtueEffects, 
+  isAbilityAppropriateForCharacterType,
+  calculateEffectiveScore,
+  getAbilityCost,
+  hasAffinityWithAbility
+} = require('../utils/abilityUtils');
 
 // Get all reference abilities
 router.get('/reference-abilities', async (req, res) => {
@@ -56,7 +64,7 @@ router.get('/reference-abilities/category/:category', async (req, res) => {
 });
 
 // Get all abilities for a character
-router.get('/characters/:characterId/abilities', isAuthenticated, async (req, res) => {
+router.get('/characters/:characterId/abilities', authenticateToken, async (req, res) => {
   try {
     const { characterId } = req.params;
     
@@ -107,16 +115,22 @@ router.get('/characters/:characterId/abilities', isAuthenticated, async (req, re
     
     // Apply virtue effects to ability scores
     const enhancedAbilities = abilities.map(ability => {
-      const { score, xp } = applyVirtueEffects(
+      const effectiveScore = calculateEffectiveScore(
+        ability.ability_name,
         ability.score,
-        ability.experience_points,
-        abilityVirtues,
-        ability.ability_name
+        character.CharacterVirtueFlaws
       );
       
+      // Calculate XP needed for next level
+      const nextLevelXP = ability.score > 0 
+        ? (ability.score * 5) + 5
+        : 5;
+
       return {
         ...ability.toJSON(),
-        effective_score: score
+        effective_score: effectiveScore,
+        xp_for_next_level: nextLevelXP,
+        has_affinity: hasAffinityWithAbility(ability.ability_name, character.CharacterVirtueFlaws)
       };
     });
     
@@ -134,12 +148,15 @@ router.get('/characters/:characterId/abilities', isAuthenticated, async (req, re
 });
 
 // Add a new ability to a character
-router.post('/characters/:characterId/abilities', isAuthenticated, async (req, res) => {
+router.post('/characters/:characterId/abilities', authenticateToken, async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { characterId } = req.params;
     const { ability_name, category, specialty, experience_points } = req.body;
     
     if (!ability_name || !category) {
+      await transaction.rollback();
       return res.status(400).json({
         status: 'error',
         message: 'Ability name and category are required'
@@ -151,10 +168,12 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
       where: {
         id: characterId,
         user_id: req.user.id
-      }
+      },
+      transaction
     });
     
     if (!character) {
+      await transaction.rollback();
       return res.status(404).json({
         status: 'error',
         message: 'Character not found or access denied'
@@ -165,10 +184,12 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
     const referenceAbility = await ReferenceAbility.findOne({
       where: {
         name: ability_name
-      }
+      },
+      transaction
     });
     
     if (!referenceAbility) {
+      await transaction.rollback();
       return res.status(400).json({
         status: 'error',
         message: `Ability "${ability_name}" not found in reference abilities`
@@ -177,6 +198,7 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
     
     // Check if the ability is appropriate for the character type
     if (!isAbilityAppropriateForCharacterType(ability_name, category, character.character_type)) {
+      await transaction.rollback();
       return res.status(400).json({
         status: 'error',
         message: `Ability "${ability_name}" is not appropriate for ${character.character_type} characters`
@@ -188,15 +210,27 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
       where: {
         character_id: characterId,
         ability_name
-      }
+      },
+      transaction
     });
     
     if (existingAbility) {
+      await transaction.rollback();
       return res.status(400).json({
         status: 'error',
         message: `Character already has ability "${ability_name}"`
       });
     }
+    
+    // Get character's virtues/flaws to check for Affinity
+    const characterVirtuesFlaws = await CharacterVirtueFlaw.findAll({
+      where: { character_id: characterId },
+      include: [{
+        model: ReferenceVirtueFlaw,
+        as: 'ReferenceVirtueFlaw'
+      }],
+      transaction
+    });
     
     // Calculate score from XP if provided
     let score = 0;
@@ -204,6 +238,36 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
     
     if (xp > 0) {
       score = calculateLevelFromXP(xp);
+      
+      // Calculate actual cost based on virtues/flaws
+      const actualCost = getAbilityCost(
+        xp,  // Target XP 
+        0,   // Current XP (0 for new ability)
+        ability_name,
+        characterVirtuesFlaws,
+        category
+      );
+      
+      if (actualCost > 0) {
+        // Access the experience service via require (it will be created later)
+        const experienceService = require('../services/experienceService');
+        
+        const spendResult = await experienceService.spendExperience(
+          characterId,
+          category,
+          ability_name,
+          actualCost
+        );
+        
+        if (!spendResult.success) {
+          await transaction.rollback();
+          return res.status(400).json({
+            status: 'error',
+            message: spendResult.reason,
+            details: spendResult.details || {}
+          });
+        }
+      }
     }
     
     // Create the new ability
@@ -214,23 +278,39 @@ router.post('/characters/:characterId/abilities', isAuthenticated, async (req, r
       specialty: specialty || null,
       category,
       experience_points: xp
-    });
+    }, { transaction });
+    
+    await transaction.commit();
+    
+    // Calculate effective score using the enhanced function
+    const effectiveScore = calculateEffectiveScore(
+      ability_name,
+      score,
+      characterVirtuesFlaws
+    );
     
     res.status(201).json({
       status: 'success',
-      data: newAbility
+      data: {
+        ...newAbility.toJSON(),
+        effective_score: effectiveScore
+      }
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error adding ability to character:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to add ability to character'
+      message: 'Failed to add ability to character',
+      details: error.message
     });
   }
 });
 
 // Update an ability for a character
-router.put('/characters/:characterId/abilities/:abilityId', isAuthenticated, async (req, res) => {
+router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { characterId, abilityId } = req.params;
     const { score, specialty, experience_points } = req.body;
@@ -240,10 +320,12 @@ router.put('/characters/:characterId/abilities/:abilityId', isAuthenticated, asy
       where: {
         id: characterId,
         user_id: req.user.id
-      }
+      },
+      transaction
     });
     
     if (!character) {
+      await transaction.rollback();
       return res.status(404).json({
         status: 'error',
         message: 'Character not found or access denied'
@@ -255,29 +337,140 @@ router.put('/characters/:characterId/abilities/:abilityId', isAuthenticated, asy
       where: {
         id: abilityId,
         character_id: characterId
-      }
+      },
+      transaction
     });
     
     if (!ability) {
+      await transaction.rollback();
       return res.status(404).json({
         status: 'error',
         message: 'Ability not found for this character'
       });
     }
     
+    // Get character's virtues/flaws to check for Affinity
+    const characterVirtuesFlaws = await CharacterVirtueFlaw.findAll({
+      where: { character_id: characterId },
+      include: [{
+        model: ReferenceVirtueFlaw,
+        as: 'ReferenceVirtueFlaw'
+      }],
+      transaction
+    });
+    
+    // Get affinity status using our utility function
+    const hasAffinity = hasAffinityWithAbility(ability.ability_name, characterVirtuesFlaws);
+    
     // Handle updates
     let updatedXP = ability.experience_points;
     let updatedScore = ability.score;
+    let updatesMade = false;
+    
+    // If specialty is provided and different from current, update it
+    if (specialty !== undefined && specialty !== ability.specialty) {
+      updatesMade = true;
+    }
     
     // If XP is provided, update score accordingly
-    if (experience_points !== undefined) {
+    if (experience_points !== undefined && experience_points !== ability.experience_points) {
+      // Only allow increasing XP for now
+      if (experience_points < ability.experience_points) {
+        await transaction.rollback();
+        return res.status(400).json({
+          status: 'error',
+          message: 'Decreasing experience points is not supported'
+        });
+      }
+      
+      // Calculate the cost of the XP increase using our utility function
+      const actualCost = getAbilityCost(
+        experience_points,  // Target XP
+        ability.experience_points,  // Current XP
+        ability.ability_name,
+        characterVirtuesFlaws,
+        ability.category
+      );
+      
+      if (actualCost > 0) {
+        // Spend the experience points
+        const experienceService = require('../services/experienceService');
+        
+        const spendResult = await experienceService.spendExperience(
+          characterId,
+          ability.category,
+          ability.ability_name,
+          actualCost
+        );
+        
+        if (!spendResult.success) {
+          await transaction.rollback();
+          return res.status(400).json({
+            status: 'error',
+            message: spendResult.reason,
+            details: spendResult.details || {}
+          });
+        }
+      }
+      
       updatedXP = experience_points;
       updatedScore = calculateLevelFromXP(experience_points);
+      updatesMade = true;
     } 
     // If score is provided, update XP accordingly
-    else if (score !== undefined) {
+    else if (score !== undefined && score !== ability.score) {
+      // Only allow increasing score for now
+      if (score < ability.score) {
+        await transaction.rollback();
+        return res.status(400).json({
+          status: 'error',
+          message: 'Decreasing ability score is not supported'
+        });
+      }
+      
+      const newXP = calculateXPForLevel(score);
+      
+      // Calculate cost using our utility function
+      const actualCost = getAbilityCost(
+        newXP,  // Target XP
+        ability.experience_points,  // Current XP
+        ability.ability_name,
+        characterVirtuesFlaws,
+        ability.category
+      );
+      
+      if (actualCost > 0) {
+        // Spend the experience points
+        const experienceService = require('../services/experienceService');
+        
+        const spendResult = await experienceService.spendExperience(
+          characterId,
+          ability.category,
+          ability.ability_name,
+          actualCost
+        );
+        
+        if (!spendResult.success) {
+          await transaction.rollback();
+          return res.status(400).json({
+            status: 'error',
+            message: spendResult.reason,
+            details: spendResult.details || {}
+          });
+        }
+      }
+      
       updatedScore = score;
-      updatedXP = calculateXPForLevel(score);
+      updatedXP = newXP;
+      updatesMade = true;
+    }
+    
+    if (!updatesMade) {
+      await transaction.rollback();
+      return res.status(400).json({
+        status: 'error',
+        message: 'No changes were provided for the update'
+      });
     }
     
     // Update the ability
@@ -285,26 +478,40 @@ router.put('/characters/:characterId/abilities/:abilityId', isAuthenticated, asy
       score: updatedScore,
       specialty: specialty !== undefined ? specialty : ability.specialty,
       experience_points: updatedXP
-    });
+    }, { transaction });
+    
+    await transaction.commit();
     
     // Fetch the updated ability
     const updatedAbility = await CharacterAbility.findByPk(abilityId);
     
+    // Calculate effective score using the enhanced function
+    const effectiveScore = calculateEffectiveScore(
+      updatedAbility.ability_name,
+      updatedAbility.score,
+      characterVirtuesFlaws
+    );
+    
     res.json({
       status: 'success',
-      data: updatedAbility
+      data: {
+        ...updatedAbility.toJSON(),
+        effective_score: effectiveScore
+      }
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error updating character ability:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to update character ability'
+      message: 'Failed to update character ability',
+      details: error.message
     });
   }
 });
 
 // Delete an ability from a character
-router.delete('/characters/:characterId/abilities/:abilityId', isAuthenticated, async (req, res) => {
+router.delete('/characters/:characterId/abilities/:abilityId', authenticateToken, async (req, res) => {
   try {
     const { characterId, abilityId } = req.params;
     

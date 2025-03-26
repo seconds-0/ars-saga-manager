@@ -13,6 +13,8 @@ const apiLimiter = require('./middleware/rateLimiter');
 const sanitizeInputs = require('./middleware/sanitizer');
 const { handleError } = require('./utils/errorHandler');
 const referenceVirtuesFlawsRouter = require('./routes/referenceVirtuesFlaws');
+const abilitiesRouter = require('./routes/abilities');
+const artsRouter = require('./routes/arts');
 
 const app = express();
 
@@ -61,6 +63,12 @@ app.use('/api/characters', authenticateToken, characterRoutes);
 
 // Reference virtues and flaws route
 app.use('/api/reference-virtues-flaws', referenceVirtuesFlawsRouter);
+
+// Abilities routes
+app.use('/api', authenticateToken, abilitiesRouter);
+
+// Arts routes
+app.use('/api', artsRouter);
 
 // Test route
 app.get('/', (req, res) => {
