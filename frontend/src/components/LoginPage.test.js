@@ -101,7 +101,6 @@ const renderLoginPage = () => {
 describe('LoginPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorage.clear();
     mockPost.mockReset();
   });
 
@@ -121,8 +120,8 @@ describe('LoginPage', () => {
   });
 
   describe('Login Functionality', () => {
-    test('calls login API with correct credentials', async () => {
-      mockPost.mockResolvedValueOnce({ data: { token: 'fake-token' } });
+    test('calls login API with correct credentials and calls login function', async () => {
+      mockPost.mockResolvedValueOnce({ data: { userId: '123', message: 'Login successful' } });
       
       renderLoginPage();
       fireEvent.submit(screen.getByTestId('login-form'));
@@ -132,23 +131,12 @@ describe('LoginPage', () => {
           email: 'test@example.com', 
           password: 'password123' 
         });
-      });
-    });
-
-    test('stores token in localStorage after successful login', async () => {
-      const fakeToken = 'fake-token';
-      mockPost.mockResolvedValueOnce({ data: { token: fakeToken } });
-      
-      renderLoginPage();
-      fireEvent.submit(screen.getByTestId('login-form'));
-      
-      await waitFor(() => {
-        expect(localStorage.getItem('token')).toBe(fakeToken);
+        expect(mockLogin).toHaveBeenCalledWith('123');
       });
     });
 
     test('navigates to home page after successful login', async () => {
-      mockPost.mockResolvedValueOnce({ data: { token: 'fake-token' } });
+      mockPost.mockResolvedValueOnce({ data: { userId: '123', message: 'Login successful' } });
       
       renderLoginPage();
       fireEvent.submit(screen.getByTestId('login-form'));

@@ -1,7 +1,39 @@
-CREATED AT: 2025-02-07T06:38:15.041Z
+CREATED AT: 2025-03-25T05:19:26.075Z
 
 SequelizeMeta
   ├─ name (character varying, not nullable)
+Users
+  ├─ id (integer, not nullable)
+Users
+  ├─ email (character varying, not nullable)
+Users
+  ├─ password (character varying, not nullable)
+Users
+  ├─ created_at (timestamp with time zone, not nullable)
+Users
+  ├─ updated_at (timestamp with time zone, not nullable)
+Users
+  ├─ refresh_token (character varying, nullable)
+Users
+  ├─ refresh_token_expires (timestamp with time zone, nullable)
+character_abilities
+  ├─ id (integer, not nullable)
+character_abilities
+  ├─ character_id (integer, not nullable)
+character_abilities
+  ├─ ability_name (character varying, not nullable)
+character_abilities
+  ├─ score (integer, not nullable)
+character_abilities
+  ├─ specialty (character varying, nullable)
+character_abilities
+  ├─ category (USER-DEFINED, not nullable)
+character_abilities
+  ├─ experience_points (integer, not nullable)
+character_abilities
+  ├─ created_at (timestamp with time zone, not nullable)
+character_abilities
+  ├─ updated_at (timestamp with time zone, not nullable)
 character_virtues_flaws
   ├─ id (integer, not nullable)
 character_virtues_flaws
@@ -36,6 +68,8 @@ characters
   ├─ created_at (timestamp with time zone, not nullable)
 characters
   ├─ updated_at (timestamp with time zone, not nullable)
+characters
+  ├─ use_cunning (boolean, not nullable)
 houses
   ├─ id (integer, not nullable)
 houses
@@ -49,6 +83,22 @@ houses
 houses
   ├─ created_at (timestamp with time zone, not nullable)
 houses
+  ├─ updated_at (timestamp with time zone, not nullable)
+reference_abilities
+  ├─ id (integer, not nullable)
+reference_abilities
+  ├─ name (character varying, not nullable)
+reference_abilities
+  ├─ category (USER-DEFINED, not nullable)
+reference_abilities
+  ├─ description (text, nullable)
+reference_abilities
+  ├─ puissant_allowed (boolean, not nullable)
+reference_abilities
+  ├─ affinity_allowed (boolean, not nullable)
+reference_abilities
+  ├─ created_at (timestamp with time zone, not nullable)
+reference_abilities
   ├─ updated_at (timestamp with time zone, not nullable)
 reference_virtues_flaws
   ├─ id (integer, not nullable)
@@ -69,7 +119,7 @@ reference_virtues_flaws
 reference_virtues_flaws
   ├─ allowed_sizes (jsonb, not nullable)
 reference_virtues_flaws
-  ├─ max_selections (integer, nullable)
+  ├─ max_selections (integer, not nullable)
 reference_virtues_flaws
   ├─ prerequisites (jsonb, not nullable)
 reference_virtues_flaws
@@ -79,14 +129,4 @@ reference_virtues_flaws
 reference_virtues_flaws
   ├─ created_at (timestamp with time zone, not nullable)
 reference_virtues_flaws
-  ├─ updated_at (timestamp with time zone, not nullable)
-users
-  ├─ id (integer, not nullable)
-users
-  ├─ email (character varying, not nullable)
-users
-  ├─ password (character varying, not nullable)
-users
-  ├─ created_at (timestamp with time zone, not nullable)
-users
   ├─ updated_at (timestamp with time zone, not nullable)

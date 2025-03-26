@@ -7,72 +7,91 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Special case handling for login page
+  const isLoginPage = window.location.pathname === '/login';
 
   const fetchUser = useCallback(async () => {
+    if (isLoginPage) {
+      console.log('👋 On login page, no need to fetch user data');
+      setIsInitialized(true);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       console.log('🔄 Fetching user data...');
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('❌ No token found during user fetch');
-        logout();
-        return;
-      }
-
-      console.log('🔍 Token found, fetching user details...');
+      setIsLoading(true);
+      // No need to check for token - the cookie is automatically sent
+      console.log('🔍 Fetching user details...');
       const response = await api.get('/auth/me');
       console.log('✅ User data received:', response.data);
       setUser(response.data);
-      setIsInitialized(true);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('❌ Error fetching user:', error);
       console.error('📝 Error details:', error.response?.data);
-      logout();
+      setIsAuthenticated(false);
+      setUser(null);
+      
+      // If we're not on the login page and get an auth error, redirect to login
+      if (error.response?.status === 401 && !isLoginPage) {
+        console.log('🔄 Authentication failed, redirecting to login');
+        window.location.href = '/login';
+      }
+    } finally {
+      setIsInitialized(true);
+      setIsLoading(false);
     }
-  }, []);
+  }, [isLoginPage]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     console.log('🔄 Starting logout process...');
-    console.log('🗑️ Clearing local storage...');
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
+    try {
+      // Call the logout endpoint to clear the cookie
+      await api.post('/auth/logout');
+      console.log('✅ Successfully called logout endpoint');
+    } catch (error) {
+      console.error('❌ Error during logout API call:', error);
+    }
     console.log('🔓 Resetting auth state...');
     setIsAuthenticated(false);
     setUser(null);
     console.log('✅ Logout complete');
+    
+    // Redirect to login page after logout
+    window.location.href = '/login';
   }, []);
 
   useEffect(() => {
     console.log('🔄 Initializing authentication state...');
-    const token = localStorage.getItem('token');
-    console.log('🔑 Token state:', token ? 'Token exists' : 'No token found');
-    
-    if (token) {
-      console.log('✅ Valid token found, setting authenticated state');
-      setIsAuthenticated(true);
-      fetchUser();
-    } else {
-      console.log('❌ No valid token found');
-      setIsAuthenticated(false);
-      setIsInitialized(true);
-    }
-  }, [fetchUser]);
+    // Initialize auth state only once
+    fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run on mount, remove fetchUser from deps
 
-  const login = useCallback((token, userId) => {
+  const login = useCallback((userId) => {
     console.log('🔄 Starting login process...', { userId });
-    console.log('💾 Storing authentication data...');
-    localStorage.setItem('token', token);
-    localStorage.setItem('userId', userId);
     console.log('🔒 Setting authenticated state...');
     setIsAuthenticated(true);
-    console.log('🔄 Fetching user data...');
-    fetchUser();
+    setUser({ id: userId });
     console.log('✅ Login process complete');
-  }, [fetchUser]);
+    // Redirect to home page after login
+    window.location.href = '/home';
+  }, []);
 
   // Add a loading state
-  if (!isInitialized) {
+  if (!isInitialized && isLoading) {
     console.log('⏳ Auth context still initializing...');
-    return <div>Loading...</div>;
+    
+    // Show a simple loading spinner
+    return <div className="flex items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-700 mx-auto"></div>
+        <p className="mt-4 text-gray-700">Loading...</p>
+      </div>
+    </div>;
   }
 
   const value = {

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+    <h1>Simplest Possible API Test</h1>
+    
+    <div>
+        <button id="getButton">Test GET</button>
+        <button id="postButton">Test POST</button>
+    </div>
+    
+    <pre id="results" style="margin-top: 20px; padding: 10px; background-color: #f5f5f5;"></pre>
+    
+    <script>
+        const results = document.getElementById('results');
+        const getButton = document.getElementById('getButton');
+        const postButton = document.getElementById('postButton');
+        
+        // Log function that displays on page and console
+        function log(message) {
+            console.log(message);
+            results.textContent += message + '\n';
+        }
+        
+        // Test GET request
+        async function testGet() {
+            results.textContent = ''; // Clear previous results
+            log('Testing GET request to reference-virtues-flaws...');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/reference-virtues-flaws');
+                log(`Status: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                log(`Received ${data.length} virtues/flaws`);
+                log(JSON.stringify(data, null, 2).substring(0, 500) + '...');
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+            }
+        }
+        
+        // Test POST request
+        async function testPost() {
+            results.textContent = ''; // Clear previous results
+            log('Testing POST request to add a virtue/flaw...');
+            
+            const data = {
+                referenceVirtueFlawId: 564
+            };
+            
+            log(`Request payload: ${JSON.stringify(data)}`);
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/characters/1/virtues-flaws', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                log(`Status: ${response.status} ${response.statusText}`);
+                
+                if (response.ok) {
+                    const responseData = await response.json();
+                    log('Response data:');
+                    log(JSON.stringify(responseData, null, 2));
+                } else {
+                    let errorText;
+                    try {
+                        const errorData = await response.json();
+                        errorText = JSON.stringify(errorData);
+                    } catch (e) {
+                        errorText = await response.text();
+                    }
+                    log(`Error response: ${errorText}`);
+                }
+            } catch (error) {
+                log(`ERROR: ${error.message}`);
+                log(`ERROR type: ${error.name}`);
+                log(`ERROR stack: ${error.stack}`);
+            }
+        }
+        
+        // Add event listeners
+        getButton.addEventListener('click', testGet);
+        postButton.addEventListener('click', testPost);
+    </script>
+</body>
+</html>

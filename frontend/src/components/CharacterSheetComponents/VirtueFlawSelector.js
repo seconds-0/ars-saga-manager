@@ -4,7 +4,7 @@ import api from '../../api/axios';
 import { debounce } from 'lodash';
 import { validateVirtuesFlaws, createValidationRules } from '../../utils/virtueFlawValidation';
 
-function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationResult = { isValid: true, warnings: [] } }) {
+function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtueFlaw, validationResult = { isValid: true, warnings: [] } }) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -40,24 +40,8 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
     };
   }, [debouncedSearch]);
 
-  // Memoize validation rules
-  const validationRules = useMemo(() => {
-    if (!character?.type) return null;
-    return createValidationRules(character.type, {
-      allowHermeticVirtues: character.hasTheGift,
-      allowMajorVirtues: character.type !== 'grog',
-      maxVirtuePoints: 10,
-      maxMinorFlaws: 5,
-      maxStoryFlaws: 1,
-      maxPersonalityFlaws: 3,
-      requireSocialStatus: true,
-      requirePointBalance: true,
-      checkCharacterTypeRestrictions: true,
-      checkIncompatibilities: true,
-      checkPrerequisites: true,
-      house: character.house,
-    });
-  }, [character?.type, character?.hasTheGift, character?.house]);
+  // We no longer need the validation rules here as the parent component handles validation
+  // and passes the canAddVirtueFlaw function
 
   // Determine if a virtue/flaw is a house virtue
   const isHouseVirtue = useCallback((virtueFlaw) => {
@@ -65,47 +49,46 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
     return virtueFlaw.is_house_virtue && virtueFlaw.house === character.house;
   }, [character?.house]);
 
-  // Memoize the isVirtueFlawDisabled function
+  // Function to get warning messages for a virtue/flaw
+  const getWarningMessages = useCallback((virtueFlaw) => {
+    // Get any warnings from the validation result passed from parent
+    if (validationResult?.warnings) {
+      // Find warnings targeting this virtue/flaw
+      const itemWarnings = validationResult.warnings
+        .filter(w => 
+          (w.targets && w.targets.includes(virtueFlaw.name)) || 
+          (w.target === virtueFlaw.name)
+        )
+        .map(w => w.message);
+        
+      return itemWarnings;
+    }
+    return [];
+  }, [validationResult]);
+
+  // Use the canAddVirtueFlaw function passed from parent 
+  // instead of recalculating validation for each item
   const isVirtueFlawDisabled = useCallback((virtueFlaw) => {
+    // If canAddVirtueFlaw is provided, use it
+    if (typeof canAddVirtueFlaw === 'function') {
+      return !canAddVirtueFlaw(virtueFlaw);
+    }
+    
+    // Fallback if canAddVirtueFlaw isn't provided
+    
     // House virtues are always available if they match the character's house
     if (isHouseVirtue(virtueFlaw)) return false;
     
-    // Early return if we don't have required data
-    if (!character?.type || !validationRules) return true;
-
-    // Create a temporary list with the new virtue/flaw added
-    const tempVirtuesFlaws = [
-      ...(character.virtuesFlaws || []),
-      {
-        referenceVirtueFlaw: virtueFlaw,
-        is_house_virtue_flaw: false,
-      }
-    ];
+    // Simple check for point constraints (without full validation)
+    const hasEnoughPoints = virtueFlaw.type !== 'Virtue' || 
+      (virtueFlaw.size === 'Minor' && remainingPoints >= 1) || 
+      (virtueFlaw.size === 'Major' && remainingPoints >= 3);
     
-    // Validate the temporary list
-    const result = validateVirtuesFlaws(tempVirtuesFlaws, validationRules);
+    return !hasEnoughPoints;
+  }, [canAddVirtueFlaw, isHouseVirtue, remainingPoints]);
 
-    // Check if adding this virtue/flaw would make the character invalid
-    return !result.isValid || 
-           (!isHouseVirtue(virtueFlaw) && virtueFlaw.type === 'Virtue' && 
-            ((virtueFlaw.size === 'Minor' && remainingPoints < 1) || 
-             (virtueFlaw.size === 'Major' && remainingPoints < 3)));
-  }, [character?.type, character?.virtuesFlaws, remainingPoints, validationRules, isHouseVirtue]);
-
-  // Get warning messages for a specific virtue/flaw with type safety
-  const getWarningMessages = useCallback((virtueFlaw) => {
-    if (!virtueFlaw?.name) return [];
-    return (validationResult?.warnings || [])
-      .filter(w => w?.message?.includes(virtueFlaw.name))
-      .map(w => w.message || '');
-  }, [validationResult]);
-
-  // Get general warning messages that aren't tied to a specific virtue/flaw
-  const getGeneralWarnings = useCallback(() => {
-    return (validationResult?.warnings || [])
-      .map(w => w.message || '')
-      .filter(msg => !filteredVirtuesFlaws.some(vf => msg.includes(vf.name)));
-  }, [validationResult, filteredVirtuesFlaws]);
+  // We no longer need these warning display functions since
+  // all warnings are shown in the central VirtueFlawValidationMessages component
 
   // Get point cost for a virtue/flaw
   const getPointCost = useCallback((virtueFlaw) => {
@@ -242,16 +225,7 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
         </div>
       </div>
 
-      {getGeneralWarnings().length > 0 && (
-        <div 
-          className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded"
-          role="alert"
-        >
-          {getGeneralWarnings().map((warning, index) => (
-            <div key={index}>{warning}</div>
-          ))}
-        </div>
-      )}
+      {/* General warnings are now handled by the central VirtueFlawValidationMessages component */}
 
       <div className="mb-2 text-sm text-gray-600">
         Remaining Points: {remainingPoints}
@@ -327,12 +301,12 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, validationR
                     </button>
                   </div>
                   
-                  {isDisabled && warnings.length > 0 && (
+                  {isDisabled && (
                     <div 
                       className="text-sm text-red-500"
                       role="alert"
                     >
-                      Not available - {warnings[0]}
+                      Not available
                     </div>
                   )}
 

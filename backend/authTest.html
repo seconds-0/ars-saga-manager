@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Test</h1>
+    
+    <div>
+        <button id="loginBtn">1. Get Auth Token</button>
+        <button id="testGetBtn">2. Test GET (No Auth)</button>
+        <button id="testGetAuthBtn">3. Test GET (With Auth)</button>
+        <button id="testPostBtn">4. Test POST (With Auth)</button>
+    </div>
+    
+    <pre id="output">Results will appear here...</pre>
+    
+    <script>
+        // DOM Elements
+        const output = document.getElementById('output');
+        const loginBtn = document.getElementById('loginBtn');
+        const testGetBtn = document.getElementById('testGetBtn');
+        const testGetAuthBtn = document.getElementById('testGetAuthBtn');
+        const testPostBtn = document.getElementById('testPostBtn');
+        
+        // Store the token
+        let authToken = '';
+        
+        // Logging function
+        function log(message) {
+            console.log(message);
+            output.textContent += message + '\n';
+        }
+        
+        // Clear log
+        function clearLog() {
+            output.textContent = '';
+        }
+        
+        // Get auth token
+        async function getAuthToken() {
+            clearLog();
+            log('Getting auth token...');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.token) {
+                    authToken = data.token;
+                    log(`✅ Got token: ${authToken.substring(0, 20)}...`);
+                    return true;
+                } else {
+                    log(`❌ No token received: ${JSON.stringify(data)}`);
+                    return false;
+                }
+            } catch (error) {
+                log(`❌ Error getting token: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Test GET without auth
+        async function testGetNoAuth() {
+            clearLog();
+            log('Testing GET without auth...');
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/reference-virtues-flaws');
+                const data = await response.json();
+                
+                log(`✅ Status: ${response.status}`);
+                log(`✅ Data: Found ${data.length} virtues/flaws`);
+                return true;
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Test GET with auth
+        async function testGetWithAuth() {
+            clearLog();
+            log('Testing GET with auth...');
+            
+            if (!authToken) {
+                log('⚠️ No auth token available. Getting one first...');
+                await getAuthToken();
+            }
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/characters/1/virtues-flaws', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                log(`✅ Status: ${response.status}`);
+                
+                const data = await response.json();
+                log(`✅ Data: ${JSON.stringify(data, null, 2)}`);
+                return true;
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Test POST with auth
+        async function testPostWithAuth() {
+            clearLog();
+            log('Testing POST with auth...');
+            
+            if (!authToken) {
+                log('⚠️ No auth token available. Getting one first...');
+                await getAuthToken();
+            }
+            
+            try {
+                const payload = {
+                    referenceVirtueFlawId: 564
+                };
+                
+                log(`📤 Sending payload: ${JSON.stringify(payload)}`);
+                
+                const response = await fetch('http://localhost:3001/api/characters/1/virtues-flaws', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                log(`✅ Status: ${response.status}`);
+                
+                const data = await response.json();
+                log(`✅ Response: ${JSON.stringify(data, null, 2)}`);
+                return true;
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+                return false;
+            }
+        }
+        
+        // Event listeners
+        loginBtn.addEventListener('click', getAuthToken);
+        testGetBtn.addEventListener('click', testGetNoAuth);
+        testGetAuthBtn.addEventListener('click', testGetWithAuth);
+        testPostBtn.addEventListener('click', testPostWithAuth);
+    </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  test:
+    build:
+      context: ..
+      dockerfile: ./docker-test/Dockerfile
+    volumes:
+      # Frontend paths
+      - ../frontend/src:/usr/src/app/frontend/src
+      - ../frontend/testing:/usr/src/app/frontend/testing
+      - ../frontend/public:/usr/src/app/frontend/public
+      
+      # Backend paths
+      - ../backend/routes:/usr/src/app/backend/routes
+      - ../backend/models:/usr/src/app/backend/models
+      - ../backend/utils:/usr/src/app/backend/utils
+      - ../backend/middleware:/usr/src/app/backend/middleware
+      - ../backend/__tests__:/usr/src/app/backend/__tests__
+      - ../backend/config:/usr/src/app/backend/config
+      
+      # Test results output
+      - ./test-results:/usr/src/app/test-results
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - JEST_JUNIT_OUTPUT_DIR=/usr/src/app/test-results
+    command: ['--frontend', '--backend']

@@ -47,38 +47,49 @@ relevantEnvVars.forEach(varName => {
   console.log(`${varName}:`, process.env[varName] ? '[SET]' : '[NOT SET]');
 });
 
+// Special handling for WSL connection to Windows PostgreSQL
+const getHostForEnvironment = () => {
+  // When running in WSL, we may need a special hostname to connect to Windows
+  if (process.env.WSL_DISTRO_NAME) {
+    console.log('Running in WSL environment, using special host configuration');
+    // Try one of these IPs for connecting from WSL to Windows
+    return process.env.WINDOWS_HOST_IP || '172.17.0.1';
+  }
+  return process.env.DB_HOST || 'localhost';
+};
+
 const config = {
   superuser: {
-    username: process.env.DB_SUPERUSER_USERNAME,
-    password: process.env.DB_SUPERUSER_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    username: process.env.DB_SUPERUSER_USERNAME || 'postgres',
+    password: process.env.DB_SUPERUSER_PASSWORD || 'password',
+    database: process.env.DB_NAME || 'ars_saga_manager',
+    host: getHostForEnvironment(),
+    port: process.env.DB_PORT || '5432',
     dialect: 'postgres'
   },
   development: {
-    username: process.env.DB_SUPERUSER_USERNAME,
-    password: process.env.DB_SUPERUSER_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    username: process.env.DB_SUPERUSER_USERNAME || 'postgres',
+    password: process.env.DB_SUPERUSER_PASSWORD || 'password',
+    database: process.env.DB_NAME || 'ars_saga_manager',
+    host: getHostForEnvironment(),
+    port: process.env.DB_PORT || '5432',
     dialect: 'postgres',
     logging: console.log
   },
   test: {
-    username: process.env.DB_APP_USERNAME,
-    password: process.env.DB_APP_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    username: process.env.DB_APP_USERNAME || 'postgres',
+    password: process.env.DB_APP_PASSWORD || 'password',
+    database: process.env.DB_NAME || 'ars_saga_manager',
+    host: getHostForEnvironment(),
+    port: process.env.DB_PORT || '5432',
     dialect: 'postgres'
   },
   production: {
-    username: process.env.DB_APP_USERNAME,
-    password: process.env.DB_APP_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    username: process.env.DB_APP_USERNAME || 'postgres',
+    password: process.env.DB_APP_PASSWORD || 'password', 
+    database: process.env.DB_NAME || 'ars_saga_manager',
+    host: getHostForEnvironment(),
+    port: process.env.DB_PORT || '5432',
     dialect: 'postgres'
   }
 };

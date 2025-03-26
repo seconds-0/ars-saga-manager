@@ -1237,10 +1237,10 @@ describe('Virtue and Flaw Validation', () => {
         const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
         expect(result.isValid).toBe(false);
-        expect(result.warnings).toContainEqual({
-          type: 'error',
-          message: 'Grogs cannot exceed 3 Minor Flaws'
-        });
+        expect(result.warnings.some(w => 
+          w.type === 'error' && 
+          w.message === 'Grogs cannot exceed 3 Minor Flaws'
+        )).toBe(true);
       });
 
       it('should prevent grogs from taking major virtues/flaws', () => {
@@ -1282,10 +1282,10 @@ describe('Virtue and Flaw Validation', () => {
         const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
         expect(result.isValid).toBe(false);
-        expect(result.warnings).toContainEqual({
-          type: 'error',
-          message: 'Grogs cannot take The Gift'
-        });
+        expect(result.warnings.some(w => 
+          w.type === 'error' && 
+          w.message === 'Grogs cannot take The Gift'
+        )).toBe(true);
       });
 
       it('should enforce equal number of Minor Virtues and Flaws', () => {
@@ -1340,10 +1340,10 @@ describe('Virtue and Flaw Validation', () => {
 
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
-        type: 'error',
-        message: 'Grogs cannot exceed 3 Minor Flaws'
-      });
+      expect(result.warnings.some(w => 
+        w.type === 'error' && 
+        w.message === 'Grogs cannot exceed 3 Minor Flaws'
+      )).toBe(true);
     });
   });
 
@@ -1413,10 +1413,10 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
-        type: 'error',
-        message: 'Cannot take multiple instances of Non-Repeatable Virtue'
-      });
+      expect(result.warnings.some(w => 
+        w.type === 'error' && 
+        w.message === 'Cannot take multiple instances of Non-Repeatable Virtue'
+      )).toBe(true);
     });
 
     it('should allow single instance when multiple_allowed is false', () => {

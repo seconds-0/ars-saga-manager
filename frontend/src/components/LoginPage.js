@@ -19,26 +19,16 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', { email, password });
       console.log('✅ Login API call successful', response.data);
       
-      // Store token
-      console.log('💾 Storing authentication token...');
-      localStorage.setItem('token', response.data.token);
-      console.log('🔍 Verifying token storage...');
-      const storedToken = localStorage.getItem('token');
-      if (storedToken !== response.data.token) {
-        console.error('❌ Token storage verification failed!');
-        throw new Error('Token storage failed');
-      }
-      console.log('✅ Token stored successfully');
+      // Token is now stored in a HttpOnly cookie by the server
       
-      // Complete login
+      // Complete login (login function now handles redirection)
       console.log('🔐 Completing login process...');
-      login(response.data.token, response.data.userId);
-      console.log('➡️ Navigating to home page...');
-      navigate('/home');
+      login(response.data.userId);
+      // No need to navigate - login function now does this
     } catch (error) {
       console.error('❌ Login failed:', error);
       console.error('📝 Error details:', error.response?.data);
-      setErrorMessage('Login failed: ' + (error.response?.data?.message || error.message));
+      setErrorMessage('Login failed: ' + (error.response?.data?.message || error.message || 'Unknown error'));
     }
   };
 

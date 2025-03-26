@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
+const { csrfProtection, handleCsrfError } = require('./middleware/csrfProtection');
 const { sequelize } = require('./models');
 const { logger } = require('./utils/logger');
 const { requestLogging, errorLogging } = require('./middleware/logging');
@@ -14,8 +17,14 @@ const referenceVirtuesFlawsRouter = require('./routes/referenceVirtuesFlaws');
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(helmet()); // Add security headers
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true // This is important for cookies
+}));
+app.use(express.json({ limit: '100kb' })); // Limit payload size
+app.use(cookieParser());
 app.use(sanitizeInputs);
 
 // Add logging middleware
@@ -23,6 +32,25 @@ app.use(requestLogging);
 
 // Apply rate limiter to all API routes
 app.use("/api/", apiLimiter);
+
+// CSRF protection for state-changing routes - disabled during development
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api', csrfProtection);
+  app.use(handleCsrfError);
+} else {
+  console.log('⚠️ CSRF protection disabled in development mode');
+}
+
+// Provide CSRF token endpoint
+if (process.env.NODE_ENV === 'production') {
+  app.get('/api/csrf-token', (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+  });
+} else {
+  app.get('/api/csrf-token', (req, res) => {
+    res.json({ csrfToken: 'development-mode-csrf-token' });
+  });
+}
 
 // Auth routes
 app.use('/api/auth', authRoutes);

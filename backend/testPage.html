@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Virtues & Flaws Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .column {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .loading {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #b71c1c;
+        }
+        .virtue-list {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .virtue-item {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .direct-fetch button {
+            background-color: #ff9800;
+        }
+        .react-query button {
+            background-color: #9c27b0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Virtues & Flaws Testing Page</h1>
+    
+    <div class="section">
+        <h2>Testing Both Approaches</h2>
+        <p>This page allows you to test both Direct Fetch and React Query simulation approaches to adding virtues and flaws.</p>
+        
+        <div id="status-container"></div>
+    </div>
+    
+    <div class="panel">
+        <div class="column">
+            <h2>Current Virtues/Flaws</h2>
+            <button id="loadButton">Load Character Virtues/Flaws</button>
+            <div id="currentVirtuesFlaws" class="virtue-list"></div>
+        </div>
+        
+        <div class="column">
+            <h2>Add Virtue or Flaw</h2>
+            
+            <div class="direct-fetch">
+                <h3>Direct Fetch Method</h3>
+                <button id="directFetchButton">Add Test Virtue (Direct)</button>
+                <div id="directFetchStatus"></div>
+            </div>
+            
+            <div class="react-query">
+                <h3>React Query Simulation</h3>
+                <button id="reactQueryButton">Add Test Virtue (React Query)</button>
+                <div id="reactQueryStatus"></div>
+            </div>
+            
+            <h3>Available Test Virtues</h3>
+            <div id="availableVirtues" class="virtue-list"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Constants
+        const API_URL = 'http://localhost:3001/api';
+        const CHARACTER_ID = 1; // Always use the first mock character
+        
+        // DOM Elements
+        const statusContainer = document.getElementById('status-container');
+        const loadButton = document.getElementById('loadButton');
+        const currentVirtuesFlaws = document.getElementById('currentVirtuesFlaws');
+        const directFetchButton = document.getElementById('directFetchButton');
+        const directFetchStatus = document.getElementById('directFetchStatus');
+        const reactQueryButton = document.getElementById('reactQueryButton');
+        const reactQueryStatus = document.getElementById('reactQueryStatus');
+        const availableVirtues = document.getElementById('availableVirtues');
+        
+        // Show status message
+        function showStatus(message, type = 'info') {
+            statusContainer.innerHTML = `
+                <div class="status ${type}">
+                    ${message}
+                </div>
+            `;
+        }
+        
+        // Load character's virtues and flaws
+        async function loadCharacterVirtuesFlaws() {
+            try {
+                showStatus('Loading character virtues and flaws...', 'loading');
+                currentVirtuesFlaws.innerHTML = 'Loading...';
+                
+                const response = await fetch(`${API_URL}/characters/${CHARACTER_ID}/virtues-flaws`);
+                if (!response.ok) throw new Error('Failed to load virtues and flaws');
+                
+                const data = await response.json();
+                
+                if (data.virtuesFlaws && data.virtuesFlaws.length > 0) {
+                    currentVirtuesFlaws.innerHTML = data.virtuesFlaws.map(vf => `
+                        <div class="virtue-item">
+                            <strong>${vf.referenceVirtueFlaw.name}</strong> 
+                            (${vf.referenceVirtueFlaw.type}, ${vf.referenceVirtueFlaw.size})
+                            <p>${vf.referenceVirtueFlaw.description}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    currentVirtuesFlaws.innerHTML = '<p>No virtues or flaws found for this character.</p>';
+                }
+                
+                showStatus(`Loaded ${data.virtuesFlaws.length} virtues/flaws. Remaining points: ${data.remainingPoints}`, 'success');
+            } catch (error) {
+                console.error('Error loading virtues/flaws:', error);
+                currentVirtuesFlaws.innerHTML = `<p>Error: ${error.message}</p>`;
+                showStatus(`Error loading virtues/flaws: ${error.message}`, 'error');
+            }
+        }
+        
+        // Load available virtues
+        async function loadAvailableVirtues() {
+            try {
+                availableVirtues.innerHTML = 'Loading...';
+                
+                const response = await fetch(`${API_URL}/reference-virtues-flaws`);
+                if (!response.ok) throw new Error('Failed to load reference virtues and flaws');
+                
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    availableVirtues.innerHTML = data.map(vf => `
+                        <div class="virtue-item">
+                            <strong>${vf.name}</strong> 
+                            (${vf.type}, ${vf.size})
+                            <p>${vf.description || 'No description available'}</p>
+                            <button onclick="addVirtueDirectFetch(${vf.id})">Add (Direct)</button>
+                            <button onclick="addVirtueReactQuery(${vf.id})">Add (React Query)</button>
+                        </div>
+                    `).join('');
+                } else {
+                    availableVirtues.innerHTML = '<p>No reference virtues or flaws found.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading reference virtues/flaws:', error);
+                availableVirtues.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Add virtue using direct fetch
+        async function addVirtueDirectFetch(virtueId = 564) {
+            try {
+                directFetchStatus.innerHTML = '<div class="status loading">Adding virtue/flaw...</div>';
+                
+                console.log('Using direct fetch to add virtue/flaw');
+                console.log('Virtue/flaw ID:', virtueId);
+                
+                const response = await fetch(`${API_URL}/characters/${CHARACTER_ID}/virtues-flaws`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        referenceVirtueFlawId: virtueId,
+                        is_house_virtue_flaw: false
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to add virtue/flaw');
+                }
+                
+                const data = await response.json();
+                
+                console.log('Direct fetch response:', data);
+                directFetchStatus.innerHTML = '<div class="status success">Virtue/flaw added successfully!</div>';
+                
+                // Refresh the list
+                loadCharacterVirtuesFlaws();
+            } catch (error) {
+                console.error('Direct fetch error:', error);
+                directFetchStatus.innerHTML = `<div class="status error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Simulate adding virtue using React Query
+        async function addVirtueReactQuery(virtueId = 564) {
+            try {
+                reactQueryStatus.innerHTML = '<div class="status loading">Adding virtue/flaw (React Query)...</div>';
+                
+                console.log('Using React Query simulation to add virtue/flaw');
+                console.log('Virtue/flaw ID:', virtueId);
+                
+                // Create a payload with the required fields
+                const payload = { 
+                    referenceVirtueFlawId: virtueId,
+                    is_house_virtue_flaw: false
+                };
+                
+                console.log('POST request payload:', payload);
+                console.log('Request URL:', `${API_URL}/characters/${CHARACTER_ID}/virtues-flaws`);
+                
+                // This is essentially what React Query's useMutation does
+                const response = await fetch(`${API_URL}/characters/${CHARACTER_ID}/virtues-flaws`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to add virtue/flaw');
+                }
+                
+                const data = await response.json();
+                
+                console.log('React Query simulation response:', data);
+                reactQueryStatus.innerHTML = '<div class="status success">Virtue/flaw added successfully!</div>';
+                
+                // Refresh the list
+                loadCharacterVirtuesFlaws();
+            } catch (error) {
+                console.error('React Query simulation error:', error);
+                reactQueryStatus.innerHTML = `<div class="status error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Event listeners
+        loadButton.addEventListener('click', loadCharacterVirtuesFlaws);
+        directFetchButton.addEventListener('click', () => addVirtueDirectFetch());
+        reactQueryButton.addEventListener('click', () => addVirtueReactQuery());
+        
+        // Make function available globally
+        window.addVirtueDirectFetch = addVirtueDirectFetch;
+        window.addVirtueReactQuery = addVirtueReactQuery;
+        
+        // Initialize
+        loadAvailableVirtues();
+        loadCharacterVirtuesFlaws();
+    </script>
+</body>
+</html>

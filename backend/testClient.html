@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock API Tester</title>
+    <script>
+        async function testGet() {
+            try {
+                const url = document.getElementById('getUrl').value;
+                document.getElementById('getStatus').textContent = 'Loading...';
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                document.getElementById('getStatus').textContent = `Status: ${response.status} ${response.statusText}`;
+                document.getElementById('getResponse').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('getStatus').textContent = `Error: ${error.message}`;
+                document.getElementById('getResponse').textContent = '';
+            }
+        }
+        
+        async function testPost() {
+            try {
+                const url = document.getElementById('postUrl').value;
+                const payload = document.getElementById('postPayload').value;
+                document.getElementById('postStatus').textContent = 'Loading...';
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': document.getElementById('authToken').value
+                    },
+                    body: payload
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('postStatus').textContent = `Status: ${response.status} ${response.statusText}`;
+                document.getElementById('postResponse').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('postStatus').textContent = `Error: ${error.message}`;
+                document.getElementById('postResponse').textContent = '';
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mock API Tester</h1>
+    
+    <div class="section">
+        <h2>Authentication</h2>
+        <input type="text" id="authToken" placeholder="Bearer token..." value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzQwNTk0NjMzLCJleHAiOjE3NDA2ODEwMzN9.a-vC3XSnuoAeS7oZKQQX9bDLNbvVHekIZrfdfU7L2V4">
+    </div>
+    
+    <div class="section">
+        <h2>GET Request</h2>
+        <input type="text" id="getUrl" placeholder="URL" value="http://localhost:3001/api/reference-virtues-flaws">
+        <button onclick="testGet()">Send GET Request</button>
+        <div id="getStatus"></div>
+        <pre id="getResponse"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>POST Request</h2>
+        <input type="text" id="postUrl" placeholder="URL" value="http://localhost:3001/api/characters/1/virtues-flaws">
+        <textarea id="postPayload" placeholder="JSON payload">{"referenceVirtueFlawId": 564, "is_house_virtue_flaw": false}</textarea>
+        <button onclick="testPost()">Send POST Request</button>
+        <div id="postStatus"></div>
+        <pre id="postResponse"></pre>
+    </div>
+</body>
+</html>
