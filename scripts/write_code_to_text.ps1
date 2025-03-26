@@ -1,8 +1,9 @@
 param(
     [switch]$commit = $false,
     [switch]$includeDocs = $false,
+    [string]$outputFile = "codebase_documentation.txt",
+    [switch]$timestamp = $false,
     [int]$timeout = 120,
-    [switch]$skipCopy = $false,
     [switch]$skipLargeFiles = $false,
     [int]$maxFileSize = 1048576 # Default 1MB
 )
@@ -16,20 +17,25 @@ Write-Host "Running codebase to text converter..." -ForegroundColor Green
 $argList = @()
 if ($commit) {
     $argList += "--commit"
-    Write-Host "Will stage text files for commit" -ForegroundColor Yellow
+    Write-Host "Will stage text file for commit" -ForegroundColor Yellow
 }
 if ($includeDocs) {
     $argList += "--include-docs"
     Write-Host "Will include documentation files even if in .gitignore" -ForegroundColor Yellow
 }
+if ($outputFile -ne "codebase_documentation.txt") {
+    $argList += "--output-file"
+    $argList += "$outputFile"
+    Write-Host "Will save to $outputFile" -ForegroundColor Yellow
+}
+if ($timestamp) {
+    $argList += "--timestamp"
+    Write-Host "Will add timestamp to output filename" -ForegroundColor Yellow
+}
 if ($timeout -ne 120) {
     $argList += "--timeout"
     $argList += "$timeout"
     Write-Host "Using timeout of $timeout seconds" -ForegroundColor Yellow
-}
-if ($skipCopy) {
-    $argList += "--skip-copy"
-    Write-Host "Will skip creating non-timestamped copy" -ForegroundColor Yellow
 }
 if ($skipLargeFiles) {
     $argList += "--skip-large-files"

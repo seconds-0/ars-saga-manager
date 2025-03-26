@@ -5,6 +5,8 @@ set ARGS=
 set TIMEOUT=120
 set SKIP_LARGE=0
 set MAX_FILE_SIZE=1048576
+set OUTPUT_FILE=codebase_documentation.txt
+set TIMESTAMP=0
 
 if "%~1"=="-commit" (
     set ARGS=--commit
@@ -51,21 +53,36 @@ if "%~3"=="-timeout" (
     echo Using timeout of %TIMEOUT% seconds
 )
 
-if "%~1"=="-skip-copy" (
-    set ARGS=%ARGS% --skip-copy
-    echo Will skip creating non-timestamped copy
+if "%~1"=="-output-file" (
+    set OUTPUT_FILE=%~2
+    set ARGS=%ARGS% --output-file %OUTPUT_FILE%
+    echo Will save to %OUTPUT_FILE%
 )
-if "%~2"=="-skip-copy" (
-    set ARGS=%ARGS% --skip-copy
-    echo Will skip creating non-timestamped copy
+if "%~3"=="-output-file" (
+    set OUTPUT_FILE=%~4
+    set ARGS=%ARGS% --output-file %OUTPUT_FILE%
+    echo Will save to %OUTPUT_FILE%
 )
-if "%~3"=="-skip-copy" (
-    set ARGS=%ARGS% --skip-copy
-    echo Will skip creating non-timestamped copy
+
+if "%~1"=="-timestamp" (
+    set TIMESTAMP=1
+    set ARGS=%ARGS% --timestamp
+    echo Will add timestamp to output filename
 )
-if "%~4"=="-skip-copy" (
-    set ARGS=%ARGS% --skip-copy
-    echo Will skip creating non-timestamped copy
+if "%~2"=="-timestamp" (
+    set TIMESTAMP=1
+    set ARGS=%ARGS% --timestamp
+    echo Will add timestamp to output filename
+)
+if "%~3"=="-timestamp" (
+    set TIMESTAMP=1
+    set ARGS=%ARGS% --timestamp
+    echo Will add timestamp to output filename
+)
+if "%~4"=="-timestamp" (
+    set TIMESTAMP=1
+    set ARGS=%ARGS% --timestamp
+    echo Will add timestamp to output filename
 )
 
 if "%~1"=="-skip-large-files" (
@@ -127,7 +144,7 @@ if not "%ARGS%"=="--commit" if not "%ARGS:~0,9%"=="--commit " (
 if not "%ARGS%"=="--include-docs" if not "%ARGS:~-13%"==" --include-docs" (
     echo Note: To include documentation files that are listed in .gitignore, run this script with the -include-docs parameter
 )
-echo Example: write_code_to_text.bat -commit -include-docs -timeout 300 -skip-copy -skip-large-files -max-file-size 2097152
+echo Example: write_code_to_text.bat -commit -include-docs -output-file codebase.txt -timestamp -timeout 300 -skip-large-files -max-file-size 2097152
 
 pause
 endlocal

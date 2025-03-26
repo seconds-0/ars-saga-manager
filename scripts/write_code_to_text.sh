@@ -9,7 +9,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --commit)
       ARGS="$ARGS --commit"
-      echo "Will stage text files for commit"
+      echo "Will stage text file for commit"
       shift
       ;;
     --include-docs)
@@ -17,16 +17,21 @@ while [[ $# -gt 0 ]]; do
       echo "Will include documentation files even if in .gitignore"
       shift
       ;;
+    --output-file)
+      ARGS="$ARGS --output-file $2"
+      echo "Will write to output file: $2"
+      shift 2
+      ;;
+    --timestamp)
+      ARGS="$ARGS --timestamp"
+      echo "Will add timestamp to output filename"
+      shift
+      ;;
     --timeout)
       TIMEOUT="$2"
       ARGS="$ARGS --timeout $2"
       echo "Using timeout of $TIMEOUT seconds"
       shift 2
-      ;;
-    --skip-copy)
-      ARGS="$ARGS --skip-copy"
-      echo "Will skip creating non-timestamped copy"
-      shift
       ;;
     --skip-large-files)
       ARGS="$ARGS --skip-large-files"
@@ -40,7 +45,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--commit] [--include-docs] [--timeout SECONDS] [--skip-copy] [--skip-large-files] [--max-file-size BYTES]"
+      echo "Usage: $0 [--commit] [--include-docs] [--output-file FILENAME] [--timestamp] [--timeout SECONDS] [--skip-large-files] [--max-file-size BYTES]"
       exit 1
       ;;
   esac
@@ -65,4 +70,4 @@ if [[ ! "$ARGS" =~ "--include-docs" ]]; then
   echo "Note: To include documentation files that are listed in .gitignore, run this script with the --include-docs flag"
 fi
 
-echo "Example: ./write_code_to_text.sh --commit --include-docs --timeout 300 --skip-large-files --max-file-size 2097152"
+echo "Example: ./write_code_to_text.sh --commit --include-docs --output-file codebase.txt --timestamp --timeout 300 --skip-large-files --max-file-size 2097152"

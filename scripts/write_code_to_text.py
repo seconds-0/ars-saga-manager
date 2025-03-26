@@ -288,12 +288,12 @@ def main():
     import shutil
     
     # Set up command line arguments
-    parser = argparse.ArgumentParser(description='Generate complete codebase text file.')
-    parser.add_argument('--commit', action='store_true', help='Stage generated files for commit')
+    parser = argparse.ArgumentParser(description='Generate a single text file containing the entire codebase.')
+    parser.add_argument('--commit', action='store_true', help='Stage the generated file for commit')
     parser.add_argument('--include-docs', action='store_true', help='Include documentation files even if in .gitignore')
-    parser.add_argument('--output-dir', default='docs', help='Directory to save output (default: docs)')
+    parser.add_argument('--output-file', default='codebase_documentation.txt', help='Output file name (default: codebase_documentation.txt)')
+    parser.add_argument('--timestamp', action='store_true', help='Add timestamp to output filename')
     parser.add_argument('--timeout', type=int, default=120, help='Timeout in seconds (default: 120)')
-    parser.add_argument('--skip-copy', action='store_true', help='Skip creating the non-timestamped copy')
     parser.add_argument('--skip-large-files', action='store_true', help='Skip files larger than specified max size')
     parser.add_argument('--max-file-size', type=int, default=1024*1024, 
                       help='Maximum file size in bytes (default: 1MB)')
@@ -306,16 +306,14 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.join(script_dir, '..')
     
-    # Generate timestamp for the filename
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Determine output filename
+    output_filename = args.output_file
+    if args.timestamp:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_filename = f"{os.path.splitext(output_filename)[0]}_{timestamp}{os.path.splitext(output_filename)[1]}"
     
-    # Create output directory if it doesn't exist
-    output_dir = os.path.join(root_dir, args.output_dir)
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Generate both timestamped and standard filenames
-    timestamped_file = os.path.join(output_dir, f'codebase_documentation_{timestamp}.txt')
-    standard_file = os.path.join(output_dir, 'codebase_documentation.txt')
+    # Use the file in the root directory
+    output_file = os.path.join(root_dir, output_filename)
     
     print("Reading .gitignore files...")
     
@@ -341,7 +339,7 @@ def main():
     # Process the codebase with timeout
     print(f"Processing codebase (timeout: {args.timeout}s)...")
     success, message = process_codebase(
-        timestamped_file, 
+        output_file, 
         root_pathspec, 
         additional_pathspecs, 
         respect_gitignore=respect_gitignore,
@@ -352,28 +350,18 @@ def main():
     
     if success:
         print(f"✅ {message}")
-        
-        # Create a copy with standard name if not skipping
-        if not args.skip_copy:
-            shutil.copy2(timestamped_file, standard_file)
-            print(f"✅ Copied to: {standard_file}")
-        
-        print(f"✅ Codebase text file generated at: {timestamped_file}")
+        print(f"✅ Codebase text file generated at: {output_file}")
         
         # Stage for commit if requested
         if args.commit:
             try:
                 import subprocess
-                print("Staging text files for commit...")
-                files_to_add = [timestamped_file]
-                if not args.skip_copy:
-                    files_to_add.append(standard_file)
-                    
-                subprocess.run(["git", "add", "-f"] + files_to_add, check=True)
-                print("✅ Files staged successfully. You can now commit them.")
+                print("Staging text file for commit...")
+                subprocess.run(["git", "add", "-f", output_file], check=True)
+                print("✅ File staged successfully. You can now commit it.")
             except Exception as e:
-                print(f"❌ Error staging files: {str(e)}")
-                print("You may need to manually run: git add -f docs/codebase_documentation*.txt")
+                print(f"❌ Error staging file: {str(e)}")
+                print(f"You may need to manually run: git add -f {output_file}")
         
         print("✅ All done!")
     else:
