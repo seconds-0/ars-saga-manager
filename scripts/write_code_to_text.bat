@@ -2,12 +2,21 @@
 setlocal
 
 set ARGS=
+set TIMEOUT=120
 
 if "%~1"=="-commit" (
     set ARGS=--commit
     echo Will stage text files for commit
 )
 if "%~2"=="-commit" (
+    set ARGS=%ARGS% --commit
+    echo Will stage text files for commit
+)
+if "%~3"=="-commit" (
+    set ARGS=%ARGS% --commit
+    echo Will stage text files for commit
+)
+if "%~4"=="-commit" (
     set ARGS=%ARGS% --commit
     echo Will stage text files for commit
 )
@@ -20,14 +29,58 @@ if "%~2"=="-include-docs" (
     set ARGS=%ARGS% --include-docs
     echo Will include documentation files even if in .gitignore
 )
+if "%~3"=="-include-docs" (
+    set ARGS=%ARGS% --include-docs
+    echo Will include documentation files even if in .gitignore
+)
+if "%~4"=="-include-docs" (
+    set ARGS=%ARGS% --include-docs
+    echo Will include documentation files even if in .gitignore
+)
+
+if "%~1"=="-timeout" (
+    set TIMEOUT=%~2
+    set ARGS=%ARGS% --timeout %TIMEOUT%
+    echo Using timeout of %TIMEOUT% seconds
+)
+if "%~3"=="-timeout" (
+    set TIMEOUT=%~4
+    set ARGS=%ARGS% --timeout %TIMEOUT%
+    echo Using timeout of %TIMEOUT% seconds
+)
+
+if "%~1"=="-skip-copy" (
+    set ARGS=%ARGS% --skip-copy
+    echo Will skip creating non-timestamped copy
+)
+if "%~2"=="-skip-copy" (
+    set ARGS=%ARGS% --skip-copy
+    echo Will skip creating non-timestamped copy
+)
+if "%~3"=="-skip-copy" (
+    set ARGS=%ARGS% --skip-copy
+    echo Will skip creating non-timestamped copy
+)
+if "%~4"=="-skip-copy" (
+    set ARGS=%ARGS% --skip-copy
+    echo Will skip creating non-timestamped copy
+)
 
 echo Installing required dependencies...
 pip install pathspec
 
 echo Running codebase to text converter...
+echo Using timeout of %TIMEOUT% seconds
 python "%~dp0write_code_to_text.py" %ARGS%
 
-echo Done!
+echo.
+if errorlevel 1 (
+    echo Failed to complete the operation. Try increasing the timeout or optimizing the script.
+    echo Example: write_code_to_text.bat -timeout 300
+    exit /b 1
+)
+
+echo.
 echo The text files have been generated in the docs directory
 
 if not "%ARGS%"=="--commit" if not "%ARGS:~0,9%"=="--commit " (
@@ -36,7 +89,7 @@ if not "%ARGS%"=="--commit" if not "%ARGS:~0,9%"=="--commit " (
 if not "%ARGS%"=="--include-docs" if not "%ARGS:~-13%"==" --include-docs" (
     echo Note: To include documentation files that are listed in .gitignore, run this script with the -include-docs parameter
 )
-echo Example: write_code_to_text.bat -commit -include-docs
+echo Example: write_code_to_text.bat -commit -include-docs -timeout 300 -skip-copy
 
 pause
 endlocal

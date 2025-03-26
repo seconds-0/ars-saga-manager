@@ -1,6 +1,8 @@
 param(
     [switch]$commit = $false,
-    [switch]$includeDocs = $false
+    [switch]$includeDocs = $false,
+    [int]$timeout = 120,
+    [switch]$skipCopy = $false
 )
 
 Write-Host "Installing required dependencies..." -ForegroundColor Green
@@ -18,8 +20,18 @@ if ($includeDocs) {
     $argList += "--include-docs"
     Write-Host "Will include documentation files even if in .gitignore" -ForegroundColor Yellow
 }
+if ($timeout -ne 120) {
+    $argList += "--timeout"
+    $argList += "$timeout"
+    Write-Host "Using timeout of $timeout seconds" -ForegroundColor Yellow
+}
+if ($skipCopy) {
+    $argList += "--skip-copy"
+    Write-Host "Will skip creating non-timestamped copy" -ForegroundColor Yellow
+}
 
 # Run the Python script with appropriate arguments
+Write-Host "Running with timeout of $timeout seconds" -ForegroundColor Cyan
 python "$PSScriptRoot\write_code_to_text.py" $argList
 
 Write-Host "Done!" -ForegroundColor Green

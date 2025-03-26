@@ -2,6 +2,7 @@
 # Wrapper script for write_code_to_text.py
 
 ARGS=""
+TIMEOUT=120
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -16,9 +17,20 @@ while [[ $# -gt 0 ]]; do
       echo "Will include documentation files even if in .gitignore"
       shift
       ;;
+    --timeout)
+      TIMEOUT="$2"
+      ARGS="$ARGS --timeout $2"
+      echo "Using timeout of $TIMEOUT seconds"
+      shift 2
+      ;;
+    --skip-copy)
+      ARGS="$ARGS --skip-copy"
+      echo "Will skip creating non-timestamped copy"
+      shift
+      ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--commit] [--include-docs]"
+      echo "Usage: $0 [--commit] [--include-docs] [--timeout SECONDS] [--skip-copy]"
       exit 1
       ;;
   esac

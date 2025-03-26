@@ -145,69 +145,147 @@ def generate_directory_tree(start_path, root_pathspec, additional_pathspecs, ind
     
     return tree
 
-def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_gitignore=True):
-    """Process the codebase and write to markdown file."""
-    root_dir = os.path.dirname(os.path.abspath(__file__)) + '/..'
+def process_codebase(output_file, root_pathspec, additional_pathspecs, respect_gitignore=True, timeout_seconds=180):
+    """Process the codebase and write to text file.
     
-    with open(output_file, 'w', encoding='utf-8') as f:
-        # Write title
-        f.write("# Codebase Documentation\n\n")
-        
-        # Write directory structure
-        f.write("## Directory Structure\n\n")
-        tree = generate_directory_tree(root_dir, root_pathspec, additional_pathspecs, respect_gitignore=respect_gitignore)
-        f.write('\n'.join(tree))
-        f.write('\n\n')
-        
-        # Write file contents
-        f.write("## File Contents\n\n")
-        
-        # Keep track of processed files to avoid duplicates
-        processed_files = set()
-        
-        for root, dirs, files in os.walk(root_dir):
-            # Process each file
-            for file in sorted(files):
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, start=root_dir)
-                
-                # Skip if already processed or should be ignored
-                if rel_path in processed_files or should_ignore(file_path, root_pathspec, additional_pathspecs, respect_gitignore):
+    Args:
+        output_file: Path to the output file
+        root_pathspec: Root .gitignore PathSpec
+        additional_pathspecs: Additional .gitignore PathSpecs
+        respect_gitignore: Whether to respect gitignore rules
+        timeout_seconds: Maximum time in seconds to allow for processing
+    
+    Returns:
+        Tuple of (success, message)
+    """
+    import time
+    import signal
+    
+    # Setup timeout handler
+    class TimeoutException(Exception):
+        pass
+    
+    def timeout_handler(signum, frame):
+        raise TimeoutException("Processing timed out")
+    
+    # Register the timeout handler
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
+    
+    start_time = time.time()
+    root_dir = os.path.dirname(os.path.abspath(__file__)) + '/..'
+    file_count = 0
+    processed_size = 0
+    max_file_size = 1024 * 1024  # 1MB max per file to avoid huge files
+    
+    try:
+        with open(output_file, 'w', encoding='utf-8') as f:
+            # Write title
+            f.write("# Codebase Documentation\n\n")
+            print("Generating directory tree...")
+            
+            # Write directory structure
+            f.write("## Directory Structure\n\n")
+            tree = generate_directory_tree(root_dir, root_pathspec, additional_pathspecs, respect_gitignore=respect_gitignore)
+            f.write('\n'.join(tree))
+            f.write('\n\n')
+            
+            # Write file contents
+            f.write("## File Contents\n\n")
+            
+            # Keep track of processed files to avoid duplicates
+            processed_files = set()
+            
+            print("Beginning file processing...")
+            progress_interval = 50  # Show progress every 50 files
+            
+            for root, dirs, files in os.walk(root_dir):
+                # Skip node_modules entirely - it's huge and unnecessary
+                if 'node_modules' in root:
                     continue
-                
-                processed_files.add(rel_path)
-                
-                if is_binary_file(file_path):
-                    continue
-                
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as file_content:
-                        content = file_content.read()
                     
-                    # Write file header
-                    f.write(f"### {rel_path}\n\n")
+                # Process each file
+                for file in sorted(files):
+                    file_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(file_path, start=root_dir)
                     
-                    # Write file content with appropriate syntax highlighting
-                    extension = get_file_extension(file_path)
-                    f.write(f"```{extension}\n")
-                    f.write(content)
-                    if not content.endswith('\n'):
-                        f.write('\n')
-                    f.write("```\n\n")
-                except Exception as e:
-                    f.write(f"### {rel_path}\n\n")
-                    f.write(f"Error reading file: {str(e)}\n\n")
+                    # Skip if already processed or should be ignored
+                    if rel_path in processed_files or should_ignore(file_path, root_pathspec, additional_pathspecs, respect_gitignore):
+                        continue
+                    
+                    # Skip large files
+                    try:
+                        file_size = os.path.getsize(file_path)
+                        if file_size > max_file_size:
+                            f.write(f"### {rel_path}\n\n")
+                            f.write(f"File skipped (too large): {file_size/1024:.1f} KB\n\n")
+                            continue
+                    except Exception:
+                        pass
+                    
+                    processed_files.add(rel_path)
+                    file_count += 1
+                    
+                    # Show progress
+                    if file_count % progress_interval == 0:
+                        elapsed = time.time() - start_time
+                        print(f"Processed {file_count} files ({processed_size/1024:.1f} KB) in {elapsed:.1f} seconds...")
+                    
+                    if is_binary_file(file_path):
+                        continue
+                    
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as file_content:
+                            content = file_content.read()
+                        
+                        processed_size += len(content)
+                        
+                        # Write file header
+                        f.write(f"### {rel_path}\n\n")
+                        
+                        # Write file content with appropriate syntax highlighting
+                        extension = get_file_extension(file_path)
+                        f.write(f"```{extension}\n")
+                        f.write(content)
+                        if not content.endswith('\n'):
+                            f.write('\n')
+                        f.write("```\n\n")
+                    except Exception as e:
+                        f.write(f"### {rel_path}\n\n")
+                        f.write(f"Error reading file: {str(e)}\n\n")
+        
+        # Turn off the alarm
+        signal.alarm(0)
+        
+        end_time = time.time()
+        total_time = end_time - start_time
+        
+        return (True, f"Successfully processed {file_count} files ({processed_size/1024:.1f} KB) in {total_time:.1f} seconds")
+    
+    except TimeoutException:
+        return (False, f"Processing timed out after {timeout_seconds} seconds. Processed {file_count} files so far.")
+    except Exception as e:
+        return (False, f"Error processing codebase: {str(e)}")
+    finally:
+        # Make sure to turn off the alarm in all cases
+        signal.alarm(0)
 
 def main():
     """Main function to generate the codebase text file."""
     import argparse
+    import sys
+    import shutil
     
     # Set up command line arguments
     parser = argparse.ArgumentParser(description='Generate complete codebase text file.')
     parser.add_argument('--commit', action='store_true', help='Stage generated files for commit')
     parser.add_argument('--include-docs', action='store_true', help='Include documentation files even if in .gitignore')
     parser.add_argument('--output-dir', default='docs', help='Directory to save output (default: docs)')
+    parser.add_argument('--timeout', type=int, default=120, help='Timeout in seconds (default: 120)')
+    parser.add_argument('--skip-copy', action='store_true', help='Skip creating the non-timestamped copy')
     args = parser.parse_args()
+    
+    print(f"Starting code-to-text conversion with a {args.timeout} second timeout...")
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.join(script_dir, '..')
@@ -223,6 +301,8 @@ def main():
     timestamped_file = os.path.join(output_dir, f'codebase_documentation_{timestamp}.txt')
     standard_file = os.path.join(output_dir, 'codebase_documentation.txt')
     
+    print("Reading .gitignore files...")
+    
     # Read root gitignore
     root_gitignore = os.path.join(root_dir, '.gitignore')
     root_pathspec = read_gitignore(root_gitignore)
@@ -230,6 +310,10 @@ def main():
     # Find and read additional gitignore files
     additional_pathspecs = {}
     for root, dirs, files in os.walk(root_dir):
+        # Skip node_modules entirely to save time
+        if 'node_modules' in dirs:
+            dirs.remove('node_modules')
+            
         if '.gitignore' in files and root != root_dir:
             rel_dir = os.path.relpath(root, start=root_dir)
             gitignore_path = os.path.join(root, '.gitignore')
@@ -238,26 +322,46 @@ def main():
     # Whether to respect gitignore rules for documentation files
     respect_gitignore = not args.include_docs
     
-    # Process the codebase
-    process_codebase(timestamped_file, root_pathspec, additional_pathspecs, respect_gitignore=respect_gitignore)
+    # Process the codebase with timeout
+    print(f"Processing codebase (timeout: {args.timeout}s)...")
+    success, message = process_codebase(
+        timestamped_file, 
+        root_pathspec, 
+        additional_pathspecs, 
+        respect_gitignore=respect_gitignore,
+        timeout_seconds=args.timeout
+    )
     
-    # Create a copy with standard name
-    import shutil
-    shutil.copy2(timestamped_file, standard_file)
-    
-    print(f"Codebase text file generated at: {timestamped_file}")
-    print(f"Also copied to: {standard_file}")
-    
-    # Stage for commit if requested
-    if args.commit:
-        try:
-            import subprocess
-            print("Staging text files for commit...")
-            subprocess.run(["git", "add", "-f", timestamped_file, standard_file], check=True)
-            print("Files staged successfully. You can now commit them.")
-        except Exception as e:
-            print(f"Error staging files: {str(e)}")
-            print("You may need to manually run: git add -f docs/codebase_documentation*.txt")
+    if success:
+        print(f"✅ {message}")
+        
+        # Create a copy with standard name if not skipping
+        if not args.skip_copy:
+            shutil.copy2(timestamped_file, standard_file)
+            print(f"✅ Copied to: {standard_file}")
+        
+        print(f"✅ Codebase text file generated at: {timestamped_file}")
+        
+        # Stage for commit if requested
+        if args.commit:
+            try:
+                import subprocess
+                print("Staging text files for commit...")
+                files_to_add = [timestamped_file]
+                if not args.skip_copy:
+                    files_to_add.append(standard_file)
+                    
+                subprocess.run(["git", "add", "-f"] + files_to_add, check=True)
+                print("✅ Files staged successfully. You can now commit them.")
+            except Exception as e:
+                print(f"❌ Error staging files: {str(e)}")
+                print("You may need to manually run: git add -f docs/codebase_documentation*.txt")
+        
+        print("✅ All done!")
+    else:
+        print(f"❌ {message}")
+        print("You may need to increase the timeout with --timeout or optimize the script.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main() 
