@@ -5,6 +5,7 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const { sequelize, ReferenceAbility, CharacterAbility, Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
 const { authenticateToken } = require('./auth');
+const experienceService = require('../services/experienceService');
 const { 
   calculateXPForLevel, 
   calculateLevelFromXP, 
@@ -15,8 +16,8 @@ const {
   hasAffinityWithAbility
 } = require('../utils/abilityUtils');
 
-// Get all reference abilities
-router.get('/reference-abilities', async (req, res) => {
+// Get all reference abilities (public endpoint - no auth required)
+router.get('/', async (req, res) => {
   try {
     const abilities = await ReferenceAbility.findAll({
       order: [
@@ -38,8 +39,8 @@ router.get('/reference-abilities', async (req, res) => {
   }
 });
 
-// Get reference abilities by category
-router.get('/reference-abilities/category/:category', async (req, res) => {
+// Get reference abilities by category (public endpoint - no auth required)
+router.get('/category/:category', async (req, res) => {
   try {
     const { category } = req.params;
     
@@ -64,8 +65,11 @@ router.get('/reference-abilities/category/:category', async (req, res) => {
 });
 
 // Get all abilities for a character
-router.get('/characters/:characterId/abilities', authenticateToken, async (req, res) => {
+router.get('/:characterId/abilities', async (req, res) => {
   try {
+    console.log('Fetching abilities for character:', req.params.characterId);
+    console.log('User ID from req.user:', req.user?.id);
+    
     const { characterId } = req.params;
     
     // Check if character belongs to the authenticated user
@@ -81,12 +85,20 @@ router.get('/characters/:characterId/abilities', authenticateToken, async (req, 
           include: [
             {
               model: ReferenceVirtueFlaw,
-              as: 'ReferenceVirtueFlaw'
+              as: 'referenceVirtueFlaw',  // Corrected to match the model association
+              // Only select fields we actually need, explicitly excluding timestamps
+              attributes: {
+                include: ['id', 'name', 'description', 'type', 'size', 
+                  'ability_score_bonus', 'specification_type', 'affects_ability_cost'],
+                exclude: ['createdAt', 'updatedAt', 'created_at', 'updated_at']
+              }
             }
           ]
         }
       ]
     });
+    
+    console.log('Character found:', character ? 'Yes' : 'No');
     
     if (!character) {
       return res.status(404).json({
@@ -106,32 +118,44 @@ router.get('/characters/:characterId/abilities', authenticateToken, async (req, 
       ]
     });
     
-    // Get all virtues that affect abilities
-    const abilityVirtues = character.CharacterVirtueFlaws.filter(vf => 
-      vf.ReferenceVirtueFlaw.is_virtue && 
-      (vf.ReferenceVirtueFlaw.name.includes('Puissant') || 
-       vf.ReferenceVirtueFlaw.name.includes('Affinity'))
-    );
+    // Get all virtues that affect abilities with safer property access
+    const abilityVirtues = character.CharacterVirtueFlaws.filter(vf => {
+      // Standardize on referenceVirtueFlaw (lowercase r) since that's the alias in the model
+      const ref = vf.referenceVirtueFlaw;
+      return ref && ref.type === 'Virtue' && 
+        (ref.name.includes('Puissant') || ref.name.includes('Affinity'));
+    });
     
-    // Apply virtue effects to ability scores
+    // Apply virtue effects to ability scores with additional error handling
     const enhancedAbilities = abilities.map(ability => {
-      const effectiveScore = calculateEffectiveScore(
-        ability.ability_name,
-        ability.score,
-        character.CharacterVirtueFlaws
-      );
-      
-      // Calculate XP needed for next level
-      const nextLevelXP = ability.score > 0 
-        ? (ability.score * 5) + 5
-        : 5;
+      try {
+        const effectiveScore = calculateEffectiveScore(
+          ability.ability_name,
+          ability.score,
+          character.CharacterVirtueFlaws
+        );
+        
+        // Calculate XP needed for next level
+        const nextLevelXP = ability.score > 0 
+          ? (ability.score * 5) + 5
+          : 5;
 
-      return {
-        ...ability.toJSON(),
-        effective_score: effectiveScore,
-        xp_for_next_level: nextLevelXP,
-        has_affinity: hasAffinityWithAbility(ability.ability_name, character.CharacterVirtueFlaws)
-      };
+        return {
+          ...ability.toJSON(),
+          effective_score: effectiveScore,
+          xp_for_next_level: nextLevelXP,
+          has_affinity: hasAffinityWithAbility(ability.ability_name, character.CharacterVirtueFlaws)
+        };
+      } catch (err) {
+        console.error(`Error enhancing ability ${ability.ability_name}:`, err);
+        // Return a basic version of the ability without enhancements
+        return {
+          ...ability.toJSON(),
+          effective_score: ability.score,
+          xp_for_next_level: ability.score > 0 ? (ability.score * 5) + 5 : 5,
+          has_affinity: false
+        };
+      }
     });
     
     res.json({
@@ -140,15 +164,17 @@ router.get('/characters/:characterId/abilities', authenticateToken, async (req, 
     });
   } catch (error) {
     console.error(`Error fetching abilities for character ${req.params.characterId}:`, error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to fetch character abilities'
+      message: 'Failed to fetch character abilities',
+      details: process.env.NODE_ENV !== 'production' ? error.message : undefined
     });
   }
 });
 
 // Add a new ability to a character
-router.post('/characters/:characterId/abilities', authenticateToken, async (req, res) => {
+router.post('/:characterId/abilities', async (req, res) => {
   const transaction = await sequelize.transaction();
   
   try {
@@ -227,7 +253,7 @@ router.post('/characters/:characterId/abilities', authenticateToken, async (req,
       where: { character_id: characterId },
       include: [{
         model: ReferenceVirtueFlaw,
-        as: 'ReferenceVirtueFlaw'
+        as: 'referenceVirtueFlaw'
       }],
       transaction
     });
@@ -249,9 +275,7 @@ router.post('/characters/:characterId/abilities', authenticateToken, async (req,
       );
       
       if (actualCost > 0) {
-        // Access the experience service via require (it will be created later)
-        const experienceService = require('../services/experienceService');
-        
+        // Use the imported experienceService
         const spendResult = await experienceService.spendExperience(
           characterId,
           category,
@@ -308,7 +332,7 @@ router.post('/characters/:characterId/abilities', authenticateToken, async (req,
 });
 
 // Update an ability for a character
-router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, async (req, res) => {
+router.put('/:characterId/abilities/:abilityId', async (req, res) => {
   const transaction = await sequelize.transaction();
   
   try {
@@ -354,7 +378,7 @@ router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, a
       where: { character_id: characterId },
       include: [{
         model: ReferenceVirtueFlaw,
-        as: 'ReferenceVirtueFlaw'
+        as: 'referenceVirtueFlaw'
       }],
       transaction
     });
@@ -393,8 +417,7 @@ router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, a
       );
       
       if (actualCost > 0) {
-        // Spend the experience points
-        const experienceService = require('../services/experienceService');
+        // Spend the experience points using the imported service
         
         const spendResult = await experienceService.spendExperience(
           characterId,
@@ -440,8 +463,7 @@ router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, a
       );
       
       if (actualCost > 0) {
-        // Spend the experience points
-        const experienceService = require('../services/experienceService');
+        // Spend the experience points using the imported service
         
         const spendResult = await experienceService.spendExperience(
           characterId,
@@ -511,7 +533,7 @@ router.put('/characters/:characterId/abilities/:abilityId', authenticateToken, a
 });
 
 // Delete an ability from a character
-router.delete('/characters/:characterId/abilities/:abilityId', authenticateToken, async (req, res) => {
+router.delete('/:characterId/abilities/:abilityId', async (req, res) => {
   try {
     const { characterId, abilityId } = req.params;
     
