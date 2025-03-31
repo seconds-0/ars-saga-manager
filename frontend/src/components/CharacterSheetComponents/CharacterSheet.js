@@ -59,10 +59,30 @@ function CharacterSheet() {
 
   // This is the function we'll pass to children - it never changes identity
   const stableSave = useCallback((data) => {
+    const isAgeUpdate = data && data.age !== undefined && data.recalculateXp === true;
+    console.log('stableSave called with data:', data, 'isAgeUpdate:', isAgeUpdate);
+    
     if (saveRef.current) {
-      saveRef.current(data);
+      // Pass along the data to the actual save function
+      const savePromise = saveRef.current(data);
+      
+      // If this is an age update that will recalculate XP, we should
+      // force a character data refresh after the save completes
+      if (isAgeUpdate) {
+        console.log('Age update detected, will force refresh character data');
+        savePromise.then(() => {
+          // Wait a bit to ensure backend has time to recalculate
+          setTimeout(() => {
+            console.log('Forcing character data refresh after age update');
+            queryClient.invalidateQueries(['character', id], { 
+              refetchActive: true,
+              refetchInactive: true
+            });
+          }, 500);
+        });
+      }
     }
-  }, []);
+  }, [queryClient, id]);
 
   return (
     <ErrorBoundary>

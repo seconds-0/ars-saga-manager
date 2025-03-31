@@ -34,7 +34,14 @@ Several related issues have been identified that affect user experience and data
    - Backend validation in `validateCharacter` middleware was rejecting this as `"id" is not allowed`
    - API call was failing with 400 Bad Request but UI wasn't showing errors
 
-2. **Infinite update loop:**
+2. **Experience not updating:**
+
+   - Backend was correctly recalculating experience values when age changes
+   - Frontend wasn't properly refreshing the UI to display these updated values
+   - React Query cache invalidation wasn't forcing a refresh
+   - No visual indication that recalculation was happening
+
+3. **Infinite update loop:**
    - `handleSave` function in `CharacterSheet.js` was recreated on every render despite using `useCallback`
    - Dependency array for `handleSave` is incomplete and doesn't properly stabilize function references
    - `useEffect` in `CharacteristicsAndAbilitiesTab.js` includes `onSave` in dependency array
@@ -53,6 +60,11 @@ Several related issues have been identified that affect user experience and data
 - [x] Add missing dependencies or implement ref-based solution
 - [x] Add debouncing to the characteristics auto-save effect
 - [x] Add explicit change detection before triggering saves
+
+### 3. Fix Experience Update Issue:
+- [x] Add explicit cache invalidation and forced requery after age updates
+- [x] Add visual feedback for experience values during recalculation
+- [x] Improve detection of age-related updates in save function
 
 ## Implementation Changes
 
@@ -116,7 +128,9 @@ Several related issues have been identified that affect user experience and data
    - Confirm that updates only occur when values change, not continuously
    - Check browser performance to ensure CPU usage remains reasonable
 
-## Implemented Solution for Infinite Loop
+## Implemented Solutions
+
+### 1. Infinite Loop Fix
 
 1. **Fixed `CharacterSheet.js`:**
    - Stabilized the `handleSave` function using a hybrid ref + useCallback approach
@@ -131,6 +145,20 @@ Several related issues have been identified that affect user experience and data
    - Increased debounce timeout from 1 second to 2 seconds
    - Removed `onSave` from the dependency array to break dependency cycle
    - Added early return when no changes are detected
+
+### 2. Experience Update Fix
+
+1. **Enhanced `CharacterSheet.js`:**
+   - Modified the `stableSave` function to detect age updates
+   - Added special handling for age updates with `recalculateXp: true`
+   - Added explicit forced query invalidation after age updates
+   - Implemented a small delay to ensure backend processing completes
+   - Used React Query's refetch options to ensure fresh data
+
+2. **Enhanced `CharacterOverviewTab.js`:**
+   - Added `experience-value` CSS class to all experience values
+   - Implemented visual feedback (pulsing animation) during recalculation
+   - Added timeout to reset visual feedback after recalculation completes
 
 ## Status
 
