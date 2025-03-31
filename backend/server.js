@@ -7,6 +7,14 @@ const { csrfProtection, handleCsrfError } = require('./middleware/csrfProtection
 const { sequelize } = require('./models');
 const { logger } = require('./utils/logger');
 const { requestLogging, errorLogging } = require('./middleware/logging');
+
+// Debug start-up information
+console.log('==== SERVER STARTUP DEBUG INFO ====');
+console.log('Current working directory:', process.cwd());
+console.log('Node version:', process.version);
+console.log('Process arguments:', process.argv);
+console.log('Environment NODE_ENV:', process.env.NODE_ENV);
+console.log('==== END SERVER STARTUP DEBUG INFO ====');
 const { router: authRoutes, authenticateToken } = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
 const apiLimiter = require('./middleware/rateLimiter');
@@ -65,14 +73,17 @@ app.use('/api/characters', authenticateToken, characterRoutes);
 app.use('/api/reference-virtues-flaws', referenceVirtuesFlawsRouter);
 
 // Abilities routes
-app.use('/api', authenticateToken, abilitiesRouter);
+// Mount reference abilities routes without auth to allow public access
+app.use('/api/reference-abilities', abilitiesRouter);
+// Mount character-specific abilities routes with auth
+app.use('/api/characters', authenticateToken, abilitiesRouter);
 
 // Arts routes
 app.use('/api', artsRouter);
 
-// Test route
+// Test route with version marker
 app.get('/', (req, res) => {
-  res.send('Ars Saga Manager API is running');
+  res.send('Ars Saga Manager API is running - VERSION MARKER 20250327');
 });
 
 // Test the database connection and start server

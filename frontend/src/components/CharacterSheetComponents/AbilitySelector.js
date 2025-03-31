@@ -72,12 +72,19 @@ function AbilitySelector({ onSelectAbility, characterType, existingAbilities = [
       setError(null);
       
       try {
-        let url = '/reference-abilities';
+        // The axios baseURL already includes '/api'
+        let url = '/reference-abilities'; // Base URL defined in server.js
         if (selectedCategory) {
           url = `/reference-abilities/category/${selectedCategory}`;
         }
         
+        // Log the URL for debugging
+        console.log(`Fetching reference abilities from: ${url}`);
+        
         const response = await axios.get(url);
+        
+        // Log the response for debugging
+        console.log("Reference abilities API response:", response);
         if (response.data.status === 'success') {
           setReferenceAbilities(response.data.data);
         } else {

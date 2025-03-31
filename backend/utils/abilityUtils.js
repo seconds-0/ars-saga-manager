@@ -253,20 +253,23 @@ const getAbilityCost = (targetXP, currentXP, abilityName, characterVirtuesFlaws,
   
   // Find virtues that reduce ability costs
   characterVirtuesFlaws.forEach(cvf => {
+    // Standardize on referenceVirtueFlaw (lowercase r) since that's the alias in the model
+    const ref = cvf.referenceVirtueFlaw;
+    
     // Skip if not a virtue or doesn't affect ability cost
-    if (!cvf.referenceVirtueFlaw || !cvf.referenceVirtueFlaw.affects_ability_cost) {
+    if (!ref || !ref.affects_ability_cost) {
       return;
     }
     
     // Handle Affinity with specific ability
-    if (cvf.referenceVirtueFlaw.name === 'Affinity with (Ability)' && 
+    if (ref.name === 'Affinity with (Ability)' && 
         cvf.selections && cvf.selections.Ability === abilityName) {
       // Affinity reduces cost by 25%
       costMultiplier = Math.min(costMultiplier, 0.75);
     }
     
     // Handle Book Learner (reduces Academic ability costs)
-    if (cvf.referenceVirtueFlaw.name === 'Book Learner' && 
+    if (ref.name === 'Book Learner' && 
         abilityCategory === 'ACADEMIC') {
       // Book Learner reduces cost by 25% for Academic abilities
       costMultiplier = Math.min(costMultiplier, 0.75);
@@ -292,9 +295,13 @@ const hasAffinityWithAbility = (abilityName, characterVirtuesFlaws) => {
   }
   
   return characterVirtuesFlaws.some(cvf => {
-    if (!cvf.referenceVirtueFlaw) return false;
+    // Standardize on referenceVirtueFlaw (lowercase r) since that's the alias in the model
+    const ref = cvf.referenceVirtueFlaw;
     
-    return cvf.referenceVirtueFlaw.name === 'Affinity with (Ability)' && 
+    // Skip if no reference data available
+    if (!ref) return false;
+    
+    return ref.name === 'Affinity with (Ability)' && 
            cvf.selections && cvf.selections.Ability === abilityName;
   });
 };
@@ -315,13 +322,17 @@ const calculateEffectiveScore = (abilityName, baseScore, characterVirtuesFlaws) 
   
   // Calculate score modifiers from virtues and flaws
   characterVirtuesFlaws.forEach(cvf => {
-    if (!cvf.referenceVirtueFlaw) return;
+    // Standardize on referenceVirtueFlaw (lowercase r) since that's the alias in the model
+    const ref = cvf.referenceVirtueFlaw;
+    
+    // Skip if no reference data available
+    if (!ref) return;
     
     // Check for ability-specific virtues like Puissant
-    if (cvf.referenceVirtueFlaw.ability_score_bonus !== 0 && 
-        cvf.referenceVirtueFlaw.specification_type === 'Ability' &&
+    if (ref.ability_score_bonus !== 0 && 
+        ref.specification_type === 'Ability' &&
         cvf.selections && cvf.selections.Ability === abilityName) {
-      scoreModifier += cvf.referenceVirtueFlaw.ability_score_bonus;
+      scoreModifier += ref.ability_score_bonus;
     }
   });
   

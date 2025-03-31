@@ -4,7 +4,7 @@ const ruleEngine = require('../utils/ruleEngine');
 const logger = require('../utils/logger');
 const { authenticateToken } = require('../routes/auth');
 const { v4: uuidv4 } = require('uuid');
-const { validateVirtueFlaw, validateCharacter } = require('../middleware/validation');
+const { validateVirtueFlaw, validateCharacter, validateCharacterUpdate } = require('../middleware/validation');
 const { AppError, handleError } = require('../utils/errorHandler');
 const sanitizeInputs = require('../middleware/sanitizer');
 const { Op } = require('sequelize');
@@ -116,7 +116,7 @@ router.post('/', authenticateToken, validateCharacter, async (req, res) => {
       ...fullCharacteristics,
       use_cunning,
       total_improvement_points: 7, // Default value
-      age: req.body.age || 20 // Set initial age from request or default to 20
+      age: req.body.age || 25 // Set initial age from request or default to 25
     });
     console.log('Character created:', character.toJSON());
 
@@ -201,27 +201,60 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Update a character
-router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) => {
+router.put('/:id', checkCharacterOwnership, validateCharacterUpdate, async (req, res) => {
   try {
     console.log('Received update request for character:', req.params.id);
     console.log('Request body:', req.body);
 
-    const { use_cunning, total_improvement_points, age, ...characteristics } = req.body;
+    // Extract known fields explicitly, handle characteristics separately if needed
+    const { 
+        age, 
+        recalculateXp, // This field is only used as a flag, not saved directly
+        use_cunning, 
+        total_improvement_points, 
+        ...characteristics 
+    } = req.body;
     
-    // Validate characteristics
-    const validationError = validateCharacteristics(characteristics);
-    if (validationError) {
-      console.log('Validation error:', validationError);
-      return res.status(400).json({ message: validationError });
+    // Prepare the update payload, excluding recalculateXp
+    const updatePayload = {};
+    if (age !== undefined) updatePayload.age = age;
+    if (use_cunning !== undefined) updatePayload.use_cunning = use_cunning;
+    if (total_improvement_points !== undefined) updatePayload.total_improvement_points = total_improvement_points;
+    // Add valid characteristics to the payload
+    const validCharacteristics = ['strength', 'stamina', 'dexterity', 'quickness', 'intelligence', 'presence', 'communication', 'perception'];
+    for (const char of validCharacteristics) {
+        if (characteristics[char] !== undefined) {
+            updatePayload[char] = characteristics[char];
+        }
     }
+
+    // Check if there's anything to update
+    if (Object.keys(updatePayload).length === 0) {
+        console.log('No valid fields to update found in request body.');
+        // Optionally return a 200 OK or a specific message
+        const currentCharacter = await Character.findByPk(req.params.id);
+        const derived = calculateDerivedCharacteristics(currentCharacter);
+        return res.json({ ...currentCharacter.toJSON(), derivedCharacteristics: derived });
+    }
+    console.log('Prepared update payload:', updatePayload);
 
     // Check if age is being updated or recalculation is requested
     const character = await Character.findByPk(req.params.id);
-    const isAgeUpdated = age !== undefined && age !== character.age;
+    const isAgeUpdated = age !== undefined && Number(age) !== Number(character.age);
     const forceRecalculate = req.body.recalculateXp === true;
+    
+    console.log('Character update details:', {
+      characterId: req.params.id,
+      currentAge: character.age,
+      newAge: age,
+      isAgeUpdated,
+      forceRecalculate,
+      recalculateXpInRequest: req.body.recalculateXp
+    });
 
+    // Use the prepared updatePayload
     const [updated] = await Character.update(
-      { ...characteristics, use_cunning, total_improvement_points, age },
+      updatePayload, 
       { where: { id: req.params.id, user_id: req.user.id } }
     );
 
@@ -229,7 +262,19 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
       // If age was updated or recalculation is requested, recalculate experience
       if (isAgeUpdated || forceRecalculate) {
         console.log('Age updated or recalculation requested, recalculating experience');
-        await recalculateAndUpdateExp(req.params.id, { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw });
+        try {
+          const updatedCharacter = await recalculateAndUpdateExp(req.params.id, { Character, CharacterVirtueFlaw, ReferenceVirtueFlaw });
+          console.log('Experience recalculated successfully:', {
+            generalXp: updatedCharacter.general_exp_available,
+            magicalXp: updatedCharacter.magical_exp_available,
+            restrictedPools: updatedCharacter.restricted_exp_pools
+          });
+        } catch (recalcError) {
+          console.error('Error recalculating experience:', recalcError);
+          console.error('Stack trace:', recalcError.stack);
+        }
+      } else {
+        console.log('Not recalculating experience - age not updated and recalculation not forced');
       }
       
       const updatedCharacter = await Character.findOne({ where: { id: req.params.id } });
@@ -237,8 +282,8 @@ router.put('/:id', checkCharacterOwnership, validateCharacter, async (req, res) 
       console.log('Character updated successfully:', updatedCharacter.toJSON());
       return res.json({ ...updatedCharacter.toJSON(), derivedCharacteristics });
     }
-    console.log('Character not found:', req.params.id);
-    return res.status(404).json({ message: 'Character not found' });
+    console.log('Character not found or update failed:', req.params.id);
+    return res.status(404).json({ message: 'Character not found or update failed' });
   } catch (error) {
     console.error('Error updating character:', error);
     res.status(500).json({ message: 'Error updating character', error: error.message });

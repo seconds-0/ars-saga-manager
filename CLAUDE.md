@@ -1,11 +1,12 @@
 # Claude Code Instructions
 
-## MCP Tools
+## Complex Development Tasks
 
-### ConsultSeniorEngineer MCP
+### Comprehensive Analysis and Planning
 
-- **Purpose**: Analyzes the entire codebase at once and provides senior-level engineering guidance
-- **When to use**:
+For complex tasks that require analysis of the entire codebase or intricate system interactions, request the user to utilize a larger context or specialized model for comprehensive review.
+
+- **When to request user assistance**:
   - **Initial planning of big features** (highly recommended)
   - Analyzing large-scale architectural changes
   - Vetting complex implementation plans
@@ -19,9 +20,9 @@
   - Database schema design validation
   - Performance optimization recommendations
   - Technical debt assessment
-- **Usage**: Use whenever needed for complex issues, especially those related to security, state management, core game mechanics, or multi-component interactions
-- **How it works**: Pulls the entire codebase and analyzes it with a powerful LLM to provide comprehensive insights
-- **Important**: For authentication fixes, refresh token implementations, or debugging infinite loops/circular dependencies, ALWAYS use this MCP before implementing solutions
+
+- **Approach**: For these tasks, ask the user to send the codebase to a higher-capacity LLM to provide a comprehensive review and plan, which they can then share back to continue implementation
+- **Important**: For authentication fixes, refresh token implementations, or debugging infinite loops/circular dependencies, ALWAYS recommend getting a comprehensive review before implementing solutions
 
 ## Documentation Check
 
