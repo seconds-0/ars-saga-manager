@@ -65,8 +65,9 @@ describe('Experience Utilities', () => {
       };
       const virtuesFlaws = [
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Wealthy',
+            type: 'Virtue',
             exp_rate_modifier: 5 // +5 to yearly rate
           }
         }
@@ -89,8 +90,9 @@ describe('Experience Utilities', () => {
       };
       const virtuesFlaws = [
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'General Bonus',
+            type: 'Virtue',
             general_exp_modifier: 50,
             general_exp_modifier_category: null // null means unrestricted
           }
@@ -114,8 +116,9 @@ describe('Experience Utilities', () => {
       };
       const virtuesFlaws = [
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Warrior',
+            type: 'Virtue',
             general_exp_modifier: 50,
             general_exp_modifier_category: 'Martial' // Category restriction
           }
@@ -145,15 +148,17 @@ describe('Experience Utilities', () => {
       };
       const virtuesFlaws = [
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Warrior',
+            type: 'Virtue',
             general_exp_modifier: 50,
             general_exp_modifier_category: 'Martial'
           }
         },
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Educated',
+            type: 'Virtue',
             general_exp_modifier: 50,
             general_exp_modifier_category: '["Latin", "Artes Liberales"]' // List of abilities
           }
@@ -192,27 +197,31 @@ describe('Experience Utilities', () => {
       };
       const virtuesFlaws = [
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Wealthy',
+            type: 'Virtue',
             exp_rate_modifier: 5 // +5 to yearly rate
           }
         },
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'General Bonus',
+            type: 'Virtue',
             general_exp_modifier: 30,
             general_exp_modifier_category: null // Unrestricted
           }
         },
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Magical Bonus',
+            type: 'Virtue',
             magical_exp_modifier: 60
           }
         },
         {
-          ReferenceVirtueFlaw: {
+          referenceVirtueFlaw: {
             name: 'Warrior',
+            type: 'Virtue',
             general_exp_modifier: 50,
             general_exp_modifier_category: 'Martial'
           }
