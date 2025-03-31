@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useReducer, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useReducer, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import CharacteristicInput from './CharacteristicInput';
 import AbilityList from './AbilityList';
@@ -137,32 +137,62 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
     }
   }, [characteristics]);
 
+  // Use ref to store previous values for comparison
+  const prevValuesRef = useRef({
+    characteristics: null,
+    use_cunning: null,
+    totalPoints: null
+  });
+
   // Auto-save characteristics when they change
   useEffect(() => {
+    // Only proceed if the points are valid
+    if (availablePoints < 0) return;
+    
+    // Check if values actually changed compared to previous save
+    const hasCharacteristicsChanged = JSON.stringify(characteristics) !== JSON.stringify(prevValuesRef.current.characteristics);
+    const hasUseCunningChanged = use_cunning !== prevValuesRef.current.use_cunning;
+    const hasTotalPointsChanged = totalPoints !== prevValuesRef.current.totalPoints;
+    
+    // Only save if something actually changed
+    if (!hasCharacteristicsChanged && !hasUseCunningChanged && !hasTotalPointsChanged) {
+      console.log('No changes detected, skipping save');
+      return;
+    }
+    
     const saveCharacteristics = async () => {
-      // Only save if the points are valid
-      if (availablePoints >= 0) {
-        try {
-          const updatedData = {
-            ...characteristics,
-            use_cunning,
-            total_improvement_points: totalPoints
-          };
-          
-          await onSave(updatedData);
-          // No need to show a toast for automatic saves
-        } catch (error) {
-          console.error('Error saving characteristics:', error);
-          setToastMessage('Failed to save characteristics automatically. Please reload the page.');
-          setToastType('error');
-        }
+      try {
+        console.log('Saving characteristics due to detected changes');
+        const updatedData = {
+          ...characteristics,
+          use_cunning,
+          total_improvement_points: totalPoints
+        };
+        
+        // Update the previous values ref before saving
+        prevValuesRef.current = {
+          characteristics: JSON.parse(JSON.stringify(characteristics)),
+          use_cunning,
+          totalPoints
+        };
+        
+        await onSave(updatedData);
+        // No need to show a toast for automatic saves
+      } catch (error) {
+        console.error('Error saving characteristics:', error);
+        setToastMessage('Failed to save characteristics automatically. Please reload the page.');
+        setToastType('error');
       }
     };
     
-    // Add a small delay to avoid too many saves
-    const timer = setTimeout(saveCharacteristics, 1000);
+    // Add a longer delay to avoid too many saves - increased to 2 seconds
+    const timer = setTimeout(saveCharacteristics, 2000);
     return () => clearTimeout(timer);
-  }, [characteristics, use_cunning, totalPoints, availablePoints, onSave]);
+    
+    // Intentionally omit onSave from dependency array to prevent infinite loops
+    // We're using the current value via function closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [characteristics, use_cunning, totalPoints, availablePoints]);
 
   // Handle adding a new ability
   const handleAddAbility = async (abilityData) => {
@@ -203,17 +233,7 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
       {/* Characteristics Section */}
       <section>
         <h2 className="text-xl font-bold mb-4">Characteristics</h2>
-        <div className="mb-4">
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={use_cunning}
-              onChange={() => setUseCunning(!use_cunning)}
-              className="mr-2 h-4 w-4"
-            />
-            <span className="select-none">Use Cunning instead of Intelligence</span>
-          </label>
-        </div>
+        {/* Hide "Use Cunning" option completely until animals are added */}
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-gray-50 p-4 rounded-md shadow-sm">
@@ -265,20 +285,36 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
                 <span className="font-medium text-blue-700">General XP:</span>
                 <span className="ml-1">{character.general_exp_available || 0}</span>
               </div>
-              <div className="bg-green-50 px-3 py-1 rounded-md border border-green-100">
-                <span className="font-medium text-green-700">Magical XP:</span>
-                <span className="ml-1">{character.magical_exp_available || 0}</span>
-              </div>
+              {/* Only show magical XP for magi */}
+              {character.character_type && character.character_type.toLowerCase() === 'magus' && (
+                <div className="bg-green-50 px-3 py-1 rounded-md border border-green-100">
+                  <span className="font-medium text-green-700">Magical XP:</span>
+                  <span className="ml-1">{character.magical_exp_available || 0}</span>
+                </div>
+              )}
               
               {/* Render restricted XP pools if available */}
-              {character.restricted_exp_pools && Object.entries(character.restricted_exp_pools).map(([category, amount]) => (
-                amount > 0 && (
-                  <div key={category} className="bg-purple-50 px-3 py-1 rounded-md border border-purple-100">
-                    <span className="font-medium text-purple-700">{category} XP:</span>
-                    <span className="ml-1">{amount}</span>
-                  </div>
-                )
-              ))}
+              {character.restricted_exp_pools && Array.isArray(character.restricted_exp_pools) ? (
+                // Handle array format (from backend)
+                character.restricted_exp_pools.map((pool, idx) => (
+                  (pool.amount - (pool.spent || 0)) > 0 && (
+                    <div key={idx} className="bg-purple-50 px-3 py-1 rounded-md border border-purple-100">
+                      <span className="font-medium text-purple-700">{pool.source_virtue_flaw || 'Restricted'} XP:</span>
+                      <span className="ml-1">{pool.amount - (pool.spent || 0)}</span>
+                    </div>
+                  )
+                ))
+              ) : (
+                // Handle object format (possibly from older data)
+                character.restricted_exp_pools && Object.entries(character.restricted_exp_pools).map(([category, amount]) => (
+                  amount > 0 && (
+                    <div key={category} className="bg-purple-50 px-3 py-1 rounded-md border border-purple-100">
+                      <span className="font-medium text-purple-700">{category} XP:</span>
+                      <span className="ml-1">{amount}</span>
+                    </div>
+                  )
+                ))
+              )}
             </div>
           )}
         </div>
@@ -334,7 +370,7 @@ CharacteristicsAndAbilitiesTab.propTypes = {
     age: PropTypes.number,
     general_exp_available: PropTypes.number,
     magical_exp_available: PropTypes.number,
-    restricted_exp_pools: PropTypes.object
+    restricted_exp_pools: PropTypes.oneOfType([PropTypes.array, PropTypes.object])
   }),
   onSave: PropTypes.func.isRequired
 };
