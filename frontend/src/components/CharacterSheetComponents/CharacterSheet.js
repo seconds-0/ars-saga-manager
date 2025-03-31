@@ -64,22 +64,20 @@ function CharacterSheet() {
     
     if (saveRef.current) {
       // Pass along the data to the actual save function
-      const savePromise = saveRef.current(data);
+      saveRef.current(data);
       
       // If this is an age update that will recalculate XP, we should
       // force a character data refresh after the save completes
       if (isAgeUpdate) {
         console.log('Age update detected, will force refresh character data');
-        savePromise.then(() => {
-          // Wait a bit to ensure backend has time to recalculate
-          setTimeout(() => {
-            console.log('Forcing character data refresh after age update');
-            queryClient.invalidateQueries(['character', id], { 
-              refetchActive: true,
-              refetchInactive: true
-            });
-          }, 500);
-        });
+        // Use setTimeout to allow the mutation to complete
+        setTimeout(() => {
+          console.log('Forcing character data refresh after age update');
+          queryClient.invalidateQueries(['character', id], { 
+            refetchActive: true,
+            refetchInactive: true
+          });
+        }, 1000);
       }
     }
   }, [queryClient, id]);
