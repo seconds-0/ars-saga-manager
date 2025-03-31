@@ -38,8 +38,26 @@ function CharacterSheet() {
     (updatedCharacterData) => api.put(`/characters/${id}`, updatedCharacterData),
     {
       onSuccess: (data, variables) => {
-        queryClient.invalidateQueries(['character', id]);
-        console.log('Character update successful, query invalidated. Data:', data, 'Variables:', variables);
+        // Check if this was an age update that should recalculate XP
+        const isAgeUpdate = variables && variables.age !== undefined && variables.recalculateXp === true;
+        
+        console.log('Character update successful. Data:', data, 'Variables:', variables, 'isAgeUpdate:', isAgeUpdate);
+        
+        if (isAgeUpdate) {
+          console.log('Age update detected in mutation success handler, forcing data refresh');
+          // For age updates, we want to make sure we get fresh data
+          // First invalidate the query cache
+          queryClient.invalidateQueries(['character', id]);
+          
+          // Then force an immediate refetch to get the updated experience values
+          queryClient.refetchQueries(['character', id], { 
+            active: true,
+            inactive: true
+          });
+        } else {
+          // For regular updates, just invalidate the cache
+          queryClient.invalidateQueries(['character', id]);
+        }
       },
       onError: (err, variables) => {
         console.error('Error updating character:', err, 'Variables:', variables);
@@ -59,28 +77,14 @@ function CharacterSheet() {
 
   // This is the function we'll pass to children - it never changes identity
   const stableSave = useCallback((data) => {
-    const isAgeUpdate = data && data.age !== undefined && data.recalculateXp === true;
-    console.log('stableSave called with data:', data, 'isAgeUpdate:', isAgeUpdate);
+    console.log('stableSave called with data:', data);
     
     if (saveRef.current) {
       // Pass along the data to the actual save function
+      // The refresh logic is now handled in the mutation's onSuccess handler
       saveRef.current(data);
-      
-      // If this is an age update that will recalculate XP, we should
-      // force a character data refresh after the save completes
-      if (isAgeUpdate) {
-        console.log('Age update detected, will force refresh character data');
-        // Use setTimeout to allow the mutation to complete
-        setTimeout(() => {
-          console.log('Forcing character data refresh after age update');
-          queryClient.invalidateQueries(['character', id], { 
-            refetchActive: true,
-            refetchInactive: true
-          });
-        }, 1000);
-      }
     }
-  }, [queryClient, id]);
+  }, []);
 
   return (
     <ErrorBoundary>
