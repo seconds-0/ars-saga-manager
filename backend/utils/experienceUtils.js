@@ -16,12 +16,32 @@ const calculateCharacterExperience = (character, allVirtuesFlaws) => {
   let magicalExpTotal = 0;
   const restrictedPoolsArray = [];
   
-  // Calculate modifiers from virtues and flaws
-  allVirtuesFlaws.forEach(vf => {
-    const refVF = vf.ReferenceVirtueFlaw || vf.referenceVirtueFlaw;
+  // Calculate modifiers from virtues and flaws with debug output
+  console.log(`Processing ${allVirtuesFlaws.length} virtues/flaws for character ID ${character.id}`);
+  
+  allVirtuesFlaws.forEach((vf, index) => {
+    // Standardize on referenceVirtueFlaw (lowercase r) since that's the alias in the model
+    const refVF = vf.referenceVirtueFlaw;
+    
+    // Debug output to see what properties we have
+    console.log(`Virtue/Flaw #${index + 1}:`, {
+      vfId: vf.id,
+      hasReference: !!refVF,
+      refName: refVF?.name || 'No name',
+      refType: refVF?.type,
+      refSize: refVF?.size,
+      refModifiers: {
+        expRate: refVF?.exp_rate_modifier,
+        magicalExp: refVF?.magical_exp_modifier,
+        generalExp: refVF?.general_exp_modifier
+      }
+    });
     
     // Skip if reference data is missing
-    if (!refVF) return;
+    if (!refVF) {
+      console.log(`Skipping VF #${index + 1} - no reference data`);
+      return;
+    }
     
     // Adjust yearly rate
     if (refVF.exp_rate_modifier) {
@@ -87,11 +107,25 @@ const calculateCharacterExperience = (character, allVirtuesFlaws) => {
     magicalExpTotal += 240; // Base magical XP for magi
   }
   
-  return {
+  const result = {
     general_exp_available: baseGeneralExp + flatGeneralBonus,
     magical_exp_available: magicalExpTotal,
     restricted_exp_pools: restrictedPoolsArray
   };
+  
+  console.log('Experience calculation complete:', {
+    characterId: character.id,
+    age: character.age,
+    yearlyRate,
+    baseGeneralExp,
+    flatGeneralBonus,
+    isMagus,
+    magicalExpTotal,
+    restrictedPoolsCount: restrictedPoolsArray.length,
+    result
+  });
+  
+  return result;
 };
 
 /**
@@ -114,7 +148,13 @@ const recalculateAndUpdateExp = async (characterId, models) => {
     where: { character_id: characterId },
     include: [{
       model: ReferenceVirtueFlaw,
-      as: 'ReferenceVirtueFlaw'
+      as: 'referenceVirtueFlaw',
+      attributes: {
+        include: ['id', 'name', 'type', 'size', 
+          'exp_rate_modifier', 'magical_exp_modifier', 
+          'general_exp_modifier', 'general_exp_modifier_category'],
+        exclude: ['createdAt', 'updatedAt', 'created_at', 'updated_at']
+      }
     }]
   });
   
