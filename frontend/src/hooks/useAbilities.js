@@ -15,7 +15,13 @@ function useAbilities(characterId) {
     setError(null);
     
     try {
-      const response = await axios.get(`/characters/${characterId}/abilities`);
+      // Log the URL for debugging
+      console.log(`Fetching abilities from: /api/characters/${characterId}/abilities`);
+      
+      const response = await axios.get(`/api/characters/${characterId}/abilities`);
+      
+      // Log the response for debugging
+      console.log("Abilities API response:", response);
       
       if (response.data.status === 'success') {
         setAbilities(response.data.data);
@@ -42,7 +48,7 @@ function useAbilities(characterId) {
     setError(null);
     
     try {
-      const response = await axios.post(`/characters/${characterId}/abilities`, newAbility);
+      const response = await axios.post(`/api/characters/${characterId}/abilities`, newAbility);
       
       if (response.data.status === 'success') {
         // Refresh the abilities list
@@ -68,7 +74,7 @@ function useAbilities(characterId) {
     setError(null);
     
     try {
-      const response = await axios.put(`/characters/${characterId}/abilities/${abilityId}`, updates);
+      const response = await axios.put(`/api/characters/${characterId}/abilities/${abilityId}`, updates);
       
       if (response.data.status === 'success') {
         // Update the ability in the local state
@@ -98,7 +104,7 @@ function useAbilities(characterId) {
     setError(null);
     
     try {
-      const response = await axios.delete(`/characters/${characterId}/abilities/${abilityId}`);
+      const response = await axios.delete(`/api/characters/${characterId}/abilities/${abilityId}`);
       
       if (response.data.status === 'success') {
         // Remove the ability from the local state

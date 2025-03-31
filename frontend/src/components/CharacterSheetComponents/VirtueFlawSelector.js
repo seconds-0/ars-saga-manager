@@ -11,6 +11,7 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
   const [showDetails, setShowDetails] = useState(null);
   const [sortBy, setSortBy] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [hideUnavailable, setHideUnavailable] = useState(true);
 
   const fetchReferenceVirtuesFlaws = async () => {
     const response = await api.get('/reference-virtues-flaws');
@@ -121,12 +122,16 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
   const filteredVirtuesFlaws = useMemo(() => {
     if (!allVirtuesFlaws) return [];
 
-    // Filter by search term, category, and type
+    // Filter by search term, category, type, and availability
     const filtered = allVirtuesFlaws.filter(vf => {
       const matchesSearch = vf.name.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || vf.category === selectedCategory;
       const matchesType = selectedType === 'all' || vf.type === selectedType;
-      return matchesSearch && matchesCategory && matchesType;
+      
+      // Apply the hideUnavailable filter if checked
+      const isAvailable = !hideUnavailable || !isVirtueFlawDisabled(vf);
+      
+      return matchesSearch && matchesCategory && matchesType && isAvailable;
     });
 
     // Group by category
@@ -152,71 +157,87 @@ function VirtueFlawSelector({ onAdd, remainingPoints = 0, character, canAddVirtu
         // Sort items within category
         ...sortItems(items)
       ]);
-  }, [search, selectedCategory, selectedType, allVirtuesFlaws, isHouseVirtue, sortItems]);
+  }, [search, selectedCategory, selectedType, hideUnavailable, allVirtuesFlaws, isHouseVirtue, isVirtueFlawDisabled, sortItems]);
 
   if (isLoading) return <div>Loading virtues and flaws...</div>;
   if (error) return <div>Error loading virtues and flaws: {error.message}</div>;
 
   return (
     <div role="region" aria-label="Virtue and Flaw Selection">
-      <div className="flex gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search virtues and flaws"
-          onChange={(e) => {
-            // Clear any previous timers
-            if (window.searchTimer) clearTimeout(window.searchTimer);
-            
-            // Set a new timer
-            window.searchTimer = setTimeout(() => {
-              setSearch(e.target.value);
-            }, 300);
-          }}
-          className="flex-grow p-2 border rounded"
-          aria-label="Search virtues and flaws"
-          role="searchbox"
-        />
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="p-2 border rounded"
-          aria-label="Filter by category"
-        >
-          {categories.map(cat => (
-            <option key={cat} value={cat}>
-              {cat === 'all' ? 'All Categories' : cat}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="p-2 border rounded"
-          aria-label="Filter by type"
-        >
-          <option value="all">All Types</option>
-          <option value="Virtue">Virtues</option>
-          <option value="Flaw">Flaws</option>
-        </select>
-        <div className="flex items-center gap-2">
+      <div className="space-y-4 mb-4">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Search virtues and flaws"
+            onChange={(e) => {
+              // Clear any previous timers
+              if (window.searchTimer) clearTimeout(window.searchTimer);
+              
+              // Set a new timer
+              window.searchTimer = setTimeout(() => {
+                setSearch(e.target.value);
+              }, 300);
+            }}
+            className="flex-grow p-2 border rounded"
+            aria-label="Search virtues and flaws"
+            role="searchbox"
+          />
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className="p-2 border rounded"
-            aria-label="Sort by"
+            aria-label="Filter by category"
           >
-            <option value="name">Name</option>
-            <option value="type">Type</option>
-            <option value="size">Size</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'all' ? 'All Categories' : cat}
+              </option>
+            ))}
           </select>
-          <button
-            onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-            className="p-2 border rounded hover:bg-gray-50"
-            aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
-            title={`Sort ${sortDirection === 'asc' ? 'Z to A' : 'A to Z'}`}
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="p-2 border rounded"
+            aria-label="Filter by type"
           >
-            {sortDirection === 'asc' ? '↑' : '↓'}
-          </button>
+            <option value="all">All Types</option>
+            <option value="Virtue">Virtues</option>
+            <option value="Flaw">Flaws</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="p-2 border rounded"
+              aria-label="Sort by"
+            >
+              <option value="name">Name</option>
+              <option value="type">Type</option>
+              <option value="size">Size</option>
+            </select>
+            <button
+              onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="p-2 border rounded hover:bg-gray-50"
+              aria-label={`Sort ${sortDirection === 'asc' ? 'descending' : 'ascending'}`}
+              title={`Sort ${sortDirection === 'asc' ? 'Z to A' : 'A to Z'}`}
+            >
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Hide Unavailable toggle */}
+        <div className="flex items-center mb-2">
+          <input
+            type="checkbox"
+            id="hideUnavailable"
+            checked={hideUnavailable}
+            onChange={() => setHideUnavailable(prev => !prev)}
+            className="h-4 w-4 mr-2"
+          />
+          <label htmlFor="hideUnavailable" className="select-none cursor-pointer">
+            Hide Unavailable
+          </label>
         </div>
       </div>
 
