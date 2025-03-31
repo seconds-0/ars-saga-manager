@@ -437,38 +437,87 @@ npm test -- -t "test name pattern"
 npm test -- path/to/file.test.js
 ```
 
-### 2. Batched Test Runner
+### 2. Batched Test Runner (WSL)
 
-For running tests in WSL without timeouts:
+For running tests in WSL with batching to mitigate timeouts:
+
 ```bash
 # Run all tests in batches
 npm run test:batched
 
-# Run frontend tests only
+# Run only frontend tests
 npm run test:batched:frontend
 
-# Run tests with custom batch size
-npm run test:batched -- --batch-size=3
+# Run only backend tests
+npm run test:batched:backend
+
+# Run tests for recently changed files
+npm run test:changed
 ```
 
-### 3. Simple Test Runner
+Additional options:
 
-For ultra-fast testing of non-UI utilities:
-```bash
-# Run simple tests
-npm run test:simple path/to/file.simple.test.js
-```
+- Set batch size: `npm run test:batched -- --batch-size=3`
+- Filter tests by pattern: `npm run test:batched -- --pattern=VirtueFlaw`
+- See detailed output: `npm run test:batched -- --verbose`
 
-### 4. Docker-based Testing
+The batched test runner creates a detailed Markdown report in `/test-results/batched-test-report.md` with:
 
-For isolated testing environment:
+- Test summary statistics
+- Detailed error information for failing tests
+- Batch execution metadata
+
+### 3. Docker-based Testing (Recommended for Full Suite)
+
+For optimal performance, the Docker-based test runner provides an isolated environment:
+
 ```bash
 # Run all tests in Docker
 npm run test:docker
 
 # Build and run tests
 npm run test:docker:build
+
+# Run only frontend tests
+npm run test:docker:frontend
+
+# Run only backend tests
+npm run test:docker:backend
+
+# Run tests for specific file pattern
+npm run test:docker:file=src/components/*.test.js
 ```
+
+Benefits of Docker testing:
+
+- Consistent environment across machines
+- Significantly faster than WSL for the full suite
+- Avoids Windows filesystem performance issues
+- Isolated dependencies
+
+### 4. WSL Optimization
+
+To improve WSL performance, run the optimization script:
+```bash
+npm run test:wsl-optimize
+```
+
+This script configures `.wslconfig`, Linux memory/swap, disk I/O, and Node.js settings. Restart WSL (`wsl --shutdown`) after running.
+
+### 5. Simple Test Runner (Fastest for Logic)
+
+For ultra-fast validation of non-UI code during development:
+```bash
+npm run test:simple path/to/test.js
+```
+
+The simple test runner:
+
+- Uses pure Node.js, avoiding Jest's overhead
+- Supports basic Jest API (test/describe/expect)
+- Runs in milliseconds
+- Perfect for validating business logic, utilities, backend code
+- Limitations: no UI component testing, limited matchers
 
 ## Example Test Files
 

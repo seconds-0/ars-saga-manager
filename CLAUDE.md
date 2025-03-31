@@ -132,74 +132,19 @@ Before implementing any feature or bugfix:
 
 The project provides multiple ways to run tests, each with different performance characteristics, especially relevant in WSL environments.
 
-### Recommended Testing Workflow During Development
+> **Note:** For comprehensive testing environment details, refer to:
+> 
+> - [TEST-STANDARDS.md](./Documentation/TEST-STANDARDS.md) - Detailed testing environments and options
+> - [TEST-PATTERNS.md](./Documentation/TEST-PATTERNS.md) - General testing patterns
+> - [**test-utils**/README.md](./frontend/src/__test-utils__/README.md) - Reusable test utilities
 
-1.  **Logic & Utilities (Backend/Frontend):** For pure logic files (`experienceUtils.js`, `abilityUtils.js`, `virtueFlawValidation.js`, `virtueFlawPoints.js`), **use the Simple Test Runner (`npm run test:simple path/to/your.test.js`)** for the fastest feedback loop during implementation and debugging.
-2.  **Frontend Components & Hooks:** For React components (`AbilityInput.js`, `AbilityList.js`) and hooks (`useAbilities.js`), use either the **Batched Test Runner (`npm run test:batched:frontend`)** or the **Docker Runner (`npm run test:docker:frontend`)** if Docker is available and faster on your system. Avoid direct `npm test` in WSL for frontend tests due to likely timeouts.
-3.  **Full Suite:** Run the full suite (`npm run test:all` or `npm run test:batched`) less frequently, primarily before committing major changes or requesting reviews.
+### Recommended Testing Workflow
 
-### Detailed Runner Options
+1. **Logic & Utilities:** Use Simple Test Runner (`npm run test:simple path/to/test.js`) for fastest feedback
+2. **Frontend Components:** Use Batched Runner (`npm run test:batched:frontend`) or Docker Runner
+3. **Full Suite:** Run only before commits (`npm run test:all` or `npm run test:batched`)
 
-#### 1. Batched Test Runner (WSL)
-
-For running tests in WSL with batching to mitigate timeouts:
-
-- Run all tests in batches: `npm run test:batched`
-- Run only frontend tests: `npm run test:batched:frontend`
-- Run only backend tests: `npm run test:batched:backend`
-- Run tests for recently changed files: `npm run test:changed`
-
-Additional options:
-
-- Set batch size: `npm run test:batched -- --batch-size=3`
-- Filter tests by pattern: `npm run test:batched -- --pattern=VirtueFlaw`
-- See detailed output: `npm run test:batched -- --verbose`
-
-The batched test runner creates a detailed Markdown report in `/test-results/batched-test-report.md` with:
-
-- Test summary statistics
-- Detailed error information for failing tests
-- Batch execution metadata
-
-#### 2. Docker-based Testing (Recommended for Full Suite)
-
-For optimal performance, the Docker-based test runner provides an isolated environment:
-
-- Run all tests in Docker: `npm run test:docker`
-- Build and run tests: `npm run test:docker:build`
-- Run only frontend tests: `npm run test:docker:frontend`
-- Run only backend tests: `npm run test:docker:backend`
-- Run tests for specific file pattern: `npm run test:docker:file=src/components/*.test.js`
-
-Benefits of Docker testing:
-
-- Consistent environment across machines
-- Significantly faster than WSL for the full suite
-- Avoids Windows filesystem performance issues
-- Isolated dependencies
-
-#### 3. WSL Optimization
-
-To improve WSL performance, run the optimization script:
-Use code with caution.
-Markdown
-npm run test:wsl-optimize
-
-This script configures `.wslconfig`, Linux memory/swap, disk I/O, and Node.js settings. Restart WSL (`wsl --shutdown`) after running.
-
-#### 4. Simple Test Runner (Fastest for Logic)
-
-For ultra-fast validation of non-UI code during development:
-Use code with caution.
-npm run test:simple path/to/test.js
-
-The simple test runner:
-
-- Uses pure Node.js, avoiding Jest's overhead.
-- Supports basic Jest API (test/describe/expect).
-- Runs in milliseconds.
-- Perfect for validating business logic, utilities, backend code.
-- Limitations: no UI component testing, limited matchers.
+See [TEST-STANDARDS.md](./Documentation/TEST-STANDARDS.md) for detailed runner options, configurations, and optimization techniques.
 
 ## Database Management
 
@@ -291,117 +236,24 @@ The simple test runner:
 > - [TEST-STANDARDIZATION.md](./Documentation/Plans/TEST-STANDARDIZATION.md) - Standardized approach with example code
 > - [**test-utils**/README.md](./frontend/src/__test-utils__/README.md) - Reusable test utilities and fixtures
 
-### Test Utilities Module (**REQUIRED for Frontend Tests**)
+### Testing Requirements
 
-The project provides a comprehensive set of standardized test utilities in the `__test-utils__` directory to ensure consistent testing patterns across all components:
+- **REQUIRED:** Use the standardized test utilities provided in `frontend/src/__test-utils__`
+- Focus on testing behavior, not implementation details
+- Follow the project's consistent setup function pattern
+- Group tests with descriptive describe blocks
+- Mock external dependencies consistently
 
-```javascript
-// Import only what you need (preferred)
-import {
-  setupComponent,
-  setupWithQueryClient,
-  setupConsoleSuppress,
-  createAxiosMock,
-  CHARACTER_FIXTURES,
-  AUTH_STATES
-} from '../__test-utils__';
-Use code with caution.
-Core Utilities
-Component Setup Functions: setupComponent(), setupWithQueryClient(), setupWithRouter(), setupWithAuth(), setupWithAllProviders()
-
-Console Error Suppression: setupConsoleSuppress(), suppressConsoleErrors()
-
-Mock Implementations: createAxiosMock(), mockUseAuth(), AUTH_STATES
-
-Testing Fixtures: CHARACTER_FIXTURES, VIRTUE_FLAW_FIXTURES, ABILITY_FIXTURES, QUERY_STATES
-
-Hook Testing Utilities: setupHook(), setupHookWithQueryClient(), setupHookWithAuth(), waitForHookToSettle(), HOOK_STATES
-
-Standard Test Pattern
-Every test file should follow this consistent pattern:
-
-import React from 'react';
-import { screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import YourComponent from './YourComponent';
-import { setupComponent, setupConsoleSuppress } from '../__test-utils__';
-
-// Setup console error suppression
-setupConsoleSuppress();
-
-// Component-specific setup function
-function setup(customProps = {}) {
-  const defaultProps = { /* Default prop values */ };
-  return setupComponent(YourComponent, defaultProps, customProps);
-}
-
-describe('YourComponent', () => {
-  describe('Rendering', () => {
-    test('renders correctly', () => {
-      setup();
-      expect(screen.getByText('Expected Text')).toBeInTheDocument();
-    });
-  });
-
-  describe('User interactions', () => {
-    test('handles user input', () => {
-      const { props } = setup();
-      fireEvent.click(screen.getByRole('button'));
-      expect(props.onButtonClick).toHaveBeenCalled();
-    });
-  });
-});
-Use code with caution.
-JavaScript
-Test Structure
-Begin each test file with standard imports and mock setup using __test-utils__.
-
-Group tests using descriptive describe blocks.
-
-Use consistent setup functions for component rendering.
-
-Test behavior, not implementation details.
-
-Component Testing Checklist
-Initial render state verification
-
-Props handling
-
-User interactions
-
-Conditional rendering
-
-Error/Loading/Empty states
-
-Accessibility concerns
-
-Mock Guidelines
-Mock all external dependencies using __test-utils__ helpers where possible.
-
-Use consistent mock patterns. Reset mocks between tests.
-
-Testing Complex State Management
-Test custom hooks in isolation using renderHook and hookUtils.
-
-Verify all state transitions.
-
-Balancing Test Coverage and Maintenance
-Coverage Strategy: Aim for high coverage on core logic (utils, services) and critical UI paths.
-
-Efficiency: Use parameterized tests, test behaviors, limit snapshots.
-
-Maintenance: Update tests with component changes, document complex tests.
-
-Current Development Focus
-<Checklist of its current state. Claude updates this>
+For detailed testing patterns, examples, and best practices, refer to the documentation listed above rather than duplicating it here.
 
 ## Tool Constraints
 
 - **Unable to run Sequelize CLI commands** - When database migrations and seeds need to be executed, prompt the user to run commands like `npx sequelize-cli db:migrate` and `npx sequelize-cli db:seed:all` rather than attempting to run them directly.
 - **Auth middleware consistency** - The project uses `authenticateToken` from `auth.js` for all protected routes. Do not use `isAuthenticated` which doesn't exist.
 
-## Tool Constraints
+## Critical Quality Rules
 
-- **Unable to run Sequelize CLI commands** - When database migrations and seeds need to be executed, prompt the user to run commands like `npx sequelize-cli db:migrate` and `npx sequelize-cli db:seed:all` rather than attempting to run them directly.
-- **Auth middleware consistency** - The project uses `authenticateToken` from `auth.js` for all protected routes. Do not use `isAuthenticated` which doesn't exist.
+- **NEVER bypass or change tests** - Tests are the foundation of our quality control. NEVER modify test expectations to bypass failing tests. Always fix the implementation to make the tests pass correctly. This ensures the application behaves according to the expected behavior.
+- **Always run tests before marking a feature as complete** - Before considering a feature implementation complete, run all relevant tests to ensure nothing has been broken.
+- **Maintain test accuracy** - Tests must accurately verify expected system behavior. If a test seems wrong, discuss it with the user rather than modifying the test.
 ```
