@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { sequelize, ReferenceAbility, CharacterAbility, Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
+const { sequelize, ReferenceAbility, CharacterAbility, Character, CharacterVirtueFlaw } = require('../models');
 const { authenticateToken } = require('./auth');
 const experienceService = require('../services/experienceService');
 const { 
@@ -13,8 +13,10 @@ const {
   isAbilityAppropriateForCharacterType,
   calculateEffectiveScore,
   getAbilityCost,
+  getAbilityRefund,
   hasAffinityWithAbility
 } = require('../utils/abilityUtils');
+const { safeReferenceVirtueFlawInclude, safeCharacterVirtueFlawsInclude } = require('../utils/modelIncludeUtils');
 
 // Get all reference abilities (public endpoint - no auth required)
 router.get('/', async (req, res) => {
@@ -78,24 +80,7 @@ router.get('/:characterId/abilities', async (req, res) => {
         id: characterId,
         user_id: req.user.id
       },
-      include: [
-        {
-          model: CharacterVirtueFlaw,
-          as: 'CharacterVirtueFlaws',
-          include: [
-            {
-              model: ReferenceVirtueFlaw,
-              as: 'referenceVirtueFlaw',  // Corrected to match the model association
-              // Only select fields we actually need, explicitly excluding timestamps
-              attributes: {
-                include: ['id', 'name', 'description', 'type', 'size', 
-                  'ability_score_bonus', 'specification_type', 'affects_ability_cost'],
-                exclude: ['createdAt', 'updatedAt', 'created_at', 'updated_at']
-              }
-            }
-          ]
-        }
-      ]
+      include: [safeCharacterVirtueFlawsInclude()]
     });
     
     console.log('Character found:', character ? 'Yes' : 'No');
@@ -136,7 +121,7 @@ router.get('/:characterId/abilities', async (req, res) => {
         );
         
         // Calculate XP needed for next level
-        const nextLevelXP = ability.score > 0 
+        const nextLevelXP = ability.score >= 0 
           ? (ability.score * 5) + 5
           : 5;
 
@@ -248,15 +233,9 @@ router.post('/:characterId/abilities', async (req, res) => {
       });
     }
     
-    // Get character's virtues/flaws to check for Affinity
-    const characterVirtuesFlaws = await CharacterVirtueFlaw.findAll({
-      where: { character_id: characterId },
-      include: [{
-        model: ReferenceVirtueFlaw,
-        as: 'referenceVirtueFlaw'
-      }],
-      transaction
-    });
+    // Extract character virtues/flaws directly from the character object we already fetched
+    // This is more efficient than doing another query
+    const characterVirtuesFlaws = character.CharacterVirtueFlaws || [];
     
     // Calculate score from XP if provided
     let score = 0;
@@ -339,12 +318,15 @@ router.put('/:characterId/abilities/:abilityId', async (req, res) => {
     const { characterId, abilityId } = req.params;
     const { score, specialty, experience_points } = req.body;
     
+    console.log(`Updating ability ${abilityId} for character ${characterId} with:`, { score, specialty, experience_points });
+    
     // Check if character belongs to the authenticated user
     const character = await Character.findOne({
       where: {
         id: characterId,
         user_id: req.user.id
       },
+      include: [safeCharacterVirtueFlawsInclude()],
       transaction
     });
     
@@ -373,15 +355,9 @@ router.put('/:characterId/abilities/:abilityId', async (req, res) => {
       });
     }
     
-    // Get character's virtues/flaws to check for Affinity
-    const characterVirtuesFlaws = await CharacterVirtueFlaw.findAll({
-      where: { character_id: characterId },
-      include: [{
-        model: ReferenceVirtueFlaw,
-        as: 'referenceVirtueFlaw'
-      }],
-      transaction
-    });
+    // Extract character virtues/flaws directly from the character object we already fetched
+    // This is more efficient than doing another query
+    const characterVirtuesFlaws = character.CharacterVirtueFlaws || [];
     
     // Get affinity status using our utility function
     const hasAffinity = hasAffinityWithAbility(ability.ability_name, characterVirtuesFlaws);
@@ -398,41 +374,65 @@ router.put('/:characterId/abilities/:abilityId', async (req, res) => {
     
     // If XP is provided, update score accordingly
     if (experience_points !== undefined && experience_points !== ability.experience_points) {
-      // Only allow increasing XP for now
-      if (experience_points < ability.experience_points) {
-        await transaction.rollback();
-        return res.status(400).json({
-          status: 'error',
-          message: 'Decreasing experience points is not supported'
-        });
-      }
-      
-      // Calculate the cost of the XP increase using our utility function
-      const actualCost = getAbilityCost(
-        experience_points,  // Target XP
-        ability.experience_points,  // Current XP
-        ability.ability_name,
-        characterVirtuesFlaws,
-        ability.category
-      );
-      
-      if (actualCost > 0) {
-        // Spend the experience points using the imported service
-        
-        const spendResult = await experienceService.spendExperience(
-          characterId,
-          ability.category,
+      if (experience_points > ability.experience_points) {
+        // For increasing XP, calculate the cost and spend XP
+        const actualCost = getAbilityCost(
+          experience_points,  // Target XP
+          ability.experience_points,  // Current XP
           ability.ability_name,
-          actualCost
+          characterVirtuesFlaws,
+          ability.category
         );
         
-        if (!spendResult.success) {
-          await transaction.rollback();
-          return res.status(400).json({
-            status: 'error',
-            message: spendResult.reason,
-            details: spendResult.details || {}
-          });
+        if (actualCost > 0) {
+          // Spend the experience points using the imported service
+          const spendResult = await experienceService.spendExperience(
+            characterId,
+            ability.category,
+            ability.ability_name,
+            actualCost
+          );
+          
+          if (!spendResult.success) {
+            await transaction.rollback();
+            return res.status(400).json({
+              status: 'error',
+              message: spendResult.reason,
+              details: spendResult.details || {}
+            });
+          }
+        }
+      } else {
+        // For decreasing XP, calculate and refund the difference
+        console.log(`Decreasing XP for ${ability.ability_name} from ${ability.experience_points} to ${experience_points}`);
+        
+        // Calculate the refund amount
+        const refundAmount = getAbilityRefund(
+          ability.experience_points, // Current XP
+          experience_points,        // Target XP
+          ability.ability_name,
+          characterVirtuesFlaws,
+          ability.category
+        );
+        
+        if (refundAmount > 0) {
+          console.log(`Refunding ${refundAmount} XP for decreasing XP of ${ability.ability_name}`);
+          
+          // Refund the experience points
+          const refundResult = await experienceService.refundExperience(
+            characterId,
+            ability.category,
+            ability.ability_name,
+            refundAmount
+          );
+          
+          if (!refundResult.success) {
+            console.error(`Failed to refund XP: ${refundResult.reason}`);
+            // We don't rollback here since we still want to allow the XP to decrease
+            // Just log the error but continue with the update
+          } else {
+            console.log(`Successfully refunded ${refundAmount} XP. New general XP: ${refundResult.details.new_general_exp}`);
+          }
         }
       }
       
@@ -442,43 +442,67 @@ router.put('/:characterId/abilities/:abilityId', async (req, res) => {
     } 
     // If score is provided, update XP accordingly
     else if (score !== undefined && score !== ability.score) {
-      // Only allow increasing score for now
-      if (score < ability.score) {
-        await transaction.rollback();
-        return res.status(400).json({
-          status: 'error',
-          message: 'Decreasing ability score is not supported'
-        });
-      }
-      
       const newXP = calculateXPForLevel(score);
       
-      // Calculate cost using our utility function
-      const actualCost = getAbilityCost(
-        newXP,  // Target XP
-        ability.experience_points,  // Current XP
-        ability.ability_name,
-        characterVirtuesFlaws,
-        ability.category
-      );
-      
-      if (actualCost > 0) {
-        // Spend the experience points using the imported service
-        
-        const spendResult = await experienceService.spendExperience(
-          characterId,
-          ability.category,
+      if (score > ability.score) {
+        // For increasing scores, we need to calculate the cost and spend XP
+        const actualCost = getAbilityCost(
+          newXP,  // Target XP
+          ability.experience_points,  // Current XP
           ability.ability_name,
-          actualCost
+          characterVirtuesFlaws,
+          ability.category
         );
         
-        if (!spendResult.success) {
-          await transaction.rollback();
-          return res.status(400).json({
-            status: 'error',
-            message: spendResult.reason,
-            details: spendResult.details || {}
-          });
+        if (actualCost > 0) {
+          // Spend the experience points using the imported service
+          const spendResult = await experienceService.spendExperience(
+            characterId,
+            ability.category,
+            ability.ability_name,
+            actualCost
+          );
+          
+          if (!spendResult.success) {
+            await transaction.rollback();
+            return res.status(400).json({
+              status: 'error',
+              message: spendResult.reason,
+              details: spendResult.details || {}
+            });
+          }
+        }
+      } else {
+        // For decreasing scores, calculate and refund XP to the character
+        console.log(`Decreasing ability score for ${ability.ability_name} from ${ability.score} to ${score}`);
+        
+        // Calculate the refund amount
+        const refundAmount = getAbilityRefund(
+          ability.experience_points, // Current XP
+          newXP,                    // Target XP
+          ability.ability_name,
+          characterVirtuesFlaws,
+          ability.category
+        );
+        
+        if (refundAmount > 0) {
+          console.log(`Refunding ${refundAmount} XP for decreasing ${ability.ability_name}`);
+          
+          // Refund the experience points
+          const refundResult = await experienceService.refundExperience(
+            characterId,
+            ability.category,
+            ability.ability_name,
+            refundAmount
+          );
+          
+          if (!refundResult.success) {
+            console.error(`Failed to refund XP: ${refundResult.reason}`);
+            // We don't rollback here since we still want to allow the score to decrease
+            // Just log the error but continue with the update
+          } else {
+            console.log(`Successfully refunded ${refundAmount} XP. New general XP: ${refundResult.details.new_general_exp}`);
+          }
         }
       }
       
@@ -522,12 +546,462 @@ router.put('/:characterId/abilities/:abilityId', async (req, res) => {
       }
     });
   } catch (error) {
-    await transaction.rollback();
+    // Make sure to rollback the transaction
+    try {
+      if (transaction) await transaction.rollback();
+    } catch (rollbackError) {
+      console.error('Error during transaction rollback:', rollbackError);
+    }
+    
     console.error('Error updating character ability:', error);
+    console.error('Error stack:', error.stack);
+    
     res.status(500).json({
       status: 'error',
       message: 'Failed to update character ability',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
+  }
+});
+
+/**
+ * Batch update abilities for a character
+ * This endpoint accepts multiple ability operations in a single request
+ * to reduce API calls and avoid rate limiting issues
+ */
+router.post('/:characterId/abilities/batch', async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const { characterId } = req.params;
+    const { operations } = req.body;
+    
+    // Validate request
+    if (!operations || !Array.isArray(operations) || operations.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        status: 'error',
+        message: 'Request must include an array of operations'
+      });
+    }
+    
+    // Check if character belongs to the authenticated user
+    const character = await Character.findOne({
+      where: {
+        id: characterId,
+        user_id: req.user.id
+      },
+      include: [safeCharacterVirtueFlawsInclude()],
+      transaction
+    });
+    
+    if (!character) {
+      await transaction.rollback();
+      return res.status(404).json({
+        status: 'error',
+        message: 'Character not found or access denied'
+      });
+    }
+    
+    // Extract character virtues/flaws directly from the character object
+    const characterVirtuesFlaws = character.CharacterVirtueFlaws || [];
+    
+    // Process each operation
+    const results = [];
+    let hasErrors = false;
+    
+    for (const operation of operations) {
+      const { abilityId, action, data } = operation;
+      
+      try {
+        // Validate operation
+        if (!abilityId || !action) {
+          results.push({
+            abilityId,
+            action,
+            success: false,
+            error: 'Missing required operation fields (abilityId, action)',
+          });
+          hasErrors = true;
+          continue;
+        }
+        
+        // Find the ability
+        const ability = await CharacterAbility.findOne({
+          where: {
+            id: abilityId,
+            character_id: characterId
+          },
+          transaction
+        });
+        
+        if (!ability) {
+          results.push({
+            abilityId,
+            action,
+            success: false,
+            error: `Ability with ID ${abilityId} not found for this character`,
+          });
+          hasErrors = true;
+          continue;
+        }
+        
+        // Set default values based on current ability
+        let updatedXP = ability.experience_points;
+        let updatedScore = ability.score;
+        let updatedSpecialty = ability.specialty;
+        let updatesMade = false;
+        
+        // Process based on action type
+        switch (action) {
+          case 'increment': {
+            // Increment score by 1 level
+            const targetScore = ability.score + 1;
+            const targetXP = calculateXPForLevel(targetScore);
+            const xpNeeded = targetXP - ability.experience_points;
+            
+            console.log(`Batch: Incrementing ${ability.ability_name} from score ${ability.score} (${ability.experience_points} XP) to score ${targetScore} (${targetXP} XP)`);
+            console.log(`XP needed: ${xpNeeded}`);
+            
+            if (xpNeeded > 0) {
+              // Calculate actual cost with virtues/flaws
+              const actualCost = getAbilityCost(
+                targetXP,  // Target XP
+                ability.experience_points,  // Current XP
+                ability.ability_name,
+                characterVirtuesFlaws,
+                ability.category
+              );
+              
+              if (actualCost > 0) {
+                // Spend the experience points
+                const spendResult = await experienceService.spendExperience(
+                  characterId,
+                  ability.category,
+                  ability.ability_name,
+                  actualCost
+                );
+                
+                if (!spendResult.success) {
+                  results.push({
+                    abilityId,
+                    action,
+                    success: false,
+                    error: spendResult.reason,
+                    details: spendResult.details || {}
+                  });
+                  continue;
+                }
+              }
+            }
+            
+            updatedScore = targetScore;
+            updatedXP = targetXP;
+            updatesMade = true;
+            break;
+          }
+          
+          case 'decrement': {
+            // Don't allow decrementing below 0
+            if (ability.score <= 0) {
+              results.push({
+                abilityId,
+                action,
+                success: false,
+                error: 'Cannot decrement ability score below 0',
+              });
+              continue;
+            }
+            
+            // Decrement score by 1 level
+            const targetScore = ability.score - 1;
+            const targetXP = calculateXPForLevel(targetScore);
+            const xpRefund = ability.experience_points - targetXP;
+            
+            console.log(`Batch: Decrementing ${ability.ability_name} from score ${ability.score} (${ability.experience_points} XP) to score ${targetScore} (${targetXP} XP)`);
+            console.log(`XP refund: ${xpRefund}`);
+            
+            if (xpRefund > 0) {
+              // Calculate actual refund with virtues/flaws
+              const refundAmount = getAbilityRefund(
+                ability.experience_points, // Current XP
+                targetXP,                 // Target XP
+                ability.ability_name,
+                characterVirtuesFlaws,
+                ability.category
+              );
+              
+              if (refundAmount > 0) {
+                // Refund the experience points
+                const refundResult = await experienceService.refundExperience(
+                  characterId,
+                  ability.category,
+                  ability.ability_name,
+                  refundAmount
+                );
+                
+                if (!refundResult.success) {
+                  console.error(`Failed to refund XP: ${refundResult.reason}`);
+                  // We still allow the operation to continue - just log the error
+                }
+              }
+            }
+            
+            updatedScore = targetScore;
+            updatedXP = targetXP;
+            updatesMade = true;
+            break;
+          }
+          
+          case 'update': {
+            // Direct update with provided data
+            if (!data) {
+              results.push({
+                abilityId,
+                action,
+                success: false,
+                error: 'Missing data for update operation',
+              });
+              continue;
+            }
+            
+            // Handle specialty update
+            if (data.specialty !== undefined && data.specialty !== ability.specialty) {
+              updatedSpecialty = data.specialty;
+              updatesMade = true;
+            }
+            
+            // Handle score/xp update - prioritize score if both are provided
+            if (data.score !== undefined && data.score !== ability.score) {
+              const newXP = calculateXPForLevel(data.score);
+              
+              if (data.score > ability.score) {
+                // For increasing scores, calculate cost and spend XP
+                const actualCost = getAbilityCost(
+                  newXP,  // Target XP
+                  ability.experience_points,  // Current XP
+                  ability.ability_name,
+                  characterVirtuesFlaws,
+                  ability.category
+                );
+                
+                if (actualCost > 0) {
+                  // Spend the experience points
+                  const spendResult = await experienceService.spendExperience(
+                    characterId,
+                    ability.category,
+                    ability.ability_name,
+                    actualCost
+                  );
+                  
+                  if (!spendResult.success) {
+                    results.push({
+                      abilityId,
+                      action,
+                      success: false,
+                      error: spendResult.reason,
+                      details: spendResult.details || {}
+                    });
+                    continue;
+                  }
+                }
+              } else {
+                // For decreasing scores, calculate and refund XP
+                const refundAmount = getAbilityRefund(
+                  ability.experience_points, // Current XP
+                  newXP,                    // Target XP
+                  ability.ability_name,
+                  characterVirtuesFlaws,
+                  ability.category
+                );
+                
+                if (refundAmount > 0) {
+                  // Refund the experience points
+                  const refundResult = await experienceService.refundExperience(
+                    characterId,
+                    ability.category,
+                    ability.ability_name,
+                    refundAmount
+                  );
+                  
+                  if (!refundResult.success) {
+                    console.error(`Failed to refund XP: ${refundResult.reason}`);
+                    // We still allow the operation to continue - just log the error
+                  }
+                }
+              }
+              
+              updatedScore = data.score;
+              updatedXP = newXP;
+              updatesMade = true;
+            } 
+            // If score is not provided but XP is, update based on XP
+            else if (data.experience_points !== undefined && data.experience_points !== ability.experience_points) {
+              if (data.experience_points > ability.experience_points) {
+                // For increasing XP, calculate cost and spend XP
+                const actualCost = getAbilityCost(
+                  data.experience_points,  // Target XP
+                  ability.experience_points,  // Current XP
+                  ability.ability_name,
+                  characterVirtuesFlaws,
+                  ability.category
+                );
+                
+                if (actualCost > 0) {
+                  // Spend the experience points
+                  const spendResult = await experienceService.spendExperience(
+                    characterId,
+                    ability.category,
+                    ability.ability_name,
+                    actualCost
+                  );
+                  
+                  if (!spendResult.success) {
+                    results.push({
+                      abilityId,
+                      action,
+                      success: false,
+                      error: spendResult.reason,
+                      details: spendResult.details || {}
+                    });
+                    continue;
+                  }
+                }
+              } else {
+                // For decreasing XP, calculate and refund
+                const refundAmount = getAbilityRefund(
+                  ability.experience_points, // Current XP
+                  data.experience_points,    // Target XP
+                  ability.ability_name,
+                  characterVirtuesFlaws,
+                  ability.category
+                );
+                
+                if (refundAmount > 0) {
+                  // Refund the experience points
+                  const refundResult = await experienceService.refundExperience(
+                    characterId,
+                    ability.category,
+                    ability.ability_name,
+                    refundAmount
+                  );
+                  
+                  if (!refundResult.success) {
+                    console.error(`Failed to refund XP: ${refundResult.reason}`);
+                    // We still allow the operation to continue - just log the error
+                  }
+                }
+              }
+              
+              updatedXP = data.experience_points;
+              updatedScore = calculateLevelFromXP(data.experience_points);
+              updatesMade = true;
+            }
+            
+            break;
+          }
+          
+          default:
+            results.push({
+              abilityId,
+              action,
+              success: false,
+              error: `Unknown action: ${action}`,
+            });
+            continue;
+        }
+        
+        // If no updates were made, skip this operation
+        if (!updatesMade) {
+          results.push({
+            abilityId,
+            action,
+            success: true,
+            data: ability.toJSON(),
+            message: 'No changes required',
+          });
+          continue;
+        }
+        
+        // Update the ability
+        await ability.update({
+          score: updatedScore,
+          specialty: updatedSpecialty,
+          experience_points: updatedXP
+        }, { transaction });
+        
+        // Calculate effective score
+        const effectiveScore = calculateEffectiveScore(
+          ability.ability_name,
+          updatedScore,
+          characterVirtuesFlaws
+        );
+        
+        // Add result
+        results.push({
+          abilityId,
+          action,
+          success: true,
+          data: {
+            id: ability.id,
+            ability_name: ability.ability_name,
+            score: updatedScore,
+            effective_score: effectiveScore,
+            specialty: updatedSpecialty,
+            experience_points: updatedXP,
+            category: ability.category
+          }
+        });
+        
+      } catch (operationError) {
+        console.error(`Error processing operation for ability ${abilityId}:`, operationError);
+        
+        results.push({
+          abilityId,
+          action,
+          success: false,
+          error: operationError.message || 'An error occurred processing this operation',
+        });
+        
+        hasErrors = true;
+      }
+    }
+    
+    // If any operations failed and we're not using partial success, rollback
+    // Otherwise commit the transaction
+    if (hasErrors && req.body.allOrNothing === true) {
+      await transaction.rollback();
+      return res.status(400).json({
+        status: 'error',
+        message: 'One or more operations failed and allOrNothing is enabled',
+        results
+      });
+    } else {
+      await transaction.commit();
+      
+      return res.json({
+        status: 'success',
+        results
+      });
+    }
+    
+  } catch (error) {
+    // Make sure to rollback the transaction
+    try {
+      if (transaction) await transaction.rollback();
+    } catch (rollbackError) {
+      console.error('Error during transaction rollback:', rollbackError);
+    }
+    
+    console.error('Error processing batch ability updates:', error);
+    console.error('Error stack:', error.stack);
+    
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to process batch ability updates',
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
     });
   }
 });

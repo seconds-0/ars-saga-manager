@@ -7,6 +7,7 @@
 For complex tasks that require analysis of the entire codebase or intricate system interactions, request the user to utilize a larger context or specialized model for comprehensive review.
 
 - **When to request user assistance**:
+
   - **Initial planning of big features** (highly recommended)
   - Analyzing large-scale architectural changes
   - Vetting complex implementation plans
@@ -125,16 +126,26 @@ Before implementing any feature or bugfix:
 - Run all tests: `npm run test:all` - Run all tests in backend and frontend
 - Run single test: `cd frontend && npm test -- -t "test name"` or `cd backend && npm test -- -t "test name"`
 - Frontend test with HTML report: `cd frontend && npm run test:html` - Generates test-report.html
+- Generate comprehensive test report: `npm run test:report` - When Claude's direct test running is interrupted/broken
 - Start all services: `npm run start:all` - Start backend, frontend, and logging stack
 - Stop all services: `npm run stop:all` - Gracefully shut down all services
 - Health check: `npm run health` - Check status of all services
+
+### IMPORTANT: Test Running Strategy
+
+Due to environment constraints in Claude's tooling that may prevent directly viewing test results:
+
+1. When tests need to be run and validated, ask the user to run: `npm run test:report`
+2. This will generate a comprehensive test report that can be analyzed by Claude
+3. After the user runs this command, review the report to identify any remaining issues
+4. Never try to run tests directly via npm test commands when experiencing output truncation issues
 
 ## Testing Environment Options
 
 The project provides multiple ways to run tests, each with different performance characteristics, especially relevant in WSL environments.
 
 > **Note:** For comprehensive testing environment details, refer to:
-> 
+>
 > - [TEST-STANDARDS.md](./Documentation/TEST-STANDARDS.md) - Detailed testing environments and options
 > - [TEST-PATTERNS.md](./Documentation/TEST-PATTERNS.md) - General testing patterns
 > - [**test-utils**/README.md](./frontend/src/__test-utils__/README.md) - Reusable test utilities
@@ -257,4 +268,7 @@ For detailed testing patterns, examples, and best practices, refer to the docume
 - **NEVER bypass or change tests** - Tests are the foundation of our quality control. NEVER modify test expectations to bypass failing tests. Always fix the implementation to make the tests pass correctly. This ensures the application behaves according to the expected behavior.
 - **Always run tests before marking a feature as complete** - Before considering a feature implementation complete, run all relevant tests to ensure nothing has been broken.
 - **Maintain test accuracy** - Tests must accurately verify expected system behavior. If a test seems wrong, discuss it with the user rather than modifying the test.
+
+```
+
 ```

@@ -11,8 +11,13 @@
     "stop:logs": "docker-compose -f docker/docker-compose.yml down",
     "start:all": "node scripts/start-all.js",
     "stop:all": "node scripts/stop-all.js",
+    "restart:all": "node scripts/restart-all.js",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "test:all": "cd backend && npm test && cd ../frontend && npm test",
+    "test:report:all": "node scripts/run-all-tests-and-report.js",
+    "test:report:frontend": "cd frontend && npm run test:report",
+    "test:report:backend": "cd backend && npm test",
+    "test:extract": "node scripts/extract-test-failures.js",
     "test:batched": "node test-utils/batched-test-runner.js",
     "test:debug": "node test-utils/debug-test-runner.js",
     "test:simple": "node test-utils/simple-test-runner.js"

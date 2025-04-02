@@ -65,7 +65,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ReferenceVirtueFlaw',
-    tableName: 'reference_virtues_flaws'
+    tableName: 'reference_virtues_flaws',
+    underscored: true,
+    timestamps: true
   });
   return ReferenceVirtueFlaw;
 };

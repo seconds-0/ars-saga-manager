@@ -161,3 +161,14 @@ docs/codebase_documentation*.txt
 docs/codebase_documentation*.md
 codebase_documentation*.md
 codebase_documentation*.txt
+
+# Code-to-text output directory for script
+Documentation/code-to-text/
+
+# Test output files
+test-output/
+batch-test-results.txt
+batch-integration-check.txt
+integration-test-results.txt
+test-results.txt
+test-run.log

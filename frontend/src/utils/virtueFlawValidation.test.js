@@ -34,10 +34,11 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Grogs cannot take Major Virtues or Flaws'
-      });
+        message: 'Grogs cannot take Major Virtues or Flaws',
+        source: 'grog_major'
+      }));
     });
 
     it('should validate companion restrictions with default rules', () => {
@@ -52,10 +53,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Virtue points (12) must be balanced by equal Flaw points (0)'
-      });
+        message: 'Virtue points (12) must be balanced by equal Flaw points (0)',
+        source: 'point_balance',
+        virtuePoints: 12,
+        flawPoints: 0
+      }));
     });
 
     it('should validate minor flaw limit for companions/magi', () => {
@@ -72,10 +76,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Cannot exceed 5 Minor Flaws'
-      });
+        message: 'Cannot exceed 5 Minor Flaws',
+        source: 'minor_flaws_limit',
+        count: 6,
+        max: 5
+      }));
     });
 
     it('should validate The Gift restrictions', () => {
@@ -94,10 +101,11 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Cannot take Hermetic Virtues without The Gift'
-      });
+        message: 'Cannot take Hermetic Virtues without The Gift',
+        source: 'hermetic_requires_gift'
+      }));
     });
   });
 
@@ -338,10 +346,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Virtue points (6) must be balanced by equal Flaw points (3)'
-      });
+        message: 'Virtue points (6) must be balanced by equal Flaw points (3)',
+        source: 'point_balance',
+        virtuePoints: 6,
+        flawPoints: 3
+      }));
     });
 
     it('should ignore house virtues/flaws in point balance', () => {
@@ -465,10 +476,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Cannot have more than one Story Flaw'
-      });
+        message: 'Cannot have more than one Story Flaw',
+        source: 'story_flaws',
+        count: 3,
+        max: 1
+      }));
     });
 
     it('should validate Personality Flaw limit', () => {
@@ -515,10 +529,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Cannot have more than three Personality Flaws'
-      });
+        message: 'Cannot have more than three Personality Flaws',
+        source: 'personality_flaws',
+        count: 4,
+        max: 3
+      }));
     });
 
     it('should allow overriding category limits', () => {
@@ -603,10 +620,12 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)'
-      });
+        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)',
+        source: 'social_status',
+        count: 0
+      }));
     });
 
     it('should not allow multiple social status indicators', () => {
@@ -635,10 +654,12 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)'
-      });
+        message: 'Character must have exactly one Social Status (either as a Virtue, Free Status, or Flaw)',
+        source: 'social_status',
+        count: 2
+      }));
     });
 
     it('should allow one social status virtue', () => {
@@ -784,10 +805,12 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Incompatible combination: Virtue A cannot be taken with Flaw B'
-      });
+        message: 'Incompatible combination: Virtue A cannot be taken with Flaw B',
+        source: 'incompatibility',
+        items: ['Virtue A', 'Flaw B']
+      }));
     });
 
     it('should allow virtue/flaw combinations without incompatibilities', () => {
@@ -912,10 +935,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Advanced Virtue requires prerequisite: Basic Virtue'
-      });
+        message: 'Advanced Virtue requires prerequisite: Basic Virtue',
+        source: 'prerequisites',
+        missing: ['Basic Virtue'],
+        target: 'Advanced Virtue'
+      }));
     });
 
     it('should validate flaw prerequisites', () => {
@@ -939,10 +965,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Advanced Flaw requires prerequisite: Basic Flaw'
-      });
+        message: 'Advanced Flaw requires prerequisite: Basic Flaw',
+        source: 'prerequisites',
+        missing: ['Basic Flaw'],
+        target: 'Advanced Flaw'
+      }));
     });
 
     it('should allow virtues/flaws with satisfied prerequisites', () => {
@@ -1033,10 +1062,13 @@ describe('Virtue and Flaw Validation', () => {
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Advanced Virtue requires prerequisite: Basic Virtue 2'
-      });
+        message: 'Advanced Virtue requires prerequisite: Basic Virtue 2',
+        source: 'prerequisites',
+        missing: ['Basic Virtue 2'],
+        target: 'Advanced Virtue'
+      }));
     });
   });
 
@@ -1111,14 +1143,18 @@ describe('Virtue and Flaw Validation', () => {
 
       const result = validateVirtuesFlaws(virtuesFlaws, rules);
       expect(result.isValid).toBe(false);
-      expect(result.warnings).toContainEqual({
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Incompatible combination: Virtue A cannot be taken with Virtue B'
-      });
-      expect(result.warnings).toContainEqual({
+        message: 'Incompatible combination: Virtue A cannot be taken with Virtue B',
+        source: 'incompatibility',
+        items: ['Virtue A', 'Virtue B']
+      }));
+      expect(result.warnings).toContainEqual(expect.objectContaining({
         type: 'error',
-        message: 'Incompatible combination: Virtue A cannot be taken with Virtue C'
-      });
+        message: 'Incompatible combination: Virtue A cannot be taken with Virtue C',
+        source: 'incompatibility',
+        items: ['Virtue A', 'Virtue C']
+      }));
     });
 
     it('should handle house virtues correctly in point calculations', () => {
@@ -1259,10 +1295,11 @@ describe('Virtue and Flaw Validation', () => {
         const result = validateVirtuesFlaws(virtuesFlaws, rules);
 
         expect(result.isValid).toBe(false);
-        expect(result.warnings).toContainEqual({
+        expect(result.warnings).toContainEqual(expect.objectContaining({
           type: 'error',
-          message: 'Grogs cannot take Major Virtues or Flaws'
-        });
+          message: 'Grogs cannot take Major Virtues or Flaws',
+          source: 'grog_major'
+        }));
       });
 
       it('should prevent grogs from taking The Gift', () => {

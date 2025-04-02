@@ -16,7 +16,8 @@ function AbilityList({
   onIncrementAbility, 
   onDecrementAbility,
   onIncrementXP,
-  onUpdateSpecialty 
+  onUpdateSpecialty,
+  pendingOperations = {}
 }) {
   // Group abilities by category (memoized)
   const groupedAbilities = useMemo(() => {
@@ -35,6 +36,16 @@ function AbilityList({
       return groups;
     }, {});
   }, [abilities]);
+
+  // Get pending operation state for an ability
+  const getPendingState = (abilityId) => {
+    const pending = pendingOperations[abilityId] || {};
+    return {
+      isPendingIncrement: pending.increment || false,
+      isPendingDecrement: pending.decrement || false,
+      isPendingXP: pending.xp || false
+    };
+  };
 
   // Generate section heading with count and collapsible style
   const renderCategoryHeading = (label, icon, count) => (
@@ -60,22 +71,29 @@ function AbilityList({
             {renderCategoryHeading(label, icon, categoryAbilities.length)}
             
             <div className="space-y-2 p-2 bg-white">
-              {categoryAbilities.map(ability => (
-                <AbilityInput
-                  key={ability.id}
-                  name={ability.ability_name}
-                  baseValue={ability.score}
-                  effectiveValue={ability.effective_score}
-                  experience={ability.experience_points}
-                  xpForNextLevel={ability.xp_for_next_level || 5}
-                  specialty={ability.specialty}
-                  category={ability.category}
-                  onIncrement={() => onIncrementAbility(ability.id, ability.score, ability.experience_points)}
-                  onDecrement={() => onDecrementAbility(ability.id, ability.score, ability.experience_points)}
-                  onIncrementXP={(amount) => onIncrementXP && onIncrementXP(ability.id, ability.experience_points, amount)}
-                  onSpecialtyChange={(value) => onUpdateSpecialty(ability.id, value)}
-                />
-              ))}
+              {categoryAbilities.map(ability => {
+                const { isPendingIncrement, isPendingDecrement, isPendingXP } = getPendingState(ability.id);
+                
+                return (
+                  <AbilityInput
+                    key={ability.id}
+                    name={ability.ability_name}
+                    baseValue={ability.score}
+                    effectiveValue={ability.effective_score}
+                    experience={ability.experience_points}
+                    xpForNextLevel={ability.xp_for_next_level || 5}
+                    specialty={ability.specialty}
+                    category={ability.category}
+                    onIncrement={() => onIncrementAbility(ability.id, ability.score, ability.experience_points)}
+                    onDecrement={() => onDecrementAbility(ability.id, ability.score, ability.experience_points)}
+                    onIncrementXP={(amount) => onIncrementXP && onIncrementXP(ability.id, ability.experience_points, amount)}
+                    onSpecialtyChange={(value) => onUpdateSpecialty(ability.id, value)}
+                    isPendingIncrement={isPendingIncrement}
+                    isPendingDecrement={isPendingDecrement}
+                    isPendingXP={isPendingXP}
+                  />
+                );
+              })}
             </div>
           </div>
         );
@@ -107,7 +125,8 @@ AbilityList.propTypes = {
   onIncrementAbility: PropTypes.func.isRequired,
   onDecrementAbility: PropTypes.func.isRequired,
   onIncrementXP: PropTypes.func,
-  onUpdateSpecialty: PropTypes.func.isRequired
+  onUpdateSpecialty: PropTypes.func.isRequired,
+  pendingOperations: PropTypes.object
 };
 
 export default React.memo(AbilityList);

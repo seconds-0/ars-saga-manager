@@ -130,6 +130,31 @@ The application uses a modern logging stack:
    - INFO: General application events
    - DEBUG: Detailed information for debugging (development only)
 
+### Game Features
+
+1. **Character Management**:
+   - Create characters of different types (Magus, Companion, Grog)
+   - Track characteristics (Intelligence, Strength, etc.)
+   - Manage virtues and flaws with validation
+   - Experience point tracking and spending
+
+2. **Abilities System**:
+   - Full implementation of Ars Magica abilities
+   - Experience-based ability scores
+   - Support for specialty abilities
+   - Virtue effects (Affinity, Puissant)
+   - Category-based organization (General, Academic, Martial, etc.)
+
+3. **Arts System**:
+   - Hermetic Arts for Magi characters
+   - Techniques and Forms organization
+   - Experience tracking for magical abilities
+
+4. **Experience Management**:
+   - Age-based experience calculation
+   - Separate pools for different experience types
+   - Experience spending on abilities and arts
+
 ### Common Commands
 
 ```bash
@@ -175,7 +200,12 @@ npm run stop:logs     # Stops the logging stack
 npm run health        # Checks health of all services
 
 # Testing
-npm run test:all     # Runs all tests (backend and frontend)
+npm run test:all      # Runs all tests (backend and frontend)
+npm run test:simple   # Runs tests with simpler test runner
+
+# Game Features
+node scripts/setup-abilities.js   # Set up abilities in the database
+node scripts/run-arts-migration.js # Set up hermetic arts in the database
 ```
 
 ### Directory Structure
@@ -186,14 +216,15 @@ ars-saga-manager/
 │   ├── models/            # Database models
 │   ├── routes/            # API routes
 │   ├── middleware/        # Express middleware
+│   ├── migrations/        # Database migrations
+│   ├── seeders/           # Database seeders
+│   ├── services/          # Business logic services
 │   ├── tests/             # Backend tests
 │   └── utils/             # Utility functions
-├── docs/                  # Project documentation
-│   ├── architecture/      # Architecture diagrams
-│   ├── development/       # Development guidelines
-│   ├── plans/             # Feature plans
-│   ├── system/            # System configuration
-│   └── testing/           # Testing strategies
+├── Documentation/         # Project documentation
+│   ├── Architecture/      # Architecture diagrams
+│   ├── Plans/             # Feature plans and workplans
+│   └── Product Requirements/ # System requirements
 ├── docker/                # Docker configuration
 │   ├── logging/           # Logging configuration
 │   └── docker-compose.yml # Main Docker composition
@@ -270,5 +301,11 @@ ars-saga-manager/
 - Keep JWT_SECRET secure and unique
 - Use strong database passwords
 - Review logs for sensitive information
+
+### Known Issues & Best Practices
+
+- **Timestamp Attributes:** When working with `ReferenceVirtueFlaw` associations, always exclude timestamp attributes to avoid database errors. See [TIMESTAMP-ATTRIBUTES.md](./Documentation/TIMESTAMP-ATTRIBUTES.md) for details.
+- **Database Migrations:** Always test migrations on a development database before applying them to production.
+- **Authentication:** Be careful when modifying the auth system to avoid creating security vulnerabilities.
 
 Need help? Create an issue in the repository or contact the development team.

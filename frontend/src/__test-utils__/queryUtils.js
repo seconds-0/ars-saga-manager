@@ -1,115 +1,67 @@
+/**
+ * Utilities for working with React Query in tests
+ */
 import { QueryClient } from 'react-query';
 
 /**
- * Standard query states for testing
+ * Creates a test QueryClient with logging disabled and sensible defaults
+ * @returns {QueryClient} A configured QueryClient for testing
  */
-export const QUERY_STATES = {
-  LOADING: {
-    isLoading: true,
-    isError: false,
-    isSuccess: false,
-    data: undefined,
-    error: null,
-  },
-  ERROR: {
-    isLoading: false,
-    isError: true,
-    isSuccess: false,
-    data: undefined,
-    error: new Error('Test error'),
-  },
-  SUCCESS_EMPTY: {
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    data: [],
-    error: null,
-  },
-  SUCCESS_WITH_DATA: (data) => ({
-    isLoading: false,
-    isError: false,
-    isSuccess: true,
-    data,
-    error: null,
-  }),
-};
-
-/**
- * Creates a useQuery mock with predefined state
- * @param {Object} queryState - Query state to mock
- * @returns {Function} Mocked useQuery implementation
- */
-export function mockUseQuery(queryState = QUERY_STATES.SUCCESS_EMPTY) {
-  return jest.fn().mockReturnValue(queryState);
-}
-
-/**
- * Creates a useMutation mock with predefined behavior
- * @param {Function} mockFn - Mocked mutation function
- * @param {Object} state - Mutation state
- * @returns {Object} Mocked useMutation result
- */
-export function mockUseMutation(mockFn = jest.fn(), state = {}) {
-  return jest.fn().mockReturnValue({
-    mutate: mockFn,
-    mutateAsync: mockFn,
-    isLoading: false,
-    isError: false,
-    isSuccess: false,
-    ...state,
-  });
-}
-
-/**
- * Builds a QueryClient with prefilled cache data for testing
- * @param {Object} queryData - Map of query keys to their data
- * @returns {QueryClient} QueryClient with prefilled cache
- */
-export function buildQueryClientWithData(queryData = {}) {
-  const queryClient = new QueryClient({
+export function createTestQueryClient() {
+  return new QueryClient({
     defaultOptions: {
       queries: {
+        // Don't retry failed queries in tests
         retry: false,
-        cacheTime: 0,
-        staleTime: 0,
+        // Don't refetch queries on window focus in tests
         refetchOnWindowFocus: false,
+        // Disable caching for tests to avoid state leaking between tests
+        cacheTime: 0,
+        // Use a short stale time so stale data is quickly refreshed
+        staleTime: 0,
       },
     },
+    // Prevent noise in test output
+    logger: {
+      log: console.log,
+      warn: console.warn,
+      // Silence errors since we expect some errors in tests
+      error: () => {},
+    },
   });
-
-  // Prefill the cache with provided data
-  Object.entries(queryData).forEach(([queryKey, data]) => {
-    queryClient.setQueryData(queryKey.split('/'), data);
-  });
-
-  return queryClient;
 }
 
 /**
- * Utility to wait for all pending queries to settle
- * @param {QueryClient} queryClient - The QueryClient instance
- * @returns {Promise} Promise that resolves when queries settle
+ * Mocks the response for a specific query key
+ * 
+ * @param {QueryClient} queryClient - The query client to mock
+ * @param {Array|string} queryKey - The query key to mock a response for
+ * @param {any} response - The response data to mock
  */
-export async function waitForQueries(queryClient) {
-  // Get all query cache instances
-  const queryCache = queryClient.getQueryCache();
-  const queries = queryCache.findAll();
-  
-  // Wait for all queries to settle
-  return Promise.all(
-    queries.map(query => {
-      // If the query is already settled, return a resolved promise
-      if (!query.isLoading()) return Promise.resolve();
-      
-      // Otherwise, create a promise that resolves when the query settles
-      return new Promise(resolve => {
-        const unsubscribe = queryClient.getQueryCache().subscribe(() => {
-          if (!query.isLoading()) {
-            unsubscribe();
-            resolve();
-          }
-        });
-      });
-    })
-  );
+export function mockQueryResponse(queryClient, queryKey, response) {
+  queryClient.setQueryData(queryKey, response);
 }
+
+/**
+ * Mocks an error for a specific query key
+ * 
+ * @param {QueryClient} queryClient - The query client to mock
+ * @param {Array|string} queryKey - The query key to mock an error for
+ * @param {Error} error - The error to mock
+ */
+export function mockQueryError(queryClient, queryKey, error) {
+  queryClient.setQueryData(queryKey, {
+    error,
+  });
+}
+
+/**
+ * Resets all query cache
+ * 
+ * @param {QueryClient} queryClient - The query client to reset
+ */
+export function resetQueries(queryClient) {
+  queryClient.clear();
+}
+
+export default { createTestQueryClient, mockQueryResponse, mockQueryError, resetQueries };

@@ -31,15 +31,12 @@ const calculateLevelFromXP = (xp) => {
   let level = 0;
   let increment = 5;
   
-  while (totalXP <= xp) {
-    level++;
+  while (totalXP < xp) {
     totalXP += increment;
-    increment += 5;
-    
-    // If we've exceeded the XP, we need to go back one level
-    if (totalXP > xp) {
-      level--;
-      break;
+    // If we can afford this level, increment the level
+    if (totalXP <= xp) {
+      level++;
+      increment += 5;
     }
   }
   
@@ -284,6 +281,38 @@ const getAbilityCost = (targetXP, currentXP, abilityName, characterVirtuesFlaws,
 };
 
 /**
+ * Calculates the experience points to refund when decreasing an ability score
+ * @param {number} currentXP - Current experience points
+ * @param {number} targetXP - Target experience points (lower than current)
+ * @param {string} abilityName - Name of the ability
+ * @param {Array} characterVirtuesFlaws - Character's virtues and flaws
+ * @param {string} abilityCategory - Category of the ability (ACADEMIC, MARTIAL, etc.)
+ * @returns {number} - The adjusted experience refund amount
+ */
+const getAbilityRefund = (currentXP, targetXP, abilityName, characterVirtuesFlaws, abilityCategory) => {
+  // Ensure inputs are valid
+  if (currentXP < 0) {
+    currentXP = 0; // Cannot have negative current XP
+  }
+  
+  if (targetXP < 0) {
+    targetXP = 0; // Cannot have negative target XP
+  }
+  
+  if (targetXP >= currentXP) {
+    return 0; // No refund if the target XP is higher or equal
+  }
+  
+  const baseRefund = currentXP - targetXP;
+  
+  // Since virtues and flaws typically affect the cost when gaining abilities,
+  // we'll refund at the base rate without applying discounts.
+  // This avoids players gaming the system by buying with discounts and refunding at full value.
+  
+  return baseRefund;
+};
+
+/**
  * Determines if character has affinity with an ability based on their virtues
  * @param {string} abilityName - Name of the ability
  * @param {Array} characterVirtuesFlaws - The character's virtues and flaws
@@ -347,6 +376,7 @@ module.exports = {
   isAbilityAppropriateForCharacterType,
   applyVirtueEffects,
   getAbilityCost,
+  getAbilityRefund,
   hasAffinityWithAbility,
   calculateEffectiveScore
 };

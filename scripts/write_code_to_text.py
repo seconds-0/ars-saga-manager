@@ -419,8 +419,12 @@ def main():
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_filename = f"{os.path.splitext(output_filename)[0]}_{timestamp}{os.path.splitext(output_filename)[1]}"
     
-    # Use the file in the root directory
-    output_file = os.path.join(root_dir, output_filename)
+    # Create code-to-text directory in Documentation if it doesn't exist
+    code_to_text_dir = os.path.join(root_dir, 'Documentation', 'code-to-text')
+    os.makedirs(code_to_text_dir, exist_ok=True)
+    
+    # Use the file in the code-to-text directory
+    output_file = os.path.join(code_to_text_dir, output_filename)
     
     print("Reading .gitignore files...")
     

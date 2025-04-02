@@ -7,6 +7,7 @@ import CharacteristicsAndAbilitiesTab from './CharacteristicsAndAbilitiesTab';
 import ArtsTab from './ArtsTab';
 import SpellsTab from './SpellsTab';
 import EquipmentAndCombatTab from './EquipmentAndCombatTab';
+import { CharacterProvider } from '../../contexts/CharacterProvider';
 
 const tabs = [
   { name: 'Overview', component: CharacterOverviewTab },
@@ -59,7 +60,9 @@ function CharacterSheetTabs({ character, onSave }) {
         ))}
       </div>
       <ErrorBoundary>
-        {React.createElement(visibleTabs[activeTab].component, { character, onSave })}
+        <CharacterProvider>
+          {React.createElement(visibleTabs[activeTab].component, { character, onSave })}
+        </CharacterProvider>
       </ErrorBoundary>
     </div>
   );

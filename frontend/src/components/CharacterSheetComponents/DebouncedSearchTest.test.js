@@ -95,7 +95,7 @@ jest.mock('lodash', () => {
 });
 
 // Import our mocked component
-const VirtueFlawSelector = require('./VirtueFlawSelector').default;
+import VirtueFlawSelector from './VirtueFlawSelector';
 
 describe('Debounced Search in VirtueFlawSelector', () => {
   function setup() {

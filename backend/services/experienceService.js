@@ -1,7 +1,8 @@
 'use strict';
 
-const { sequelize, Character, CharacterVirtueFlaw, ReferenceVirtueFlaw } = require('../models');
+const { sequelize, Character } = require('../models');
 const { hasAffinityWithAbility } = require('../utils/abilityUtils');
+const { safeCharacterVirtueFlawsInclude } = require('../utils/modelIncludeUtils');
 
 /**
  * Service for handling experience point spending
@@ -16,25 +17,32 @@ class ExperienceService {
    * @returns {Object} - Result of the spending operation
    */
   async spendExperience(characterId, abilityCategory, abilityName, expCost) {
+    console.log(`Spending ${expCost} exp on ${abilityName} (${abilityCategory}) for character ${characterId}`);
+    
     const transaction = await sequelize.transaction();
     
     try {
-      // Fetch character with its Virtues/Flaws
+      console.log('Starting experience spending transaction');
+      
+      // Fetch character with its Virtues/Flaws, using the safe include helper
       const character = await Character.findByPk(characterId, {
-        include: [{
-          model: CharacterVirtueFlaw,
-          as: 'CharacterVirtueFlaws',
-          include: [{
-            model: ReferenceVirtueFlaw,
-            as: 'referenceVirtueFlaw'
-          }]
-        }],
+        include: [safeCharacterVirtueFlawsInclude()],
         transaction
       });
       
       if (!character) {
+        console.error(`Character not found with ID: ${characterId}`);
         await transaction.rollback();
         return { success: false, reason: 'Character not found' };
+      }
+      
+      console.log(`Character found: ${character.name}, general_exp_available: ${character.general_exp_available}`);
+      
+      // Log virtues/flaws for debugging
+      if (character.CharacterVirtueFlaws && character.CharacterVirtueFlaws.length > 0) {
+        console.log(`Character has ${character.CharacterVirtueFlaws.length} virtues/flaws`);
+      } else {
+        console.log('Character has no virtues/flaws');
       }
       
       // Convert Exp pools to local variables for easier manipulation
@@ -113,7 +121,17 @@ class ExperienceService {
     } catch (error) {
       await transaction.rollback();
       console.error('Error spending experience:', error);
-      return { success: false, reason: 'Database error', error: error.message };
+      console.error('Error stack:', error.stack);
+      return { 
+        success: false, 
+        reason: 'Database error', 
+        error: error.message,
+        details: {
+          stack: error.stack,
+          name: error.name,
+          code: error.code
+        }
+      };
     }
   }
   
@@ -143,6 +161,73 @@ class ExperienceService {
         
       default:
         return false;
+    }
+  }
+
+  /**
+   * Refunds experience points when an ability score is decreased
+   * @param {number} characterId - Character ID
+   * @param {string} abilityCategory - Category of the ability
+   * @param {string} abilityName - Name of the ability
+   * @param {number} expAmount - Experience amount to refund
+   * @returns {Object} - Result of the refund operation
+   */
+  async refundExperience(characterId, abilityCategory, abilityName, expAmount) {
+    console.log(`Refunding ${expAmount} exp for ${abilityName} (${abilityCategory}) to character ${characterId}`);
+    
+    const transaction = await sequelize.transaction();
+    
+    try {
+      console.log('Starting experience refund transaction');
+      
+      // Fetch character with its Virtues/Flaws, using the safe include helper
+      const character = await Character.findByPk(characterId, {
+        include: [safeCharacterVirtueFlawsInclude()],
+        transaction
+      });
+      
+      if (!character) {
+        console.error(`Character not found with ID: ${characterId}`);
+        await transaction.rollback();
+        return { success: false, reason: 'Character not found' };
+      }
+      
+      console.log(`Character found: ${character.name}, general_exp_available: ${character.general_exp_available}`);
+      
+      // Convert Exp pools to local variables for easier manipulation
+      const { general_exp_available, magical_exp_available } = character;
+      
+      // For simplicity, we always refund to general experience
+      // In a more complex implementation, we could try to refund to the original pools
+      const updatedGeneralExp = general_exp_available + expAmount;
+      
+      // Update the character model
+      await character.update({
+        general_exp_available: updatedGeneralExp
+      }, { transaction });
+      
+      await transaction.commit();
+      return { 
+        success: true,
+        details: {
+          refunded: expAmount,
+          new_general_exp: updatedGeneralExp
+        }
+      };
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error refunding experience:', error);
+      console.error('Error stack:', error.stack);
+      return { 
+        success: false, 
+        reason: 'Database error', 
+        error: error.message,
+        details: {
+          stack: error.stack,
+          name: error.name,
+          code: error.code
+        }
+      };
     }
   }
 }

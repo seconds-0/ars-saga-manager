@@ -8,20 +8,18 @@ import {
 } from '../__test-utils__';
 
 // Mock dependencies
-const createAxiosMock = () => ({
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  delete: jest.fn(),
-  api: {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn()
+const mockAxiosInstance = {
+  get: jest.fn(() => Promise.resolve({ data: {} })),
+  post: jest.fn(() => Promise.resolve({ data: { message: 'Registration successful' } })),
+  put: jest.fn(() => Promise.resolve({ data: {} })),
+  delete: jest.fn(() => Promise.resolve({ data: {} })),
+  interceptors: {
+    request: { use: jest.fn(), eject: jest.fn() },
+    response: { use: jest.fn(), eject: jest.fn() }
   }
-});
+};
 
-jest.mock('../api/axios', () => createAxiosMock());
+jest.mock('../api/axios', () => mockAxiosInstance);
 jest.mock('./Toast', () => {
   return function MockToast({ message, type, onClose }) {
     return (
@@ -98,15 +96,16 @@ describe('RegisterForm', () => {
     });
     
     test('submits the form when all fields are valid', async () => {
-      const { api } = require('../api/axios');
-      api.post.mockResolvedValueOnce({ data: { message: 'Registration successful' } });
+      // Clear and set the mock implementation
+      mockAxiosInstance.post.mockClear();
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: { message: 'Registration successful' } });
       
       const { fillForm, props } = setup();
       fillForm();
       
       fireEvent.click(screen.getByRole('button', { name: /register/i }));
       
-      expect(api.post).toHaveBeenCalledWith('/auth/register', {
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/auth/register', {
         email: 'test@example.com',
         password: 'password123'
       });
@@ -127,8 +126,8 @@ describe('RegisterForm', () => {
   
   describe('Error handling', () => {
     test('displays error message when registration fails', async () => {
-      const { api } = require('../api/axios');
-      api.post.mockRejectedValueOnce({
+      mockAxiosInstance.post.mockClear();
+      mockAxiosInstance.post.mockRejectedValueOnce({
         response: {
           data: {
             message: 'Email already in use'
@@ -148,8 +147,8 @@ describe('RegisterForm', () => {
     });
     
     test('handles generic errors during registration', async () => {
-      const { api } = require('../api/axios');
-      api.post.mockRejectedValueOnce(new Error('Network error'));
+      mockAxiosInstance.post.mockClear();
+      mockAxiosInstance.post.mockRejectedValueOnce(new Error('Network error'));
       
       const { fillForm } = setup();
       fillForm();

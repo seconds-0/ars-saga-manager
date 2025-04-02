@@ -30,6 +30,10 @@
     "test": "jest --config=./testing/jest.config.js",
     "test:watch": "jest --config=./testing/jest.config.js --watch",
     "test:html": "jest --config=./testing/jest.config.js --watchAll=false",
+    "test:simple": "node testing/simpleTestRunner.js",
+    "test:report": "node testing/runTestsAndReport.js",
+    "test:batch": "node testing/runBatchTests.js",
+    "test:integration": "node testing/runIntegrationTests.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

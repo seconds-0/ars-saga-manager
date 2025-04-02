@@ -5,6 +5,7 @@ import AbilityList from './AbilityList';
 import AbilitySelector from './AbilitySelector';
 import Toast from '../Toast';
 import useAbilities from '../../hooks/useAbilities';
+import { useCharacter } from '../../contexts/CharacterProvider';
 
 // Constants for characteristic groups
 const PHYSICAL_CHARACTERISTICS = ['Strength', 'Stamina', 'Dexterity', 'Quickness'];
@@ -42,6 +43,9 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('error');
 
+  // Get character context for pending operations
+  const { isOperationPending, getAllPendingOperations } = useCharacter();
+
   // Get abilities from custom hook
   const abilitiesHook = useAbilities(character?.id);
   const abilities = abilitiesHook?.abilities || [];
@@ -52,6 +56,38 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
   const decrementAbility = abilitiesHook?.decrementAbility || (() => Promise.resolve(true));
   const incrementAbilityXP = abilitiesHook?.incrementAbilityXP || (() => Promise.resolve(true));
   const updateSpecialty = abilitiesHook?.updateSpecialty || (() => Promise.resolve(true));
+  
+  // Get pending operations for abilities
+  const pendingAbilityOperations = useMemo(() => {
+    // Get all pending operations
+    const operations = getAllPendingOperations();
+    
+    // Group operations by ability ID
+    return operations.reduce((acc, op) => {
+      // Skip operations that aren't about abilities
+      if (!op.metadata || !op.metadata.abilityId || 
+          !['abilityIncrement', 'abilityDecrement', 'abilityUpdate'].includes(op.metadata.type)) {
+        return acc;
+      }
+      
+      const { abilityId, type } = op.metadata;
+      
+      if (!acc[abilityId]) {
+        acc[abilityId] = {};
+      }
+      
+      // Set specific operation flags
+      if (type === 'abilityIncrement') {
+        acc[abilityId].increment = true;
+      } else if (type === 'abilityDecrement') {
+        acc[abilityId].decrement = true;
+      } else if (type === 'abilityUpdate') {
+        acc[abilityId].xp = true;
+      }
+      
+      return acc;
+    }, {});
+  }, [getAllPendingOperations]);
 
   // Initialize character data
   useEffect(() => {
@@ -320,25 +356,32 @@ function CharacteristicsAndAbilitiesTab({ character, onSave }) {
         </div>
         
         {abilitiesLoading && <p className="text-gray-500">Loading abilities...</p>}
-        {abilitiesError && <p className="text-red-500">{abilitiesError}</p>}
         
-        {!abilitiesLoading && !abilitiesError && (
-          <>
-            <AbilityList
-              abilities={abilities}
-              onIncrementAbility={incrementAbility}
-              onDecrementAbility={decrementAbility}
-              onIncrementXP={incrementAbilityXP}
-              onUpdateSpecialty={updateSpecialty}
-            />
-            
-            <AbilitySelector
-              onSelectAbility={handleAddAbility}
-              characterType={character?.character_type || 'companion'}
-              existingAbilities={abilities}
-            />
-          </>
+        {/* Display error messages in a more visible format */}
+        {abilitiesError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-red-700">
+            <div className="flex items-start">
+              <div className="mr-3">⚠️</div>
+              <div>{abilitiesError}</div>
+            </div>
+          </div>
         )}
+        
+        {/* Always show abilities list even if there was an error */}
+        <AbilityList
+          abilities={abilities}
+          onIncrementAbility={incrementAbility}
+          onDecrementAbility={decrementAbility}
+          onIncrementXP={incrementAbilityXP}
+          onUpdateSpecialty={updateSpecialty}
+          pendingOperations={pendingAbilityOperations}
+        />
+        
+        <AbilitySelector
+          onSelectAbility={handleAddAbility}
+          characterType={character?.character_type || 'companion'}
+          existingAbilities={abilities}
+        />
       </section>
       
       {/* Toast notification */}

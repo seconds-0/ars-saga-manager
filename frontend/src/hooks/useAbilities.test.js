@@ -8,9 +8,22 @@ import {
 // Setup console error suppression
 setupConsoleSuppress();
 
-// Mock axios
-const mockAxios = createAxiosMock();
+// Create a mock axios instance with all the methods we need
+const mockAxios = {
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  create: jest.fn(() => mockAxios),
+  interceptors: {
+    request: { use: jest.fn(), eject: jest.fn() },
+    response: { use: jest.fn(), eject: jest.fn() }
+  }
+};
+
+// Mock both axios and the local api instance
 jest.mock('axios', () => mockAxios);
+jest.mock('../api/axios', () => mockAxios);
 
 /**
  * Test data and setup function for useAbilities tests
@@ -159,15 +172,17 @@ describe('useAbilities hook', () => {
       
       const abilityId = 1;
       const currentScore = 2;
+      const currentXP = 15; // XP for level 2
+      const targetXP = 30;  // XP for level 3
       
       await act(async () => {
-        const success = await result.current.incrementAbility(abilityId, currentScore);
+        const success = await result.current.incrementAbility(abilityId, currentScore, currentXP);
         expect(success).toBe(true);
       });
       
       expect(mockAxios.put).toHaveBeenCalledWith(
         `/characters/${mockCharacterId}/abilities/${abilityId}`,
-        { score: currentScore + 1 }
+        { experience_points: targetXP }
       );
     });
     
@@ -178,16 +193,97 @@ describe('useAbilities hook', () => {
       
       const abilityId = 1;
       const currentScore = 2;
+      const currentXP = 15; // XP for level 2
+      const targetXP = 5;   // XP for level 1
       
       await act(async () => {
-        const success = await result.current.decrementAbility(abilityId, currentScore);
+        const success = await result.current.decrementAbility(abilityId, currentScore, currentXP);
         expect(success).toBe(true);
       });
       
       expect(mockAxios.put).toHaveBeenCalledWith(
         `/characters/${mockCharacterId}/abilities/${abilityId}`,
-        { score: currentScore - 1 }
+        { 
+          score: currentScore - 1,
+          experience_points: targetXP
+        }
       );
+    });
+    
+    test('prevents decrementing ability below score 0', async () => {
+      const { result, waitForNextUpdate } = setupHookTest();
+      
+      await waitForNextUpdate();
+      
+      const abilityId = 1;
+      const currentScore = 0;
+      const currentXP = 0;
+      
+      await act(async () => {
+        const success = await result.current.decrementAbility(abilityId, currentScore, currentXP);
+        expect(success).toBe(true); // Returns true without making API call
+      });
+      
+      // Verify no API call was made
+      expect(mockAxios.put).not.toHaveBeenCalled();
+    });
+    
+    test('handles incrementing with experience points', async () => {
+      const { result, waitForNextUpdate, mockCharacterId } = setupHookTest();
+      
+      await waitForNextUpdate();
+      
+      const abilityId = 1;
+      const currentXP = 15;
+      const amountToAdd = 5;
+      
+      await act(async () => {
+        const success = await result.current.incrementAbilityXP(abilityId, currentXP, amountToAdd);
+        expect(success).toBe(true);
+      });
+      
+      expect(mockAxios.put).toHaveBeenCalledWith(
+        `/characters/${mockCharacterId}/abilities/${abilityId}`,
+        { experience_points: currentXP + amountToAdd }
+      );
+    });
+    
+    test('handles decrementing with experience points', async () => {
+      const { result, waitForNextUpdate, mockCharacterId } = setupHookTest();
+      
+      await waitForNextUpdate();
+      
+      const abilityId = 1;
+      const currentXP = 15;
+      const amountToSubtract = 5;
+      
+      await act(async () => {
+        const success = await result.current.decrementAbilityXP(abilityId, currentXP, amountToSubtract);
+        expect(success).toBe(true);
+      });
+      
+      expect(mockAxios.put).toHaveBeenCalledWith(
+        `/characters/${mockCharacterId}/abilities/${abilityId}`,
+        { experience_points: currentXP - amountToSubtract }
+      );
+    });
+    
+    test('prevents decrementing XP below 0', async () => {
+      const { result, waitForNextUpdate } = setupHookTest();
+      
+      await waitForNextUpdate();
+      
+      const abilityId = 1;
+      const currentXP = 5;
+      const amountToSubtract = 10; // More than current XP
+      
+      await act(async () => {
+        const success = await result.current.decrementAbilityXP(abilityId, currentXP, amountToSubtract);
+        expect(success).toBe(true); // Returns true without making API call
+      });
+      
+      // Verify no API call was made
+      expect(mockAxios.put).not.toHaveBeenCalled();
     });
   });
   

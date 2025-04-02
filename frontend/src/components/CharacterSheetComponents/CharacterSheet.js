@@ -6,6 +6,7 @@ import CharacterSheetTabs from './CharacterSheetTabs';
 import ErrorBoundary from '../ErrorBoundary';
 import { useAuth } from '../../useAuth';
 import LoadingSpinner from '../LoadingSpinner';
+import { CharacterProvider } from '../../contexts/CharacterProvider';
 
 function CharacterSheet() {
   console.log('CharacterSheet rendering');

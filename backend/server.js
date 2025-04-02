@@ -17,7 +17,7 @@ console.log('Environment NODE_ENV:', process.env.NODE_ENV);
 console.log('==== END SERVER STARTUP DEBUG INFO ====');
 const { router: authRoutes, authenticateToken } = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
-const apiLimiter = require('./middleware/rateLimiter');
+const { apiLimiter, batchLimiter } = require('./middleware/rateLimiter');
 const sanitizeInputs = require('./middleware/sanitizer');
 const { handleError } = require('./utils/errorHandler');
 const referenceVirtuesFlawsRouter = require('./routes/referenceVirtuesFlaws');
@@ -40,8 +40,12 @@ app.use(sanitizeInputs);
 // Add logging middleware
 app.use(requestLogging);
 
-// Apply rate limiter to all API routes
+// Apply rate limiters
+// General API rate limiter
 app.use("/api/", apiLimiter);
+
+// Apply special batch endpoint rate limiter - higher limits for batch operations
+app.use("/api/*/batch", batchLimiter);
 
 // CSRF protection for state-changing routes - disabled during development
 if (process.env.NODE_ENV === 'production') {
