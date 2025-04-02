@@ -1,0 +1,265 @@
+This document is to clarify the goals of the project as well as provide background on the rules of Ars Magica 5e character creation.
+
+Title: Ars Saga Manager
+
+Background: Ars Magica 5th edition is a complex table top roleplaying game set in Mythic Europe, where the players take the role of Wizards in the Order of Hermes, a secretive wizarding order that lives amongst the mundanes. Players go on adventures, work in their laboratories to craft spells or magical items, and other mystical adventures.
+
+Project stages:
+
+V1: Create a full featured, secure, and well documented online character creator for Ars Magica.
+
+Features:
+- Hosted Web app
+- Account registration
+- Secure login with email and password
+- Login with SSO vs Google and Apple
+- Ars Magica 5th edition character creation
+  - Tabbed Character Sheet
+  - Character Sheet Editing
+  - Character Sheet Printing to PDF
+  - Character Sheet Exporting to Foundry and Roll20
+- Spell Creation
+- Magic Item Creation
+
+
+Additionally, there will be central storage of core data. It will be a list of:
+- Virtues
+- Flaws
+- Abilities
+- Spells
+  - Canon spells
+  - Spell guidelines
+- Powers
+- Equipment
+
+When users are creating characters, they will be able to look up the above data to help create their characters. Users will NOT be able to modify the central repository of data; only read it and pull it into their character creation instance.
+
+---------
+CHARACTER CREATION SUMMARY:
+1. Pick a Character Type and the characters starting age.
+2. Hermetic Magi Only: Pick a House and receive a free house virtue
+3. Pick Virtues and Flaws. Minor Virtues and Flaws are worth one point, Major Virtues and Flaws three points each. Grogs: Up to three Minor Flaws, and the same number of Minor Virtues. Companions and Magi: Up to ten
+points of Flaws, and the same number of points of Virtues.
+4. Buy Characteristics. Start with 7 points. See page 18 or 30. 
+5. Early Childhood. Native Language 5, and 45 experience points spread between (Area) Lore (for the place or
+places the character is growing up), Athletics, Awareness, Brawl, Charm, Folk Ken, Guile, Living Language (other than the character’s native language), Stealth, Survival, and Swim. 
+6. Later Life. 15 experience points per year, spread between any Abilities the character can learn, based on the
+Virtues and Flaws he has. Characters with the Wealthy Major Virtue get 20 experience points per year, those with
+the Poor Major Flaw get 10. 
+7. Hermetic Magi Only: Apprenticeship. Divide 240 experience points between Hermetic Arts and any on Supernatural Abilities (or Supernatural Abilities, if the magus has the relevant Virtue). Take 120 levels of spells, of no higher level than Technique + Form + Intelligence + Magic Theory +3.
+8. Hermetic Magi Only (Optional): Years After Apprenticeship. Divide 30 points per year between experience
+points in Arts, experience points in Abilities, and levels of spells. 
+8. Personality. Pick three words to describe your character, and assign a number between +3 and –3 to each.
+Grogs should all have a score in Loyal. Warriors should all have a score in Brave.
+9. Reputation. If the character has a Virtue or Flaw granting a Reputation, decide on the reputation.
+10. Companions and Magi Only: Confidence. Your character starts with a Confidence Score of 1 and 3
+Confidence Points, unless he has a Virtue or Flaw modifying this.
+11. Equipment. Give your character equipment he could reasonably have acquired and retained.
+
+Houses & Free Virtue:
+House Bonsigaus - Puissant: Magic Theory or Puissant: Intrigue
+House Tremere - Minor Magical Focus: Certamen
+House Mercere - Puissant: Creo or Puissant: Muto
+House Guernicus - Hermetic Prestige
+House Bjorner - Heartbeast, with a beginning score of 1 in Heartbeast ability
+House Criamon - The Enigma, with a beginning score of 1 in Enigmatic Wisdom ability
+House Merinita - Faerie Magic 
+House Tytalus - Self Confident
+House Verditius - Verditius Magic
+House Flambeau - Puissant: Perdo, Puissant: Ignem, Warrior, Minor Magical Focus, 
+House Ex Miscellanea - A free minor Hermetic Virtue, a free Major non-Hermetic Virtue, and a compulsory Major Hermetic Flaw. These virtues and flaws are in addition to the normal allowance.
+--------
+CHARACTERISTICS:
+
+Characteristics are bought on the following table. You start with seven points to spend. All characters buy Characteristics in the same way.
+
+Score Cost
++3 6
++2 3
++1 1
+0 0
+–1 Gain 1
+–2 Gain 3
+–3 Gain 6
+--------
+ABILITIES
+
+Abilities are sorted into types
+
+General Abilities - No Restriction on who takes these
+Academic Abilities - May only take if they are permitted by a specific virtues or are a Magician
+Arcane Abilities - May only take if they are permitted by a specific virtues or are a Magician
+Martial Abilities - May only take if they are permitted by a specific virtues or are a Magician
+Supernatural Abilities - May only take if they are permitted by a specific virtues
+
+General:
+Animal Handling
+(Area) Lore*
+Athletics
+Awareness
+Bargain
+Brawl
+Carouse
+Charm
+Chirurgy*
+Concentration
+Craft (Type)
+Etiquette
+Folk Ken
+Guile
+Hunt
+Intrigue
+Leadership
+Legerdemain*
+(Living Language)*
+Music
+(Organization) Lore
+Profession (Type)
+Ride
+Stealth
+Survival
+Swim
+Teaching
+
+Academic:
+Artes Liberales*
+Civil and Canon Law*
+Common Law*
+(Dead Language)*
+Medicine*
+Philosophiae*
+Theology*
+
+Arcane: 
+Code of Hermes*
+Dominion Lore*
+Faerie Lore*
+Finesse
+Infernal Lore*
+Magic Lore*
+Magic Theory*
+Parma Magica*
+Penetration
+
+Martial:
+Bows
+Great Weapon
+Single Weapon
+Thrown Weapon
+
+Supernatural:
+Animal Ken*
+Dowsing*
+Enchanting Music*
+Entrancement*
+Magic Sensitivity*
+Premonitions*
+Second Sight*
+Sense Holiness and
+Unholiness*
+Shapeshifter*
+Wilderness Sense*
+
+---
+VIRTUES
+
+Virtues and Flaws are either Minor or Major. Virtues cost points, while Flaws grant points. Major Virtues cost three points, while major Flaws grant three points. Minor Virtues and Flaws cost and grant (respectively) one
+point. Players start with no points for buying Virtues and Flaws, and thus must take Flaws if they want Virtues. A central character (Any non-Grog character type) may have up to ten points of Flaws, but no more than five minor Flaws
+
+Types of Virtues and Flaws
+
+THE GIFT - The Gift is a special Virtue, because it has no cost. The character suffers all the penalties of The Gift, just as magi do (see page 75), but can be taught Supernatural Abilities without having to take the corresponding Virtues (see page 166  for rules). Most importantly, the character can be taught Hermetic Magic, so all magi must have this Virtue. A character with The Gift, even if he is not a magus, may take Hermetic Virtues and Flaws which relate to intrinsic ability rather than background or training. 
+
+HERMETIC - Only characters with The Gift can take these virtues and flaws.
+
+SOCIAL STATUS - Everyone has a social status. Some are free.
+
+SUPERNATURAL - Everyone can take supernatural flaws or virtues
+
+PERSONALITY (FLAWS ONLY) - 
+
+
+Rules by Character Type: 
+
+A Virtue or Flaw may be taken more than once only if the description explicitly allows it. Most Virtues and Flaws may only be taken once. All characters must take one Social Status, and may only take more than one if the descriptions of the Virtues or Flaws explicitly note that they are compatible. A character should not have more than one Story Flaw. This is a guideline, and may be violated with the whole troupe’s agreement. The risk is that one character will be central to too many stories. A character can not have more than one Major Personality Flaw. A character should normally not have more than two Personality Flaws in total, as more risks
+him becoming a caricature.
+
+GROGS
+• You may take up to 3 points of Flaws, and an equal number of Virtues • You must take one Social Status 
+• You should not take Story Flaws
+• You should not take more than one Personality Flaw
+• You may not take Major Vitures or Flaws
+• You may not take Hermetic Virtues and Flaws
+• You may not take The Gift
+
+COMPANIONS
+• You may take up to 10 points of Flaws, and an equal number of Virtues \
+• You may not have more than 5 Minor Flaws
+• You must take at least one Social Status
+• You should not take more than one Story Flaw
+• You should not take more than two Personality Flaws, and cannot take
+more than one Major Personality Flaw
+• You may not take Hermetic Virtues and Flaws, unless you have The Gift (this would be highly unusual)
+
+MAGI
+• You may take up to 10 points of Flaws, and an equal number of Virtues
+• You may not have more than 5 Minor Flaws
+• You may not have more than one Major Hermetic Virtue
+• You must take The Gift and the Hermetic Magus Social Status Virtue
+• You receive one free Minor Virtue from your choice of House, which you need not balance with a Flaw
+• You should take at least one Hermetic Flaw
+• You should not take more than one Story Flaw
+• You should not take more than two Personality Flaws, and cannot take more than one Major Personality Flaw
+
+------
+ARTS:
+There are 15 Hermetic arts, seperated between the 5 techniques and 10 forms
+
+Techniques:
+- Creo
+- Intellego
+- Muto
+- Perdo
+- Rego
+
+Forms:
+- Animal
+- Aquam
+- Aurum
+- Corpus
+- Herbam
+- Ignem
+- Imaginem
+- Mentem
+- Terram
+- Vim
+
+------
+Spending Experience on Arts or Abilities:
+ART ABILITY
+Score To Buy To Raise To Buy To Raise
+1 1 1 5 5
+2 3 2 15 10
+3 6 3 30 15
+4 10 4 50 20
+5 15 5 75 25
+6 21 6 105 30
+7 28 7 140 35
+8 36 8 180 40
+9 45 9 225 45
+10 55 10 275 50
+11 66 11 330 55
+12 78 12 390 60
+13 91 13 455 65
+14 105 14 525 70
+15 120 15 600 75
+16 136 16 680 80
+17 153 17 765 85
+18 171 18 855 90
+19 190 19 950 95
+20 210 20 1050 100
+
+To Buy: The number of experience points required to raise a score from zero to that
+number.
+To Raise: The number of experience points required to raise a score by one point to that
+number

@@ -201,7 +201,7 @@ def main():
     parser = argparse.ArgumentParser(description='Generate codebase documentation.')
     parser.add_argument('--commit', action='store_true', help='Stage documentation files for commit')
     parser.add_argument('--include-docs', action='store_true', help='Include documentation files even if in .gitignore')
-    parser.add_argument('--output-dir', default='docs', help='Directory to save documentation (default: docs)')
+    parser.add_argument('--output-dir', default='Documentation/codebase-docs', help='Directory to save documentation (default: Documentation/codebase-docs)')
     args = parser.parse_args()
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -252,7 +252,7 @@ def main():
             print("Files staged successfully. You can now commit them.")
         except Exception as e:
             print(f"Error staging files: {str(e)}")
-            print("You may need to manually run: git add -f docs/codebase_documentation*.txt")
+            print("You may need to manually run: git add -f Documentation/codebase-docs/codebase_documentation*.txt")
 
 if __name__ == "__main__":
     main() 
